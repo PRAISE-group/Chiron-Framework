@@ -1,7 +1,16 @@
 # Program Analysis with Chiron
 
-A framework to teach program analysis, verification and testing in a graduate level course.
+A framework to teach program analysis, verification, and testing in a graduate-level course.
 
+```
+------------
+	      ░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
+        ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
+        ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
+        ██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
+        ╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
+        ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
+```
 - [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
 
 https://github.com/PRAISE-group/Chiron-Framework/assets/65644005/4f07ea3a-62a7-48f5-bb97-f3411b17d3af
@@ -38,6 +47,15 @@ $ ./chiron.py -r ./example/example1.tl
 
 ```bash
 $ python3 chiron.py --help
+
+------------
+      	░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
+        ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
+        ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
+        ██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
+        ╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
+        ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
+
 
 Chiron v5.3
 ------------
