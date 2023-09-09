@@ -4,7 +4,9 @@ A framework to teach program analysis, verification and testing in a graduate le
 
 - [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
 
-- [![Fuzzer Demo](./assets/Fuzzer_Demo.mp4)](./assets/Fuzzer_Demo.mp4)
+https://github.com/PRAISE-group/Chiron-Framework/assets/65644005/4f07ea3a-62a7-48f5-bb97-f3411b17d3af
+
+
 
 ### Installing Dependencies
 
@@ -35,12 +37,13 @@ $ ./chiron.py -r ./example/example1.tl
 ### See help for other command line options
 
 ```bash
-$ ./chiron.py --help
+$ python3 chiron.py --help
 
 Chiron v5.3
 ------------
-usage: ./chiron.py [-h] [-p] [-r] [-O] [-b] [-z] [-t TIMEOUT] [-d PARAMS] [-c CONSTPARAMS] [-se] [-ai] [-dfa] [-sbfl] [-bg BUGGY] [-vars INPUTVARSLIST] [-nt NTESTS] [-pop POPSIZE] [-cp CXPB]
-                 [-mp MUTPB] [-ng NGEN] [-vb VERBOSE]
+usage: chiron.py [-h] [-p] [-r] [-gr] [-b] [-z] [-t TIMEOUT] [-d PARAMS] [-c CONSTPARAMS] [-se] [-ai] [-dfa] [-sbfl]
+                 [-bg BUGGY] [-vars INPUTVARSLIST] [-nt NTESTS] [-pop POPSIZE] [-cp CXPB] [-mp MUTPB] [-ng NGEN]
+                 [-vb VERBOSE]
                  progfl
 
 Program Analysis Framework for Turtle.
@@ -52,7 +55,8 @@ options:
   -h, --help            show this help message and exit
   -p, --ir              pretty printing
   -r, --run             execute program
-  -O, --opt             optimize
+  -gr, --fuzzer_gen_rand
+                        Generate random input seeds for the fuzzer before fuzzing starts.
   -b, --bin             load binary IR
   -z, --fuzz            Run fuzzer on a turtle program (seed values with '-d' or '--params' flag needed.)
   -t TIMEOUT, --timeout TIMEOUT
@@ -60,9 +64,11 @@ options:
   -d PARAMS, --params PARAMS
                         pass variable values to Chiron program in python dictionary format
   -c CONSTPARAMS, --constparams CONSTPARAMS
-                        pass variable(for which you have to find values using circuit equivalence) values to Chiron program in python dictionary format
+                        pass variable(for which you have to find values using circuit equivalence) values to Chiron program
+                        in python dictionary format
   -se, --symbolicExecution
-                        Run Symbolic Execution on a turtle program (seed values with '-d' or '--params' flag needed) to generate test cases along all possible paths.
+                        Run Symbolic Execution on a turtle program (seed values with '-d' or '--params' flag needed) to
+                        generate test cases along all possible paths.
   -ai, --abstractInterpretation
                         Run abstract interpretation
   -dfa, --dataFlowAnalysis
@@ -84,5 +90,4 @@ options:
                         number of times Genetic Algorithm iterates
   -vb VERBOSE, --verbose VERBOSE
                         To display computation to Console
-
 ```
