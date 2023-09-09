@@ -2,7 +2,7 @@
 
 A framework to teach program analysis, verification and testing in a graduate level course.
 
-- [![Architecture Diagram](./assets/Architecture_diagram.png)](./assets/Architecture_diagram.png)
+- [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
 
 - [![Fuzzer Demo](./assets/Fuzzer_Demo.mp4)](./assets/Fuzzer_Demo.mp4)
 
