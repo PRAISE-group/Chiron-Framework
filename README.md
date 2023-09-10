@@ -4,18 +4,15 @@ A framework to teach program analysis, verification, and testing in a graduate-l
 
 ```
 
-        ░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
-        ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
-        ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
-        ██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
-        ╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
-        ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
+░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
+██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
+██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
+██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
+╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
+░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
 ```
-- [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
-
-https://github.com/PRAISE-group/Chiron-Framework/assets/65644005/4f07ea3a-62a7-48f5-bb97-f3411b17d3af
-
-
+[![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
+[![Fuzzer Demo](.assets/Fuzzer_Demo.mp4)](./assets/Fuzzer_Demo.mp4)
 
 ### Installing Dependencies
 
