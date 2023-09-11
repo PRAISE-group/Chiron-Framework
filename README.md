@@ -45,7 +45,7 @@ $ ./chiron.py -r ./example/example1.tl
 ```bash
 $ python3 chiron.py --help
 
-------------
+
       	░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
         ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
         ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
@@ -61,38 +61,38 @@ usage: chiron.py [-h] [-p] [-r] [-gr] [-b] [-z] [-t TIMEOUT] [-d PARAMS] [-c CON
                  [-vb VERBOSE]
                  progfl
 
-Program Analysis Framework for Turtle.
+Program Analysis Framework for ChironLang Programs.
 
 positional arguments:
   progfl
 
 options:
   -h, --help            show this help message and exit
-  -p, --ir              pretty printing
-  -r, --run             execute program
+  -p, --ir              pretty printing the IR of a Chiron program to stdout (terminal)
+  -r, --run             execute Chiron program, the figure/shapes the turle draws is shown in a UI.
   -gr, --fuzzer_gen_rand
                         Generate random input seeds for the fuzzer before fuzzing starts.
-  -b, --bin             load binary IR
-  -z, --fuzz            Run fuzzer on a turtle program (seed values with '-d' or '--params' flag needed.)
+  -b, --bin             load binary IR of a Chiron program
+  -z, --fuzz            Run fuzzer on a Chiron program (seed values with '-d' or '--params' flag needed.)
   -t TIMEOUT, --timeout TIMEOUT
-                        Timeout Parameter for Analysis (in secs)
+                        Timeout Parameter for Analysis (in secs). This is the total timeout.
   -d PARAMS, --params PARAMS
                         pass variable values to Chiron program in python dictionary format
   -c CONSTPARAMS, --constparams CONSTPARAMS
                         pass variable(for which you have to find values using circuit equivalence) values to Chiron program
                         in python dictionary format
   -se, --symbolicExecution
-                        Run Symbolic Execution on a turtle program (seed values with '-d' or '--params' flag needed) to
+                        Run Symbolic Execution on a Chiron program (seed values with '-d' or '--params' flag needed) to
                         generate test cases along all possible paths.
   -ai, --abstractInterpretation
-                        Run abstract interpretation
+                        Run abstract interpretation on a Chiron Program.
   -dfa, --dataFlowAnalysis
-                        Run data flow analysis using worklist algorithm
-  -sbfl, --SBFL         Run Spectrum-basedFault localizer on turtle program
+                        Run data flow analysis using worklist algorithm on a Chiron Program.
+  -sbfl, --SBFL         Run Spectrum-basedFault localizer on Chiron program
   -bg BUGGY, --buggy BUGGY
-                        buggy turtle program path
+                        buggy Chiron program path
   -vars INPUTVARSLIST, --inputVarsList INPUTVARSLIST
-                        A list of input variables of given turtle program
+                        A list of input variables of given Chiron program
   -nt NTESTS, --ntests NTESTS
                         number of tests to generate
   -pop POPSIZE, --popsize POPSIZE
@@ -105,4 +105,5 @@ options:
                         number of times Genetic Algorithm iterates
   -vb VERBOSE, --verbose VERBOSE
                         To display computation to Console
+
 ```
