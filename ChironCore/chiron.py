@@ -41,12 +41,15 @@ if __name__ == "__main__":
 
     # process the command-line arguments
     cmdparser = argparse.ArgumentParser(
-        description="Program Analysis Framework for Turtle."
+        description="Program Analysis Framework for ChironLang Programs."
     )
 
     # add arguments for parsing command-line arguments
-    cmdparser.add_argument("-p", "--ir", action="store_true", help="pretty printing")
-    cmdparser.add_argument("-r", "--run", action="store_true", help="execute program")
+    cmdparser.add_argument("-p", "--ir", action="store_true",
+                    help="pretty printing the IR of a Chiron program to stdout (terminal)")
+    cmdparser.add_argument("-r", "--run", action="store_true",
+                    help="execute Chiron program, the figure/shapes the turle draws is shown in a UI.")
+
     cmdparser.add_argument(
         "-gr",
         "--fuzzer_gen_rand",
@@ -54,19 +57,19 @@ if __name__ == "__main__":
         help="Generate random input seeds for the fuzzer before fuzzing starts.",
     )
 
-    cmdparser.add_argument("-b", "--bin", action="store_true", help="load binary IR")
+    cmdparser.add_argument("-b", "--bin", action="store_true", help="load binary IR of a Chiron program")
     cmdparser.add_argument(
         "-z",
         "--fuzz",
         action="store_true",
-        help="Run fuzzer on a turtle program (seed values with '-d' or '--params' flag needed.)",
+        help="Run fuzzer on a Chiron program (seed values with '-d' or '--params' flag needed.)",
     )
     cmdparser.add_argument(
         "-t",
         "--timeout",
         default=10,
         type=float,
-        help="Timeout Parameter for Analysis (in secs)",
+        help="Timeout Parameter for Analysis (in secs). This is the total timeout.",
     )
     cmdparser.add_argument("progfl")
 
@@ -90,7 +93,7 @@ if __name__ == "__main__":
         "-se",
         "--symbolicExecution",
         action="store_true",
-        help="Run Symbolic Execution on a turtle program (seed values with '-d' or '--params' flag needed) to generate test cases along all possible paths.",
+        help="Run Symbolic Execution on a Chiron program (seed values with '-d' or '--params' flag needed) to generate test cases along all possible paths.",
     )
     # TODO: add additional arguments for parsing command-line arguments
 
@@ -98,26 +101,26 @@ if __name__ == "__main__":
         "-ai",
         "--abstractInterpretation",
         action="store_true",
-        help="Run abstract interpretation",
+        help="Run abstract interpretation on a Chiron Program.",
     )
     cmdparser.add_argument(
         "-dfa",
         "--dataFlowAnalysis",
         action="store_true",
-        help="Run data flow analysis using worklist algorithm",
+        help="Run data flow analysis using worklist algorithm on a Chiron Program.",
     )
 
     cmdparser.add_argument(
         "-sbfl",
         "--SBFL",
         action="store_true",
-        help="Run Spectrum-basedFault localizer on turtle program",
+        help="Run Spectrum-basedFault localizer on Chiron program",
     )
-    cmdparser.add_argument("-bg", "--buggy", help="buggy turtle program path", type=str)
+    cmdparser.add_argument("-bg", "--buggy", help="buggy Chiron program path", type=str)
     cmdparser.add_argument(
         "-vars",
         "--inputVarsList",
-        help="A list of input variables of given turtle program",
+        help="A list of input variables of given Chiron program",
         type=str,
     )
     cmdparser.add_argument(
@@ -166,16 +169,20 @@ if __name__ == "__main__":
         parseTree = getParseTree(args.progfl)
         astgen = astGenPass()
         ir = astgen.visitStart(parseTree)
-        irHandler.setIR(ir)
+
+
+    # Set the IR of the program.
+    irHandler.setIR(ir)
 
     # generate control_flow_graph from IR statements.
     cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
     cfgB.dumpCFG(cfg, "control_flow_graph")
 
+    # set the cfg of the program.
     irHandler.setCFG(cfg)
 
     if args.ir:
-        irHandler.pretty_print()
+        irHandler.pretty_print(irHandler.ir)
 
     if args.abstractInterpretation:
         AISub.analyzeUsingAI(irHandler)

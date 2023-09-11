@@ -78,7 +78,7 @@ def buildCFG(ir, cfgName="", isSingle=False):
                     cfg.add_edge(node, elseBB, label='Cond_False', color='red')
             else:
                 nextBB = indices2LeadersMap[irIdx + 1] if (irIdx + 1 < len(ir)) else endBB
-                cfg.add_edge(node, nextBB, label='Regular', color='blue')
+                cfg.add_edge(node, nextBB, label='flow_edge', color='blue')
 
     return cfg
 

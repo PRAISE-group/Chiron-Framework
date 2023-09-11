@@ -80,19 +80,19 @@ class tlangParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "'if'", "'['", "']'", "'else'", "'repeat'",
-                     "'goto'", "'('", "','", "')'", "'='", "'forward'",
-                     "'backward'", "'left'", "'right'", "'penup'", "'pendown'",
-                     "'pause'", "'+'", "'-'", "'*'", "'/'", "'pendown?'",
-                     "'<'", "'>'", "'=='", "'!='", "'<='", "'>='", "'&&'",
+    literalNames = [ "<INVALID>", "'if'", "'['", "']'", "'else'", "'repeat'", 
+                     "'goto'", "'('", "','", "')'", "'='", "'forward'", 
+                     "'backward'", "'left'", "'right'", "'penup'", "'pendown'", 
+                     "'pause'", "'+'", "'-'", "'*'", "'/'", "'pendown?'", 
+                     "'<'", "'>'", "'=='", "'!='", "'<='", "'>='", "'&&'", 
                      "'||'", "'!'" ]
 
-    symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
-                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
-                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
-                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
-                      "<INVALID>", "<INVALID>", "PLUS", "MINUS", "PRODUCT",
-                      "DIV", "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE",
+    symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "PLUS", "MINUS", "PRODUCT", 
+                      "DIV", "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", 
                       "GTE", "AND", "OR", "NOT", "NUM", "VAR", "NAME", "Whitespace" ]
 
     RULE_start = 0
@@ -117,11 +117,11 @@ class tlangParser ( Parser ):
     RULE_logicOp = 19
     RULE_value = 20
 
-    ruleNames =  [ "start", "instruction_list", "strict_ilist", "instruction",
-                   "conditional", "ifConditional", "ifElseConditional",
-                   "loop", "gotoCommand", "assignment", "moveCommand", "moveOp",
-                   "penCommand", "pauseCommand", "expression", "binArithOp",
-                   "unaryArithOp", "condition", "binCondOp", "logicOp",
+    ruleNames =  [ "start", "instruction_list", "strict_ilist", "instruction", 
+                   "conditional", "ifConditional", "ifElseConditional", 
+                   "loop", "gotoCommand", "assignment", "moveCommand", "moveOp", 
+                   "penCommand", "pauseCommand", "expression", "binArithOp", 
+                   "unaryArithOp", "condition", "binCondOp", "logicOp", 
                    "value" ]
 
     EOF = Token.EOF
@@ -297,13 +297,13 @@ class tlangParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 52
+            self.state = 52 
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while True:
                 self.state = 51
                 self.instruction()
-                self.state = 54
+                self.state = 54 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if not ((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << tlangParser.T__0) | (1 << tlangParser.T__4) | (1 << tlangParser.T__5) | (1 << tlangParser.T__10) | (1 << tlangParser.T__11) | (1 << tlangParser.T__12) | (1 << tlangParser.T__13) | (1 << tlangParser.T__14) | (1 << tlangParser.T__15) | (1 << tlangParser.T__16) | (1 << tlangParser.VAR))) != 0)):
@@ -989,7 +989,7 @@ class tlangParser ( Parser ):
                     self.state = 123
                     self.binArithOp()
                     self.state = 124
-                    self.expression(3)
+                    self.expression(3) 
                 self.state = 130
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,5,self._ctx)
@@ -1200,7 +1200,7 @@ class tlangParser ( Parser ):
                     self.state = 150
                     self.logicOp()
                     self.state = 151
-                    self.condition(4)
+                    self.condition(4) 
                 self.state = 157
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,7,self._ctx)
@@ -1382,8 +1382,13 @@ class tlangParser ( Parser ):
     def expression_sempred(self, localctx:ExpressionContext, predIndex:int):
             if predIndex == 0:
                 return self.precpred(self._ctx, 2)
-
+         
 
     def condition_sempred(self, localctx:ConditionContext, predIndex:int):
             if predIndex == 1:
                 return self.precpred(self._ctx, 3)
+         
+
+
+
+

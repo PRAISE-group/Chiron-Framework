@@ -122,12 +122,11 @@ class IRHandler:
         stmtList[pos] = (ChironAST.NoOpCommand(), 1)
 
     def pretty_print(self, irList):
-        base_ir = []
-        if irList is not None:
-            base_ir = irList
-        else:
-            base_ir = self.ir
-
-            print("========== IR ==========\n")
-            for idx, item in enumerate(base_ir):
-                print(idx, item[0], " [", item[1], "]")
+        """
+            We pass a IR list and print it here.
+        """
+        print("\n========== Chiron IR ==========\n")
+        print("The first label before the opcode name represents the IR index or label \non the control flow graph for that node.\n")
+        print("The number after the opcode name represents the jump offset \nrelative to that statement.\n")
+        for idx, item in enumerate(irList):
+            print(f"[L{idx}]".rjust(5), item[0], f"[{item[1]}]")
