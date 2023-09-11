@@ -143,21 +143,21 @@ class tlangLexer(Lexer):
     modeNames = [ "DEFAULT_MODE" ]
 
     literalNames = [ "<INVALID>",
-            "'if'", "'['", "']'", "'else'", "'repeat'", "'goto'", "'('",
-            "','", "')'", "'='", "'forward'", "'backward'", "'left'", "'right'",
-            "'penup'", "'pendown'", "'pause'", "'+'", "'-'", "'*'", "'/'",
-            "'pendown?'", "'<'", "'>'", "'=='", "'!='", "'<='", "'>='",
+            "'if'", "'['", "']'", "'else'", "'repeat'", "'goto'", "'('", 
+            "','", "')'", "'='", "'forward'", "'backward'", "'left'", "'right'", 
+            "'penup'", "'pendown'", "'pause'", "'+'", "'-'", "'*'", "'/'", 
+            "'pendown?'", "'<'", "'>'", "'=='", "'!='", "'<='", "'>='", 
             "'&&'", "'||'", "'!'" ]
 
     symbolicNames = [ "<INVALID>",
-            "PLUS", "MINUS", "PRODUCT", "DIV", "PENCOND", "LT", "GT", "EQ",
-            "NEQ", "LTE", "GTE", "AND", "OR", "NOT", "NUM", "VAR", "NAME",
+            "PLUS", "MINUS", "PRODUCT", "DIV", "PENCOND", "LT", "GT", "EQ", 
+            "NEQ", "LTE", "GTE", "AND", "OR", "NOT", "NUM", "VAR", "NAME", 
             "Whitespace" ]
 
-    ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6",
-                  "T__7", "T__8", "T__9", "T__10", "T__11", "T__12", "T__13",
-                  "T__14", "T__15", "T__16", "PLUS", "MINUS", "PRODUCT",
-                  "DIV", "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", "GTE",
+    ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", 
+                  "T__7", "T__8", "T__9", "T__10", "T__11", "T__12", "T__13", 
+                  "T__14", "T__15", "T__16", "PLUS", "MINUS", "PRODUCT", 
+                  "DIV", "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", "GTE", 
                   "AND", "OR", "NOT", "NUM", "VAR", "NAME", "Whitespace" ]
 
     grammarFileName = "tlang.g4"
@@ -168,3 +168,5 @@ class tlangLexer(Lexer):
         self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
         self._actions = None
         self._predicates = None
+
+
