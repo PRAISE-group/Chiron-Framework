@@ -210,8 +210,8 @@ if __name__ == "__main__":
         print("== Optimized IR ==")
 
     if args.dump_ir:
-        irHandler.pretty_print(irOpt)
-        irHandler.dumpIR("optimized.kw", irOpt)
+        irHandler.pretty_print(irHandler.ir)
+        irHandler.dumpIR("optimized.kw", irHandler.ir)
 
     if args.symbolicExecution:
         print("symbolicExecution")
