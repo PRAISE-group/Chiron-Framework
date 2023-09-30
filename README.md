@@ -3,7 +3,6 @@
 A framework to teach program analysis, verification, and testing in a graduate-level course.
 
 ```
-
 ░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
 ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
 ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
@@ -12,7 +11,7 @@ A framework to teach program analysis, verification, and testing in a graduate-l
 ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
 ```
 [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
-[![Fuzzer Demo](.assets/Fuzzer_Demo.mp4)](./assets/Fuzzer_Demo.mp4)
+[![Watch the video](https://www.pngall.com/wp-content/uploads/5/Video-Player-PNG-Picture.png)](https://github.com/PRAISE-group/Chiron-Framework/blob/master/assets/Fuzzer_Demo.mp4)
 
 ### Installing Dependencies
 
@@ -46,15 +45,15 @@ $ ./chiron.py -r ./example/example1.tl
 $ python3 chiron.py --help
 
 
-      	░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
-        ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
-        ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
-        ██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
-        ╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
-        ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
+░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
+██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
+██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
+██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
+╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
+░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
 
 
-Chiron v5.3
+Chiron v1.0.1
 ------------
 usage: chiron.py [-h] [-p] [-r] [-gr] [-b] [-z] [-t TIMEOUT] [-d PARAMS] [-c CONSTPARAMS] [-se] [-ai] [-dfa] [-sbfl]
                  [-bg BUGGY] [-vars INPUTVARSLIST] [-nt NTESTS] [-pop POPSIZE] [-cp CXPB] [-mp MUTPB] [-ng NGEN]
