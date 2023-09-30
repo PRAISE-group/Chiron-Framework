@@ -53,11 +53,6 @@ body:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
- - type: textarea
-    id: additional_information
-    attributes:
-      label: Additional information for Bug filed.
-      description: Write additional information about the bug or the version of Chiron you are using. 
   - type: checkboxes
     id: terms
     attributes:
