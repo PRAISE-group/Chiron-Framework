@@ -76,5 +76,7 @@ if __name__ == "__main__":
         astgen = astGenPass()
         ir = astgen.visitStart(parseTree)
 
+    irHandler2.pretty_print(irHandler2.ir)
+
     checkEq(args, ir)
     exit()
