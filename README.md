@@ -11,7 +11,7 @@ A framework to teach program analysis, verification, and testing in a graduate-l
 ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
 ```
 [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
-[![Watch the video](https://www.pngall.com/wp-content/uploads/5/Video-Player-PNG-Picture.png)](https://github.com/PRAISE-group/Chiron-Framework/blob/master/assets/Fuzzer_Demo.mp4)
+[![Watch the video]](https://github.com/PRAISE-group/Chiron-Framework/blob/master/assets/Fuzzer_Demo.mp4)
 
 ### Installing Dependencies
 
