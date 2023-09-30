@@ -1,4 +1,4 @@
-name: Bug Report Form
+name: "Bug Report Form"
 description: You can submit this form instead of a .md (that easier!)
 title: "[Bug]: "
 labels: ["bug", "triage"]
