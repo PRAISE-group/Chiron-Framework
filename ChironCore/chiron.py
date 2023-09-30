@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-Release = "Chiron v5.3"
+Release = "Chiron v1.0.1"
 
 import ast
 import sys
@@ -37,7 +37,14 @@ def stopTurtle():
 
 if __name__ == "__main__":
     print(Release)
-    print("------------")
+    print("""
+    ░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
+    ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
+    ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
+    ██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
+    ╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
+    ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
+    """)
 
     # process the command-line arguments
     cmdparser = argparse.ArgumentParser(
