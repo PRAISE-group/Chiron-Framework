@@ -6,12 +6,14 @@ import sys
 sys.path.insert(0, "../ChironCore/")
 
 from interfaces.sExecutionInterface import *
+from ChironAST.builder import astGenPass
 import z3solver as zs
 from irhandler import *
 from interpreter import *
 import ast
 
-
+# This is an example program showing the use
+# of Z3 Solver in python.
 def example(s):
     # To add symbolic variable x to solver
     s.addSymbVar("x")
@@ -27,20 +29,28 @@ def example(s):
     # To get any variable assigned
     print("variable assignment of z =", s.getVar("z"))
 
-
+# IMPLEMENT THIS
+# FEEL FREE TO MODIFIY THIS CODE.
 def checkEq(args, ir):
-    file1 = open("../Submission/testData.json", "r+")
+    file1 = open("testData.json", "r+")
     testData = json.loads(file1.read())
     file1.close()
-    s = zs.z3Solver()
+
+    solver = zs.z3Solver()
     testData = convertTestData(testData)
-    print(testData)
-    # output = args.output
+
+    # to see what test data has been read.
+    # print(testData)
+
+    # This is the data read from the "-e" flag
+    output = args.output
     # example(s)
     # TODO: write code to check equivalence
 
 
 if __name__ == "__main__":
+    # you are free to add your own arguments and use them
+    # in the functions of this file.
     cmdparser = argparse.ArgumentParser(
         description="symbSubmission for assignment Program Synthesis using Symbolic Execution"
     )
@@ -53,7 +63,18 @@ if __name__ == "__main__":
         type=ast.literal_eval,
         help="pass variables to Chiron program in python dictionary format",
     )
+    # This object is use to store and pass the ir around.
+    irHandler2 = IRHandler(None)
     args = cmdparser.parse_args()
-    ir = loadIR(args.progfl)
+
+    # generate IR of the program given
+    # or load it from .kw file.
+    if args.bin:
+        ir = irHandler2.loadIR(args.progfl)
+    else:
+        parseTree = getParseTree(args.progfl)
+        astgen = astGenPass()
+        ir = astgen.visitStart(parseTree)
+
     checkEq(args, ir)
     exit()
