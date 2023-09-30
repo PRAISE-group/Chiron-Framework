@@ -208,6 +208,7 @@ if __name__ == "__main__":
     if args.dataFlowAnalysis:
         irOpt = DFASub.optimizeUsingDFA(irHandler)
         print("== Optimized IR ==")
+        irHandler.pretty_print(irHandler.ir)
 
     if args.dump_ir:
         irHandler.pretty_print(irHandler.ir)
