@@ -140,6 +140,12 @@ if __name__ == "__main__":
         "-mp", "--mutpb", help="mutation probability", default=1.0, type=float
     )
     cmdparser.add_argument(
+        "-cfg", "--control_flow", help="Generate the CFG of the given turtle program", action="store_true"
+    )
+    cmdparser.add_argument(
+        "-dump", "--dump_ir", help="Dump the IR to a .kw (pickle file)", action="store_true"
+    )
+    cmdparser.add_argument(
         "-ng",
         "--ngen",
         help="number of times Genetic Algorithm iterates",
@@ -160,6 +166,8 @@ if __name__ == "__main__":
     if not (type(args.params) is dict):
         raise ValueError("Wrong type for command line arguement '-d' or '--params'.")
 
+    # Instantiate the irHandler
+    # this object is passed around everywhere.
     irHandler = IRHandler(ir)
 
     # generate IR
@@ -175,11 +183,13 @@ if __name__ == "__main__":
     irHandler.setIR(ir)
 
     # generate control_flow_graph from IR statements.
-    cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
-    cfgB.dumpCFG(cfg, "control_flow_graph")
-
-    # set the cfg of the program.
-    irHandler.setCFG(cfg)
+    if args.control_flow:
+        cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+        cfgB.dumpCFG(cfg, "control_flow_graph")
+        # set the cfg of the program.
+        irHandler.setCFG(cfg)
+    else:
+        irHandler.setCFG(None)
 
     if args.ir:
         irHandler.pretty_print(irHandler.ir)
@@ -191,6 +201,8 @@ if __name__ == "__main__":
     if args.dataFlowAnalysis:
         irOpt = DFASub.optimizeUsingDFA(irHandler)
         print("== Optimized IR ==")
+
+    if args.dump_ir:
         irHandler.pretty_print(irOpt)
         irHandler.dumpIR("optimized.kw", irOpt)
 
