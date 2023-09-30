@@ -1,5 +1,5 @@
-name: Bug Report
-description: File a bug report
+name: Bug Report Form
+description: You can submit this form instead of a .md (that easier!)
 title: "[Bug]: "
 labels: ["bug", "triage"]
 assignees:
@@ -53,11 +53,17 @@ body:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
+ - type: textarea
+    id: addnl
+    attributes:
+      label: Additional information for Bug filed.
+      description: Write additional information about the bug or the version of Chiron you are using. 
+      render: shell
   - type: checkboxes
     id: terms
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://en.wikipedia.org/wiki/Code_of_conduct)
       options:
         - label: I agree to follow this project's Code of Conduct
           required: true
