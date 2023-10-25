@@ -239,7 +239,7 @@ if __name__ == "__main__":
             )
         """
         How to run symbolicExecution?
-        # ./chiron.py -t 100 --symbolicExecution example/example2.tl -d '{":dir": 3, ":move": 5}'
+        # ./chiron.py -t 100 --symbolicExecution example/example2.tl -d '{":dir": 10, ":move": -90}'
         """
         se.symbolicExecutionMain(
             irHandler, args.params, args.constparams, timeLimit=args.timeout
