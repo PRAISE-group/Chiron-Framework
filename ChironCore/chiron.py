@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-Release = "Chiron v1.0.1"
+Release = "Chiron v1.0.4"
 
 import ast
 import sys
@@ -37,14 +37,16 @@ def stopTurtle():
 
 if __name__ == "__main__":
     print(Release)
-    print("""
+    print(
+        """
     ░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
     ██╔══██╗██║░░██║██║██╔══██╗██╔══██╗████╗░██║
     ██║░░╚═╝███████║██║██████╔╝██║░░██║██╔██╗██║
     ██║░░██╗██╔══██║██║██╔══██╗██║░░██║██║╚████║
     ╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
     ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
-    """)
+    """
+    )
 
     # process the command-line arguments
     cmdparser = argparse.ArgumentParser(
@@ -52,10 +54,18 @@ if __name__ == "__main__":
     )
 
     # add arguments for parsing command-line arguments
-    cmdparser.add_argument("-p", "--ir", action="store_true",
-                    help="pretty printing the IR of a Chiron program to stdout (terminal)")
-    cmdparser.add_argument("-r", "--run", action="store_true",
-                    help="execute Chiron program, the figure/shapes the turle draws is shown in a UI.")
+    cmdparser.add_argument(
+        "-p",
+        "--ir",
+        action="store_true",
+        help="pretty printing the IR of a Chiron program to stdout (terminal)",
+    )
+    cmdparser.add_argument(
+        "-r",
+        "--run",
+        action="store_true",
+        help="execute Chiron program, the figure/shapes the turle draws is shown in a UI.",
+    )
 
     cmdparser.add_argument(
         "-gr",
@@ -64,7 +74,9 @@ if __name__ == "__main__":
         help="Generate random input seeds for the fuzzer before fuzzing starts.",
     )
 
-    cmdparser.add_argument("-b", "--bin", action="store_true", help="load binary IR of a Chiron program")
+    cmdparser.add_argument(
+        "-b", "--bin", action="store_true", help="load binary IR of a Chiron program"
+    )
     cmdparser.add_argument(
         "-z",
         "--fuzz",
@@ -81,7 +93,7 @@ if __name__ == "__main__":
     cmdparser.add_argument("progfl")
 
     # passing variable values via command line. E.g.
-    # ./Chiron.py -r <program file> --params '{":x" : 10, ":z" : 20, ":w" : 10, ":k" : 2}'
+    # ./chiron.py -r <program file> --params '{":x" : 10, ":z" : 20, ":w" : 10, ":k" : 2}'
     cmdparser.add_argument(
         "-d",
         "--params",
@@ -147,10 +159,16 @@ if __name__ == "__main__":
         "-mp", "--mutpb", help="mutation probability", default=1.0, type=float
     )
     cmdparser.add_argument(
-        "-cfg", "--control_flow", help="Generate the CFG of the given turtle program", action="store_true"
+        "-cfg",
+        "--control_flow",
+        help="Generate the CFG of the given turtle program",
+        action="store_true",
     )
     cmdparser.add_argument(
-        "-dump", "--dump_ir", help="Dump the IR to a .kw (pickle file)", action="store_true"
+        "-dump",
+        "--dump_ir",
+        help="Dump the IR to a .kw (pickle file)",
+        action="store_true",
     )
     cmdparser.add_argument(
         "-ng",
@@ -184,7 +202,6 @@ if __name__ == "__main__":
         parseTree = getParseTree(args.progfl)
         astgen = astGenPass()
         ir = astgen.visitStart(parseTree)
-
 
     # Set the IR of the program.
     irHandler.setIR(ir)
@@ -222,7 +239,7 @@ if __name__ == "__main__":
             )
         """
         How to run symbolicExecution?
-        # ./Chiron.py -t 100 --symbolicExecution example/example2.tl -d '{":dir": 3, ":move": 5}'
+        # ./chiron.py -t 100 --symbolicExecution example/example2.tl -d '{":dir": 3, ":move": 5}'
         """
         se.symbolicExecutionMain(
             irHandler, args.params, args.constparams, timeLimit=args.timeout
@@ -235,8 +252,8 @@ if __name__ == "__main__":
             )
         """
         How to run fuzzer?
-        # ./Chiron.py -t 100 --fuzz example/example1.tl -d '{":x": 5, ":y": 100}'
-        # ./Chiron.py -t 100 --fuzz example/example2.tl -d '{":dir": 3, ":move": 5}'
+        # ./chiron.py -t 100 --fuzz example/example1.tl -d '{":x": 5, ":y": 100}'
+        # ./chiron.py -t 100 --fuzz example/example2.tl -d '{":dir": 3, ":move": 5}'
         """
         fuzzer = Fuzzer(irHandler, args.params)
         cov, corpus = fuzzer.fuzz(
@@ -286,7 +303,7 @@ if __name__ == "__main__":
             cross-over probabiliy = 1.0
             mutation probability = 1.0
             number of times GA to iterate = 100, therefore
-        command : ./Chiron.py --SBFL ./example/sbfl1.tl --buggy ./example/sbfl1_buggy.tl \
+        command : ./chiron.py --SBFL ./example/sbfl1.tl --buggy ./example/sbfl1_buggy.tl \
             -vars '[":x", ":y", ":z"]' --timeout 1 --ntests 20 --popsize 100 --cxpb 1.0 --mutpb 1.0 --ngen 100 --verbose True
         Note : if a program doesn't take any input vars them pass argument -vars as '[]'
         """
@@ -313,8 +330,8 @@ if __name__ == "__main__":
             optimized_test,
             spectrum,
         ) = testsuiteGenerator(
-            ir1=irhandler1,
-            ir2=irhandler2,
+            irhandler1=irhandler1,
+            irhandler2=irhandler2,
             inputVars=eval(args.inputVarsList),
             Ntests=args.ntests,
             timeLimit=args.timeout,
