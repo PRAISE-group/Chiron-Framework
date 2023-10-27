@@ -282,6 +282,7 @@ class SBFLAnalysis(ConcreteInterpreter):
     def __init__(self, irHandler, timeLimit=10):
         super().__init__(irHandler)
         self.ir = irHandler.ir
+        self.irhandler = irHandler
         self.allinputList = []
         self.timeLimit = timeLimit
         self.executor = Executor()
@@ -295,7 +296,7 @@ class SBFLAnalysis(ConcreteInterpreter):
         executer = Executor()
 
         # total number of compoents in ir, each line is considered as a component.
-        components = len(self.ir)
+        components = len(self.irhandler.ir)
 
         # Note : last column contains index of test, used for fault oracle.
         activity_mat = np.zeros((total_tests, components + 1), dtype="int")
@@ -305,7 +306,7 @@ class SBFLAnalysis(ConcreteInterpreter):
             endLimit = time.time() + self.timeLimit
 
             # get which components are executed.
-            coverage, _ = executer.execute(self.ir, inputList=inputList, end=endLimit)
+            coverage, _ = executer.execute(self.irhandler, inputList=inputList, end=endLimit)
 
             # set executed compoent to 1
             activity_mat[index, coverage] = 1
@@ -315,7 +316,7 @@ class SBFLAnalysis(ConcreteInterpreter):
             # passes.
             activity_mat[index, -1] = index
 
-        return activity_mat
+        return activity_mat.tolist()
 
     def generateSpectrum(self, orcl, timeLimit=360):
         # run correct and buggy program to get error vector [Fault Oracle]
@@ -389,7 +390,7 @@ def testsuiteGenerator(
 
     oracle = FaultOrcale(irhandler1, irhandler2, original_tests)
 
-    ActivityMatrix = sbfl_object.generateSpectrum(oracle)
+    ActivityMatrix = sbfl_object.generateActivityMatrix(original_tests)
     original_test_suites = np.array(ActivityMatrix, dtype="int")
     original_test_suites = original_test_suites[
         :, : original_test_suites.shape[1] - 1
