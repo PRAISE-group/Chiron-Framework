@@ -159,8 +159,14 @@ if __name__ == "__main__":
         "-mp", "--mutpb", help="mutation probability", default=1.0, type=float
     )
     cmdparser.add_argument(
-        "-cfg",
+        "-cfg_gen",
         "--control_flow",
+        help="Generate the CFG of the given turtle program",
+        action="store_true",
+    )
+    cmdparser.add_argument(
+        "-cfg_dump",
+        "--dump_cfg",
         help="Generate the CFG of the given turtle program",
         action="store_true",
     )
@@ -209,11 +215,13 @@ if __name__ == "__main__":
     # generate control_flow_graph from IR statements.
     if args.control_flow:
         cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
-        cfgB.dumpCFG(cfg, "control_flow_graph")
-        # set the cfg of the program.
         irHandler.setCFG(cfg)
     else:
         irHandler.setCFG(None)
+
+    if args.dump_cfg:
+        cfgB.dumpCFG(cfg, "control_flow_graph")
+        # set the cfg of the program.
 
     if args.ir:
         irHandler.pretty_print(irHandler.ir)
