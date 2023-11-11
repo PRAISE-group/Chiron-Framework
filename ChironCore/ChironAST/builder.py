@@ -147,7 +147,7 @@ class astGenPass(tlangVisitor):
         counterVarInitInstr = ChironAST.AssignmentCommand(counterVar, repeatNum)
         constZero = ChironAST.Num(0)
         constOne = ChironAST.Num(1)
-        loopCond = ChironAST.ConditionCommand(ChironAST.NEQ(counterVar, constZero))
+        loopCond = ChironAST.ConditionCommand(ChironAST.GT(counterVar, constZero))
         counterVarDecrInstr = ChironAST.AssignmentCommand(counterVar, ChironAST.Diff(counterVar, constOne))
 
         thenInstrList = []
