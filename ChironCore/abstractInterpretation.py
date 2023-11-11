@@ -109,7 +109,7 @@ class AbstractInterpreter(Interpreter):
             for pred in predList:
                 label = cfg.get_edge_label(pred, currBB)
                 if bbOut[pred.name]:
-                    if label == 'Cond_True':
+                    if label != 'Cond_False':
                         # See CFGBuilder function we have
                         # cfg.add_edge(node, thenBB, label='Cond_True', color='green')
                         # and 
