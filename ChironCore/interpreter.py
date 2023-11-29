@@ -108,6 +108,7 @@ class ConcreteInterpreter(Interpreter):
 
         if self.pc >= len(self.ir):
             # This is the ending of the interpreter.
+            self.trtl.write("End, Press ESC", font=("Arial", 15, "bold"))
             self.chironhook.ChironEndHook(self)
             return True
         else:
@@ -116,7 +117,7 @@ class ConcreteInterpreter(Interpreter):
     def initProgramContext(self, params):
         # This is the starting of the interpreter at setup stage.
         self.chironhook.ChironStartHook(self)
-
+        self.trtl.write("Start", font=("Arial", 15, "bold"))
         for key,val in params.items():
             var = key.replace(":","")
             exec("setattr(self.prg,\"%s\",%s)" % (var, val))
