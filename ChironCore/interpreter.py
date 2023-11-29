@@ -1,5 +1,6 @@
 
 from ChironAST import ChironAST
+from ChironHooks import Chironhooks
 import turtle
 
 Release="Chiron v5.3"
@@ -30,11 +31,6 @@ class Interpreter:
         turtle.bgcolor("white")
         turtle.hideturtle()
 
-    def initProgramContext(self, params):
-        for key,val in params.items():
-            var = key.replace(":","")
-            exec("setattr(self.prg,\"%s\",%s)" % (var, val))
-
     def handleAssignment(self, stmt,tgt):
         raise NotImplementedError('Assignments are not handled!')
 
@@ -62,11 +58,30 @@ class Interpreter:
         if not isinstance(stmt, ChironAST.ConditionCommand):
             if tgt != 1:
                 raise ValueError("Improper relative jump for non-conditional instruction", str(stmt), tgt)
+    
+    def interpret(self):
+        pass
+
+    def initProgramContext(self, params):
+        pass
+
+class ProgramContext:
+    pass
+
+# TODO: move to a different file
+class ConcreteInterpreter(Interpreter):
+    # Ref: https://realpython.com/beginners-guide-python-turtle
+    cond_eval = None # used as a temporary variable within the embedded program interpreter
+    prg = None
+
+    def __init__(self, irHandler):
+        super().__init__(irHandler)
+        self.prg = ProgramContext()
+        # Hooks Object:
+        self.chironhook = Chironhooks.ConcreteChironHooks()
+        self.pc = 0
 
     def interpret(self):
-        if self.pc >= len(self.ir):
-            return True # program terminated
-
         print("Program counter : ", self.pc)
         stmt, tgt = self.ir[self.pc]
         print(stmt, stmt.__class__.__name__, tgt)
@@ -91,23 +106,21 @@ class Interpreter:
         # TODO: handle statement
         self.pc += ntgt
 
-        # FIXME : Fuzzer returns a value pass the #ir in the coverage.
-        return True if self.pc >= len(self.ir) else False # TODO: return termination status
+        if self.pc >= len(self.ir):
+            # This is the ending of the interpreter.
+            self.chironhook.ChironEndHook(self)
+            return True
+        else:
+            return False
+    
+    def initProgramContext(self, params):
+        # This is the starting of the interpreter at setup stage.
+        self.chironhook.ChironStartHook(self)
 
-class ProgramContext:
-    pass
-
-# TODO: move to a different file
-class ConcreteInterpreter(Interpreter):
-    # Ref: https://realpython.com/beginners-guide-python-turtle
-    cond_eval = None # used as a temporary variable within the embedded program interpreter
-    prg = None
-
-    def __init__(self, irHandler):
-        super().__init__(irHandler)
-        self.prg = ProgramContext()
-        self.pc = 0
-
+        for key,val in params.items():
+            var = key.replace(":","")
+            exec("setattr(self.prg,\"%s\",%s)" % (var, val))
+    
     def handleAssignment(self, stmt, tgt):
         print("  Assignment Statement")
         lhs = str(stmt.lvar).replace(":","")
