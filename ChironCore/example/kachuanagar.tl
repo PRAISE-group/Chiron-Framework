@@ -1,4 +1,3 @@
-:radius = 35
 :cnt = 0
 :i = 0
 repeat 22 [
