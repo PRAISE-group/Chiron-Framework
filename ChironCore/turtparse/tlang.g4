@@ -39,18 +39,22 @@ penCommand : 'penup' | 'pendown' ;
 
 pauseCommand : 'pause' ;
 
-expression : value
-           | unaryArithOp expression
-           | expression binArithOp expression
-	   | '(' expression ')'
+expression : 
+             unaryArithOp expression               #unaryExpr
+           | expression multiplicative expression  #mulExpr
+		   | expression additive expression        #addExpr
+		   | value                                 #valueExpr
+		   | '(' expression ')'                    #parenExpr
  	   ;
 
-binArithOp : PLUS | MINUS | PRODUCT | DIV ;
+multiplicative : MUL | DIV;
+additive : PLUS | MINUS;
+
 unaryArithOp : MINUS ;
 
 PLUS     : '+' ;
 MINUS    : '-' ;
-PRODUCT  : '*' ;
+MUL  	 : '*' ;
 DIV      : '/' ;
 
 

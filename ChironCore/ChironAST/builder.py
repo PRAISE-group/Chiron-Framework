@@ -61,33 +61,39 @@ class astGenPass(tlangVisitor):
         ycor = self.visit(ctx.expression(1))
         return [(ChironAST.GotoCommand(xcor, ycor), 1)]
 
-    def visitExpression(self, ctx:tlangParser.ExpressionContext):
-        if ctx.value():
-            return self.visit(ctx.value())
-
-        if ctx.unaryArithOp():
-            expr1 = self.visit(ctx.expression(0))
-            if ctx.unaryArithOp().MINUS():
-                return ChironAST.UMinus(expr1)
-
-        if ctx.binArithOp():
-            binOpCtx = ctx.binArithOp()
-            expr1 = self.visit(ctx.expression(0))
-            expr2 = self.visit(ctx.expression(1))
-            if binOpCtx.PLUS():
-                return ChironAST.Sum(expr1, expr2)
-            elif binOpCtx.MINUS():
-                return ChironAST.Diff(expr1, expr2)
-            elif binOpCtx.PRODUCT():
-                return ChironAST.Mult(expr1, expr2)
-            elif binOpCtx.DIV():
-                return ChironAST.Div(expr1, expr2)
-
-        if ctx.expression():
-            # expression in paranthesis
-            return self.visit(ctx.expression(0))
-
+    # Visit a parse tree produced by tlangParser#unaryExpr.
+    def visitUnaryExpr(self, ctx:tlangParser.UnaryExprContext):
+        expr1 = self.visit(ctx.expression())
+        if ctx.unaryArithOp().MINUS():
+            return ChironAST.UMinus(expr1)
+        
         return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#addExpr.
+    def visitAddExpr(self, ctx:tlangParser.AddExprContext):
+        left = self.visit(ctx.expression(0))
+        right = self.visit(ctx.expression(1))
+        if ctx.additive().PLUS():
+            return ChironAST.Sum(left, right)
+        elif ctx.additive().MINUS():
+            return ChironAST.Diff(left, right)
+
+
+    # Visit a parse tree produced by tlangParser#mulExpr.
+    def visitMulExpr(self, ctx:tlangParser.MulExprContext):
+        left = self.visit(ctx.expression(0))
+        right = self.visit(ctx.expression(1))
+        if ctx.multiplicative().MUL():
+            return ChironAST.Mult(left, right)
+        elif ctx.multiplicative().DIV():
+            return ChironAST.Div(left, right)
+
+
+    # Visit a parse tree produced by tlangParser#parenExpr.
+    def visitParenExpr(self, ctx:tlangParser.ParenExprContext):
+        return self.visit(ctx.expression()) 
+   
 
     def visitCondition(self, ctx:tlangParser.ConditionContext):
         if ctx.PENCOND():
