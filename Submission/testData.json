@@ -1,0 +1,11 @@
+{
+    "1": {
+        "params": "{'radius': 0}",
+        "constparams": "[]",
+        "coverage": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 3]",
+        "pc": "[3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 3]",
+        "pcEval": "[True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, False]",
+        "symbEnc": "{'radius': 'radius', 'cnt': '22', 'i': '231', '__rep_counter_1': '0'}",
+        "constraints": "[True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n True,\n Not(False),\n Not(False)]"
+    }
+}

@@ -77,6 +77,11 @@ if __name__ == "__main__":
     cmdparser.add_argument(
         "-b", "--bin", action="store_true", help="load binary IR of a Chiron program"
     )
+    
+    cmdparser.add_argument(
+        "-k", "--hooks", action="store_true", help="Run hooks for Kachua."
+    )
+
     cmdparser.add_argument(
         "-z",
         "--fuzz",
@@ -274,7 +279,8 @@ if __name__ == "__main__":
     if args.run:
         # for stmt,pc in ir:
         #     print(str(stmt.__class__.__bases__[0].__name__),pc)
-        inptr = ConcreteInterpreter(irHandler)
+
+        inptr = ConcreteInterpreter(irHandler, args)
         terminated = False
         inptr.initProgramContext(args.params)
         while True:

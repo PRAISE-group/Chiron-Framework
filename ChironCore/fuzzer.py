@@ -39,7 +39,7 @@ class Fuzzer(ConcreteInterpreter):
         ir (List): List of program IR statments
         params (dict): Mapped variables with initial assignments.
         """
-        super().__init__(irHandler)
+        super().__init__(irHandler, None)
         self.ir = irHandler.ir
         self.params = params
         self.corpus = []
