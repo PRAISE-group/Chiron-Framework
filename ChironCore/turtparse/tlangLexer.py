@@ -5,7 +5,6 @@ from typing.io import TextIO
 import sys
 
 
-
 def serializedATN():
     with StringIO() as buf:
         buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\2%")
@@ -121,7 +120,7 @@ class tlangLexer(Lexer):
     T__16 = 17
     PLUS = 18
     MINUS = 19
-    PRODUCT = 20
+    MUL = 20
     DIV = 21
     PENCOND = 22
     LT = 23
@@ -150,15 +149,15 @@ class tlangLexer(Lexer):
             "'&&'", "'||'", "'!'" ]
 
     symbolicNames = [ "<INVALID>",
-            "PLUS", "MINUS", "PRODUCT", "DIV", "PENCOND", "LT", "GT", "EQ", 
+            "PLUS", "MINUS", "MUL", "DIV", "PENCOND", "LT", "GT", "EQ", 
             "NEQ", "LTE", "GTE", "AND", "OR", "NOT", "NUM", "VAR", "NAME", 
             "Whitespace" ]
 
     ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", 
                   "T__7", "T__8", "T__9", "T__10", "T__11", "T__12", "T__13", 
-                  "T__14", "T__15", "T__16", "PLUS", "MINUS", "PRODUCT", 
-                  "DIV", "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", "GTE", 
-                  "AND", "OR", "NOT", "NUM", "VAR", "NAME", "Whitespace" ]
+                  "T__14", "T__15", "T__16", "PLUS", "MINUS", "MUL", "DIV", 
+                  "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", "GTE", "AND", 
+                  "OR", "NOT", "NUM", "VAR", "NAME", "Whitespace" ]
 
     grammarFileName = "tlang.g4"
 
