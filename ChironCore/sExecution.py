@@ -129,7 +129,7 @@ def symbolicExecutionMain(irHandler, params, constparams, timeLimit=10):
             coverage = [] # coverage for current path
             pc = []
             pcEval = []
-            inptr = ConcreteInterpreter(irHandler)
+            inptr = ConcreteInterpreter(irHandler, None)
             inptr.pc = 0
             terminated = False
             inptr.initProgramContext(params)

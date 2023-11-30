@@ -15,7 +15,7 @@ class Interpreter:
     t_screen = None
     trtl = None
 
-    def __init__(self, irHandler):
+    def __init__(self, irHandler, params):
         self.ir = irHandler.ir
         self.cfg = irHandler.cfg
         self.pc = 0
@@ -27,6 +27,12 @@ class Interpreter:
         self.trtl.begin_fill()
         self.trtl.pensize(4)
         self.trtl.speed(1) # TODO: Make it user friendly
+
+        if params is not None:
+            self.args = params
+        else:
+            self.args = None
+
         turtle.title(Release)
         turtle.bgcolor("white")
         turtle.hideturtle()
@@ -74,11 +80,12 @@ class ConcreteInterpreter(Interpreter):
     cond_eval = None # used as a temporary variable within the embedded program interpreter
     prg = None
 
-    def __init__(self, irHandler):
-        super().__init__(irHandler)
+    def __init__(self, irHandler, params):
+        super().__init__(irHandler, params)
         self.prg = ProgramContext()
         # Hooks Object:
-        self.chironhook = Chironhooks.ConcreteChironHooks()
+        if self.args is not None and self.args.hooks:
+            self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
 
     def interpret(self):
@@ -109,14 +116,16 @@ class ConcreteInterpreter(Interpreter):
         if self.pc >= len(self.ir):
             # This is the ending of the interpreter.
             self.trtl.write("End, Press ESC", font=("Arial", 15, "bold"))
-            self.chironhook.ChironEndHook(self)
+            if self.args is not None and self.args.hooks:
+                self.chironhook.ChironEndHook(self)
             return True
         else:
             return False
     
     def initProgramContext(self, params):
         # This is the starting of the interpreter at setup stage.
-        self.chironhook.ChironStartHook(self)
+        if self.args is not None and self.args.hooks:
+            self.chironhook.ChironStartHook(self)
         self.trtl.write("Start", font=("Arial", 15, "bold"))
         for key,val in params.items():
             var = key.replace(":","")
