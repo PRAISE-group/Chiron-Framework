@@ -79,13 +79,38 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#expression.
-    def visitExpression(self, ctx:tlangParser.ExpressionContext):
+    # Visit a parse tree produced by tlangParser#unaryExpr.
+    def visitUnaryExpr(self, ctx:tlangParser.UnaryExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#binArithOp.
-    def visitBinArithOp(self, ctx:tlangParser.BinArithOpContext):
+    # Visit a parse tree produced by tlangParser#valueExpr.
+    def visitValueExpr(self, ctx:tlangParser.ValueExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#addExpr.
+    def visitAddExpr(self, ctx:tlangParser.AddExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#mulExpr.
+    def visitMulExpr(self, ctx:tlangParser.MulExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#parenExpr.
+    def visitParenExpr(self, ctx:tlangParser.ParenExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#multiplicative.
+    def visitMultiplicative(self, ctx:tlangParser.MultiplicativeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#additive.
+    def visitAdditive(self, ctx:tlangParser.AdditiveContext):
         return self.visitChildren(ctx)
 
 
