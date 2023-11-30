@@ -51,8 +51,8 @@ class ConcreteChironHooks(ChironHooks):
         tur.write("(350, 300)",font=("Verdana", 10, "bold"))
         tur.goto(370,200)
         tur.write("(350, 200)",font=("Verdana", 10, "bold"))
-        tur.goto(250, 175)
-        tur.write("Kachua Nagar",font=("Arial", 10, "bold"))
+        tur.goto(260, 175)
+        tur.write("Kachuapur",font=("Arial", 10, "bold"))
 
         tur.goto(0,0)
         tur.pendown()
