@@ -16,27 +16,29 @@ A framework to teach program analysis, verification, and testing in a graduate-l
 ### Installing Dependencies
 
 ```bash
-pip install antlr4-python3-runtime==4.7.2
-pip install networkx
-pip install z3-solver numpy
-sudo apt-get install python3-tk
+$ pip install antlr4-python3-runtime==4.7.2 networkx z3-solver numpy 
+$ sudo apt-get install python3-tk
 ```
 
 ### Generating the ANTLR files.
 
+The `antlr` files need to be rebuilt if any changes are made to the `tlang.g4` file or when installing Chiron for the first time.
+We use a visitor pattern to generate the AST from parsing. 
+
 ```
-cd ChironCore/turtparse
-java -cp ../extlib/antlr-4.7.2-complete.jar org.antlr.v4.Tool \
+$ cd ChironCore/turtparse
+$ java -cp ../extlib/antlr-4.7.2-complete.jar org.antlr.v4.Tool \
   -Dlanguage=Python3 -visitor -no-listener tlang.g4
 ```
 
 ### Running an example
 
 The main directory for source files is `ChironCore`. We have examples of the turtle programs in `examples` folder.
+To pass parameters (input params) for running a turtle program, use the `-d` flag. Pass the parameters as a python dictionary. 
 
 ```bash
 $ cd ChironCore
-$ ./chiron.py -r ./example/example1.tl
+$ ./chiron.py -r ./example/example1.tl -d '{":x": 20, "y": 30, ":z": 20, ":p": 40}'
 ```
 
 ### See help for other command line options
