@@ -171,7 +171,7 @@ def symbolicExecutionMain(irHandler, params, constparams, timeLimit=10):
             for k in symbEnc:
                 symbEnc1[k]=str(symbEnc[k])
             data['symbEnc']=str(symbEnc1)
-            data['constraints']=str(s.s.assertions())
+            data['constraints']=str(z3.simplify(z3.And(s.s.assertions())))
             testData[rnd1] = data
         print("pc before ",pc,pcEval,flipPC)
         pc, pcEval, flipPC, done = genPC(pc, pcEval, flipPC)
