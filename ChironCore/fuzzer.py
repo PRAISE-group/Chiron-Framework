@@ -34,20 +34,21 @@ class InputObject:
 
 class Fuzzer(ConcreteInterpreter):
     # Execute the program using the input from mutator
-    def __init__(self, irHandler, params):
+    def __init__(self, irHandler, args):
         """
         ir (List): List of program IR statments
         params (dict): Mapped variables with initial assignments.
         """
-        super().__init__(irHandler, None)
+        super().__init__(irHandler, args)
         self.ir = irHandler.ir
-        self.params = params
+        self.params = args.params
+        self.args = args
         self.corpus = []
         self.timeout = 0
         self.customMutator = CustomMutator()  # From submission
         self.coverage = CustomCoverageMetric()  # From submission
 
-    def handleStmt(self, ir, inputList={}, end=0):
+    def handleExecution(self, ir, inputList={}, end=0):
         coverage = []
         terminated = False
         self.pc = 0
@@ -130,7 +131,7 @@ class Fuzzer(ConcreteInterpreter):
             # Get new coverage from execution.
             # The maximum time for one execution of the
             # fuzzed program must be less than end time.
-            self.coverage.curr_metric = self.handleStmt(
+            self.coverage.curr_metric = self.handleExecution(
                 self.ir, mutated_input.data, end=endTime
             )
             # Print the coverage : Representational
