@@ -268,7 +268,7 @@ if __name__ == "__main__":
         # ./chiron.py -t 100 --fuzz example/example1.tl -d '{":x": 5, ":y": 100}'
         # ./chiron.py -t 100 --fuzz example/example2.tl -d '{":dir": 3, ":move": 5}'
         """
-        fuzzer = Fuzzer(irHandler, args.params)
+        fuzzer = Fuzzer(irHandler, args)
         cov, corpus = fuzzer.fuzz(
             timeLimit=args.timeout, generateRandom=args.fuzzer_gen_rand
         )
