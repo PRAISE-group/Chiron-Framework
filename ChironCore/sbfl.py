@@ -31,7 +31,7 @@ class Executor:
         returns coverage and turtle location at the end of program.
         """
         coverage = []
-        inptr = ConcreteInterpreter(ir)
+        inptr = ConcreteInterpreter(ir, None)
         inptr.pc = 0
         terminated = False
         inptr.initProgramContext(inputList)
