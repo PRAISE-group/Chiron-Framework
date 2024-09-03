@@ -12,7 +12,26 @@ A framework to teach program analysis, verification, and testing in a graduate-l
 ```
 [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
 [![Watch the video]](https://github.com/PRAISE-group/Chiron-Framework/blob/master/assets/Fuzzer_Demo.mp4)
+- [Some nice words in WSS' 2023, IIT Delhi](https://www.linkedin.com/posts/ashupdsce_wss-wss2023-iitd-activity-7150851909581463553-bJ6-?utm_source=share&utm_medium=member_desktop)
+- [ASE 2023 Conference](https://conf.researchr.org/details/ase-2023/ase-2023-papers/117/An-Integrated-Program-Analysis-Framework-for-Graduate-Courses-in-Programming-Language)
+- [Read our research paper here](https://ieeexplore.ieee.org/document/10298417)
 
+## Citation 
+
+If you want to cite this work, you may use this.
+
+```
+@INPROCEEDINGS{ase_2023_chiron,
+  author={Chatterjee, Prantik and Kalita, Pankaj Kumar and Lahiri, Sumit and Muduli, Sujit Kumar and Singh, Vishal and Takhar, Gourav and Roy, Subhajit},
+  booktitle={2023 38th IEEE/ACM International Conference on Automated Software Engineering (ASE)}, 
+  title={An Integrated Program Analysis Framework for Graduate Courses in Programming Languages and Software Engineering}, 
+  year={2023},
+  volume={},
+  number={},
+  pages={598-610},
+  keywords={Surveys;Computer languages;Program processors;Software algorithms;Software systems;Task analysis;Engines;program analysis verification and testing;programming languages;software engineering;graduate level course;education},
+  doi={10.1109/ASE56229.2023.00101}}
+```
 ### Installing Dependencies
 
 ```bash
