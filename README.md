@@ -11,9 +11,10 @@ A framework to teach program analysis, verification, and testing in a graduate-l
 ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
 ```
 [![Architecture Diagram](./assets/Architecture_Digram.png)](./assets/Architecture_Digram.png)
-[![Watch the video]](https://github.com/PRAISE-group/Chiron-Framework/blob/master/assets/Fuzzer_Demo.mp4)
-- [Some nice words in WSS' 2023, IIT Delhi](https://www.linkedin.com/posts/ashupdsce_wss-wss2023-iitd-activity-7150851909581463553-bJ6-?utm_source=share&utm_medium=member_desktop)
-- [ASE 2023 Conference](https://conf.researchr.org/details/ase-2023/ase-2023-papers/117/An-Integrated-Program-Analysis-Framework-for-Graduate-Courses-in-Programming-Language)
+
+- [Watch the video](https://github.com/PRAISE-group/Chiron-Framework/blob/master/assets/Fuzzer_Demo.mp4)
+- [Some nice words in WSS' 2023, IIT Delhi about Chiron Framework](https://www.linkedin.com/posts/ashupdsce_wss-wss2023-iitd-activity-7150851909581463553-bJ6-?utm_source=share&utm_medium=member_desktop)
+- [ASE 2023 Conference Page](https://conf.researchr.org/details/ase-2023/ase-2023-papers/117/An-Integrated-Program-Analysis-Framework-for-Graduate-Courses-in-Programming-Language)
 - [Read our research paper here](https://ieeexplore.ieee.org/document/10298417)
 
 ## Citation 
