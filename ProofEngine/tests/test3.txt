@@ -1,0 +1,15 @@
+a:1<x
+b:x<y
+c:y<z
+d:z<w
+e:w<u
+f:u<v
+g:v<8
+
+a
+b
+c
+d
+e
+f
+g
