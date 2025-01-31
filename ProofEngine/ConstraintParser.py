@@ -1,8 +1,13 @@
 import re
 
-def parse_expressions_and_literals(data):
-    expr_dict = {}  
-    literal_groups = []  
+def Constraint_Parser(filepath: str):
+    data = ""
+    with open(filepath, 'r') as file:
+        data = file.read()
+    
+    expr_dict = {}
+    literal_groups = []
+    
     sections = data.split("\n\n")
     
     expression_lines = sections[0].strip().split("\n")
@@ -19,17 +24,3 @@ def parse_expressions_and_literals(data):
         literal_groups.append([literal.strip() for literal in literals])
     
     return expr_dict, literal_groups
-
-
-def read_input_from_file(file_path):
-    with open(file_path, 'r') as file:
-        return file.read()
-
-file_path = "C1.txt"
-data = read_input_from_file(file_path)
-expr_dict, literal_groups = parse_expressions_and_literals(data)
-
-print("Expression Dictionary:")
-print(expr_dict)
-print("\nTwo-Dimensional List of Literals:")
-print(literal_groups)
