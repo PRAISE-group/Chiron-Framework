@@ -163,3 +163,5 @@ cython_debug/
 # Extra files and hidden folder.
 testcases/
 build/
+
+virtual/

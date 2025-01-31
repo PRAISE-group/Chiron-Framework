@@ -5,6 +5,7 @@ from io import StringIO
 from typing.io import TextIO
 import sys
 
+
 def serializedATN():
     with StringIO() as buf:
         buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3%")
@@ -173,6 +174,7 @@ class tlangParser ( Parser ):
 
 
 
+
     class StartContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -215,6 +217,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class Instruction_listContext(ParserRuleContext):
 
@@ -265,6 +268,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class Strict_ilistContext(ParserRuleContext):
 
@@ -317,6 +321,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class InstructionContext(ParserRuleContext):
 
@@ -418,6 +423,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class ConditionalContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -473,6 +479,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class IfConditionalContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -522,6 +529,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class IfElseConditionalContext(ParserRuleContext):
 
@@ -584,6 +592,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class LoopContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -633,6 +642,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class GotoCommandContext(ParserRuleContext):
 
@@ -685,6 +695,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class AssignmentContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -730,6 +741,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class MoveCommandContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -774,6 +786,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class MoveOpContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -814,6 +827,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class PenCommandContext(ParserRuleContext):
 
@@ -856,6 +870,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class PauseCommandContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -890,6 +905,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class ExpressionContext(ParserRuleContext):
 
@@ -1101,6 +1117,7 @@ class tlangParser ( Parser ):
             self.unrollRecursionContexts(_parentctx)
         return localctx
 
+
     class MultiplicativeContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -1146,6 +1163,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class AdditiveContext(ParserRuleContext):
 
@@ -1193,6 +1211,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class UnaryArithOpContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -1229,6 +1248,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class ConditionContext(ParserRuleContext):
 
@@ -1349,6 +1369,7 @@ class tlangParser ( Parser ):
             self.unrollRecursionContexts(_parentctx)
         return localctx
 
+
     class BinCondOpContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -1407,6 +1428,7 @@ class tlangParser ( Parser ):
             self.exitRule()
         return localctx
 
+
     class LogicOpContext(ParserRuleContext):
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -1452,6 +1474,7 @@ class tlangParser ( Parser ):
         finally:
             self.exitRule()
         return localctx
+
 
     class ValueContext(ParserRuleContext):
 
