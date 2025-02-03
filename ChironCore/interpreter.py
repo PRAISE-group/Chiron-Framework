@@ -107,6 +107,8 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleGotoCommand(stmt, tgt)
         elif isinstance(stmt, ChironAST.NoOpCommand):
             ntgt = self.handleNoOpCommand(stmt, tgt)
+        elif isinstance(stmt, ChironAST.AssertCommand):
+            ntgt = self.handleAssertCommand(stmt, tgt)
         else:
             raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
 
@@ -163,4 +165,13 @@ class ConcreteInterpreter(Interpreter):
         xcor = addContext(stmt.xcor)
         ycor = addContext(stmt.ycor)
         exec("self.trtl.goto(%s, %s)" % (xcor, ycor))
+        return 1
+    
+    def handleAssertCommand(self, stmt, tgt):
+        print("  AssertCommand")
+        print("  Asserting: ", stmt.cond)
+        exec("self.cond_eval = %s" % (addContext(stmt.cond)))
+        if not self.cond_eval:
+            raise AssertionError("Assertion Failed!")
+        
         return 1

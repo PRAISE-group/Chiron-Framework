@@ -21,6 +21,7 @@ from irhandler import *
 from fuzzer import *
 import sExecution as se
 import cfg.cfgBuilder as cfgB
+import smtConverter
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
@@ -194,6 +195,13 @@ if __name__ == "__main__":
         help="To display computation to Console",
         default=True,
         type=bool,
+    )
+
+    cmdparser.add_argument(
+        "-bmc",
+        "--bmc",
+        action="store_true",
+        help="Run Bounded Model Checking on a Chiron Program.",
     )
 
     args = cmdparser.parse_args()
@@ -391,4 +399,13 @@ if __name__ == "__main__":
         with open("{}_spectrum.csv".format(args.buggy.replace(".tl", "")), "w") as file:
             writer = csv.writer(file)
             writer.writerows(spectrum)
+        print("DONE..")
+
+    if args.bmc:
+        print("Bounded Model Checking..")
+        print("Converting program to SMT-LIB format..")
+        smt = smtConverter.SMTConverter(ir)
+        smt.convert()
+        smt.solve()
+        
         print("DONE..")

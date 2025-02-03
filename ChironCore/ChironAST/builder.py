@@ -172,3 +172,6 @@ class astGenPass(tlangVisitor):
 
     def visitPenCommand(self, ctx:tlangParser.PenCommandContext):
         return [(ChironAST.PenCommand(ctx.getText()), 1)]
+
+    def visitAssertionCommand(self, ctx:tlangParser.AssertionCommandContext):
+        return [(ChironAST.AssertCommand(self.visit(ctx.condition())), 1)]

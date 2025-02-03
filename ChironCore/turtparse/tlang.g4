@@ -17,6 +17,7 @@ instruction : assignment
 	    | penCommand
 	    | gotoCommand
 	    | pauseCommand
+		| assertionCommand
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -38,6 +39,8 @@ moveOp : 'forward' | 'backward' | 'left' | 'right' ;
 penCommand : 'penup' | 'pendown' ;
 
 pauseCommand : 'pause' ;
+
+assertionCommand : 'assert' condition ;
 
 expression : 
              unaryArithOp expression               #unaryExpr
@@ -96,3 +99,5 @@ VAR  : ':'[a-zA-Z_] [a-zA-Z0-9]* ;
 NAME : [a-zA-Z]+     ;
 
 Whitespace: [ \t\n\r]+ -> skip;
+
+Comment: '//' ~[\r\n]* -> skip;
