@@ -9,6 +9,7 @@ import dataFlowAnalysis as DFA
 from sbfl import testsuiteGenerator
 
 sys.path.insert(0, "../Submission/")
+sys.path.insert(0, "../ProofEngine/")
 sys.path.insert(0, "ChironAST/")
 sys.path.insert(0, "cfg/")
 
@@ -24,8 +25,8 @@ import cfg.cfgBuilder as cfgB
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
+from IrToSmtlib import IrToSmtlib
 import csv
-
 
 def cleanup():
     pass
@@ -195,6 +196,13 @@ if __name__ == "__main__":
         default=True,
         type=bool,
     )
+    cmdparser.add_argument(
+        "-smt",
+        "--smtlib",
+        help="To print smtlib code",
+        action="store_true",
+    )
+
 
     args = cmdparser.parse_args()
     ir = ""
@@ -392,3 +400,5 @@ if __name__ == "__main__":
             writer = csv.writer(file)
             writer.writerows(spectrum)
         print("DONE..")
+    if args.smtlib:
+        it_to_smt = IrToSmtlib(irHandler.ir)
