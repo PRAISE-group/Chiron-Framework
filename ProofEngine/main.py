@@ -12,6 +12,8 @@ filepath = sys.argv[1]
 expr_dict, literal_groups = Constraint_Parser(filepath)
 
 for key, expr in expr_dict.items():
+    # print(f"key = {key}")
+    # print(f"expr = {expr}")
     expr_dict[key] = Infix_To_Prefix(expr)
 
 statement = CNF_To_SMTLIB(literal_groups, expr_dict)

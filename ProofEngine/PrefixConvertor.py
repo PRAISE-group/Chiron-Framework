@@ -1,4 +1,5 @@
 import ast
+import re 
 
 class PrefixNotationConverter(ast.NodeVisitor):
     def visit_BinOp(self, node):
@@ -39,7 +40,7 @@ class PrefixNotationConverter(ast.NodeVisitor):
             ast.Lt: '<',
             ast.GtE: '>=',
             ast.LtE: '<=',
-            ast.Eq: '==',
+            ast.Eq: '=',
             ast.NotEq: '!=',
             ast.Mod: '%',
             ast.And: 'and',
@@ -48,7 +49,19 @@ class PrefixNotationConverter(ast.NodeVisitor):
         }
         return operators[type(op)]
 
+def preprocess_expression(expr: str):
+    """Remove ':' from variable names while keeping the exact input formatting."""
+    expr = re.sub(r":(\w+)", r"\1", expr) 
+    expr = expr.replace(" ", "")
+    expr = expr.replace("=", "==")
+    return expr
+
 def Construct_AST(expr: str):
+    # print(expr)
+    expr= preprocess_expression(expr)
+    # print(expr)
+    # print(type(expr))
+    # print()
     try:
         tree = ast.parse(expr, mode='eval')
         return tree
