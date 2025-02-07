@@ -21,7 +21,8 @@ from irhandler import *
 from fuzzer import *
 import sExecution as se
 import cfg.cfgBuilder as cfgB
-import smtConverter
+import bmc as bmc
+import ssa as ssa
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
@@ -403,8 +404,14 @@ if __name__ == "__main__":
 
     if args.bmc:
         print("Bounded Model Checking..")
+        print("Converting 3 address code to SSA form...")
+        cfg = cfgB.buildCFG(ir, "ssa_cfg")
+        cfg.compute_dominance()
+        ssaConverter = ssa.SSAConverter(ir, cfg)
+        ssaIR = ssaConverter.convert()
+
         print("Converting program to SMT-LIB format..")
-        smt = smtConverter.SMTConverter(ir)
+        smt = bmc.SMTConverter(ir)
         smt.convert()
         smt.solve()
         
