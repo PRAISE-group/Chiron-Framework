@@ -14,19 +14,22 @@ from ChironAST import ChironAST
 
 class astGenPass(tlangVisitor):
 
+
     def __init__(self):
         self.repeatInstrCount = 0 # keeps count for no of 'repeat' instructions
+        self.stmtList=[]
 
     def visitStart(self, ctx:tlangParser.StartContext):
         stmtList = self.visit(ctx.instruction_list())
-        return stmtList
+        self.stmtList.extend(stmtList)
+        return self.stmtList
 
     def visitInstruction_list(self, ctx:tlangParser.Instruction_listContext):
         instrList = []
         for instr in ctx.instruction():
-            instrList.extend(self.visit(instr))
+            self.stmtList.extend(self.visit(instr))
 
-        return instrList
+        return []
 
     def visitStrict_ilist(self, ctx:tlangParser.Strict_ilistContext):
 	# TODO: code refactoring. visitInstruction_list and visitStrict_ilist have same body
@@ -38,10 +41,32 @@ class astGenPass(tlangVisitor):
         return instrList
 
 
-    def visitAssignment(self, ctx:tlangParser.AssignmentContext):
+#computes list of recursive assign statements
+    def visitAssignment(self, ctx:tlangParser.AssignmentContext): 
+
+        print(ctx.VAR().getText(),ctx.expression().getText())
         lval = ChironAST.Var(ctx.VAR().getText())
         rval = self.visit(ctx.expression())
+        if isinstance(rval, list):
+            print(rval[-1][0])
+            rvaln = rval[-1][0].lvar  # Get the last assigned variable as rval
+            return rval + [(ChironAST.AssignmentCommand(lval, rvaln), 1)]
+    
+    # Otherwise, just return a normal assignment
         return [(ChironAST.AssignmentCommand(lval, rval), 1)]
+    
+    def visitAssignExpr(self, ctx: tlangParser.AssignExprContext):
+
+        print("Assignment Expr")
+
+        list=self.visitAssignment(ctx)
+        self.stmtList.extend(list)
+
+        return list[-1][0].lvar
+
+        # return "("+ ChironAST.AssignmentCommand(lval, rval) + ")"
+        # return   # Calls visitAssignment
+
 
 
     def visitIfConditional(self, ctx:tlangParser.IfConditionalContext):
@@ -64,6 +89,10 @@ class astGenPass(tlangVisitor):
     # Visit a parse tree produced by tlangParser#unaryExpr.
     def visitUnaryExpr(self, ctx:tlangParser.UnaryExprContext):
         expr1 = self.visit(ctx.expression())
+        # if isinstance(expr1, list):
+        #     print("Unary & assignlist",expr1[-1][0])
+        #     expr1 = expr1[-1][0].lvar  # Get the last assigned variable as rval
+            
         if ctx.unaryArithOp().MINUS():
             return ChironAST.UMinus(expr1)
         
@@ -72,12 +101,25 @@ class astGenPass(tlangVisitor):
 
     # Visit a parse tree produced by tlangParser#addExpr.
     def visitAddExpr(self, ctx:tlangParser.AddExprContext):
+        print("visiting add expr")
+        # left_list=[]
+        # right_list=[]
         left = self.visit(ctx.expression(0))
+        # if isinstance(left, list):
+        #     left_list=left
+        #     print("add and assignlist",left_list[-1][0])
+        #     left = left_list[-1][0].lvar  # Get the last assigned variable as rval
+            
         right = self.visit(ctx.expression(1))
+        # if isinstance(right, list):
+        #     right_list=right
+        #     print("add and assignlist",right_list[-1][0])
+        #     right = right_list[-1][0].lvar  # Get the last assigned variable as rval
         if ctx.additive().PLUS():
-            return ChironAST.Sum(left, right)
+            ext= ChironAST.Sum(left, right)
         elif ctx.additive().MINUS():
-            return ChironAST.Diff(left, right)
+            ext= ChironAST.Diff(left, right)
+        return ext 
 
 
     # Visit a parse tree produced by tlangParser#mulExpr.

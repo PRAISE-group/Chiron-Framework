@@ -54,11 +54,6 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#assignment.
-    def visitAssignment(self, ctx:tlangParser.AssignmentContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by tlangParser#moveCommand.
     def visitMoveCommand(self, ctx:tlangParser.MoveCommandContext):
         return self.visitChildren(ctx)
@@ -76,6 +71,26 @@ class tlangVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by tlangParser#pauseCommand.
     def visitPauseCommand(self, ctx:tlangParser.PauseCommandContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#assignment.
+    def visitAssignment(self, ctx:tlangParser.AssignmentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#multiplicative.
+    def visitMultiplicative(self, ctx:tlangParser.MultiplicativeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#additive.
+    def visitAdditive(self, ctx:tlangParser.AdditiveContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#unaryArithOp.
+    def visitUnaryArithOp(self, ctx:tlangParser.UnaryArithOpContext):
         return self.visitChildren(ctx)
 
 
@@ -99,23 +114,13 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#assignExpr.
+    def visitAssignExpr(self, ctx:tlangParser.AssignExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#parenExpr.
     def visitParenExpr(self, ctx:tlangParser.ParenExprContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by tlangParser#multiplicative.
-    def visitMultiplicative(self, ctx:tlangParser.MultiplicativeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by tlangParser#additive.
-    def visitAdditive(self, ctx:tlangParser.AdditiveContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by tlangParser#unaryArithOp.
-    def visitUnaryArithOp(self, ctx:tlangParser.UnaryArithOpContext):
         return self.visitChildren(ctx)
 
 

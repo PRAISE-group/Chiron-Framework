@@ -29,9 +29,6 @@ loop : 'repeat' value '[' strict_ilist ']' ;
 
 gotoCommand : 'goto' '(' expression ',' expression ')';
 
-assignment : VAR '=' expression
-	   ;
-
 moveCommand : moveOp expression ;
 moveOp : 'forward' | 'backward' | 'left' | 'right' ;
 
@@ -39,13 +36,11 @@ penCommand : 'penup' | 'pendown' ;
 
 pauseCommand : 'pause' ;
 
-expression : 
-             unaryArithOp expression               #unaryExpr
-           | expression multiplicative expression  #mulExpr
-		   | expression additive expression        #addExpr
-		   | value                                 #valueExpr
-		   | '(' expression ')'                    #parenExpr
- 	   ;
+
+assignment : 
+		   VAR '=' expression 
+	   ;
+
 
 multiplicative : MUL | DIV;
 additive : PLUS | MINUS;
@@ -56,6 +51,18 @@ PLUS     : '+' ;
 MINUS    : '-' ;
 MUL  	 : '*' ;
 DIV      : '/' ;
+
+
+expression : 
+             unaryArithOp expression               #unaryExpr
+           | expression multiplicative expression  #mulExpr
+		   | expression additive expression        #addExpr
+		   | '(' expression ')'                    #parenExpr
+		   | value                                 #valueExpr
+	       | VAR '=' expression                    #assignExpr
+
+ 	   ;
+
 
 
 // TODO :

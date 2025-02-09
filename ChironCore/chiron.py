@@ -210,7 +210,8 @@ if __name__ == "__main__":
     if args.bin:
         ir = irHandler.loadIR(args.progfl)
     else:
-        parseTree = getParseTree(args.progfl)
+        parseTree,parser = getParseTree(args.progfl)
+        print(parseTree.toStringTree(recog=parser))
         astgen = astGenPass()
         ir = astgen.visitStart(parseTree)
 

@@ -23,7 +23,7 @@ def getParseTree(progfl):
         print(e.__str__() + "\033[0m\n")
         exit(1)
 
-    return tree
+    return tree,tparser
 
 
 class IRHandler:

@@ -134,6 +134,8 @@ class ConcreteInterpreter(Interpreter):
     def handleAssignment(self, stmt, tgt):
         print("  Assignment Statement")
         lhs = str(stmt.lvar).replace(":","")
+        if isinstance(stmt.rexpr, ChironAST.AssignmentCommand):
+            print("this is nested")
         rhs = addContext(stmt.rexpr)
         exec("setattr(self.prg,\"%s\",%s)" % (lhs,rhs))
         return 1
