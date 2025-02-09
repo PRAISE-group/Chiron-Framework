@@ -19,6 +19,12 @@ class astGenPass(tlangVisitor):
         self.repeatInstrCount = 0 # keeps count for no of 'repeat' instructions
         self.stmtList=[]
 
+    def getLval(self,ctx):
+        if ctx.VAR():
+            return ChironAST.Var(ctx.VAR().getText())
+        elif ctx.arrayAccess():
+            return self.visitArrayAccess(ctx.arrayAccess())
+
     def visitStart(self, ctx:tlangParser.StartContext):
         stmtList = self.visit(ctx.instruction_list())
         self.stmtList.extend(stmtList)
@@ -41,12 +47,14 @@ class astGenPass(tlangVisitor):
         return instrList
 
 
+
 #computes list of recursive assign statements
     def visitAssignment(self, ctx:tlangParser.AssignmentContext): 
 
-        print(ctx.VAR().getText(),ctx.expression().getText())
-        lval = ChironAST.Var(ctx.VAR().getText())
+        # print(ctx.VAR().getText(),ctx.expression().getText())
+        lval = self.getLval(ctx)
         rval = self.visit(ctx.expression())
+        # print(rval)
         if isinstance(rval, list):
             print(rval[-1][0])
             rvaln = rval[-1][0].lvar  # Get the last assigned variable as rval
@@ -54,6 +62,26 @@ class astGenPass(tlangVisitor):
     
     # Otherwise, just return a normal assignment
         return [(ChironAST.AssignmentCommand(lval, rval), 1)]
+    
+    def visitArrayAccess(self, ctx:tlangParser.ArrayAccessContext):
+        var = ctx.VAR().getText()
+        indices = [self.visit(expr).val for expr in ctx.expression()]  # Visit all expressions in []
+
+        # print(var, indices, "Inside multi-dimensional array access")
+    
+        return ChironAST.ArrayAccess(var, indices)  # Return an object handling multiple indices
+    
+    def visitValue(self, ctx:tlangParser.ValueContext):
+        if ctx.NUM():
+            return ChironAST.Num(ctx.NUM().getText())
+        elif ctx.VAR():
+            return ChironAST.Var(ctx.VAR().getText())
+        elif ctx.array():
+            return ChironAST.Array(ctx.array().getText())
+        elif ctx.arrayAccess():
+            print("entering heaven")
+            return self.visitArrayAccess(ctx.arrayAccess())
+
     
     def visitAssignExpr(self, ctx: tlangParser.AssignExprContext):
 
@@ -92,10 +120,6 @@ class astGenPass(tlangVisitor):
     # Visit a parse tree produced by tlangParser#unaryExpr.
     def visitUnaryExpr(self, ctx:tlangParser.UnaryExprContext):
         expr1 = self.visit(ctx.expression())
-        # if isinstance(expr1, list):
-        #     print("Unary & assignlist",expr1[-1][0])
-        #     expr1 = expr1[-1][0].lvar  # Get the last assigned variable as rval
-            
         if ctx.unaryArithOp().MINUS():
             return ChironAST.UMinus(expr1)
         
@@ -104,20 +128,8 @@ class astGenPass(tlangVisitor):
 
     # Visit a parse tree produced by tlangParser#addExpr.
     def visitAddExpr(self, ctx:tlangParser.AddExprContext):
-        print("visiting add expr")
-        # left_list=[]
-        # right_list=[]
         left = self.visit(ctx.expression(0))
-        # if isinstance(left, list):
-        #     left_list=left
-        #     print("add and assignlist",left_list[-1][0])
-        #     left = left_list[-1][0].lvar  # Get the last assigned variable as rval
-            
         right = self.visit(ctx.expression(1))
-        # if isinstance(right, list):
-        #     right_list=right
-        #     print("add and assignlist",right_list[-1][0])
-        #     right = right_list[-1][0].lvar  # Get the last assigned variable as rval
         if ctx.additive().PLUS():
             ext= ChironAST.Sum(left, right)
         elif ctx.additive().MINUS():
@@ -184,11 +196,13 @@ class astGenPass(tlangVisitor):
 
         return self.visitChildren(ctx)
 
-    def visitValue(self, ctx:tlangParser.ValueContext):
-        if ctx.NUM():
-            return ChironAST.Num(ctx.NUM().getText())
-        elif ctx.VAR():
-            return ChironAST.Var(ctx.VAR().getText())
+
+    
+
+
+        
+    
+
 
     def visitLoop(self, ctx:tlangParser.LoopContext):
         # insert counter variable in IR for tracking repeat count

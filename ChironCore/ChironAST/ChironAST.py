@@ -239,3 +239,20 @@ class Var(Value):
 
     def __str__(self):
         return self.varname
+    
+class Array(Value):
+    def __init__(self, vname):
+        self.arr = vname
+
+    def __str__(self):
+        return self.arr
+    
+class ArrayAccess(Value):
+    def __init__(self, var, index):
+        self.var = var
+        self.idx = index
+    
+    def __str__(self):
+        indices_str = "".join(f"[{idx}]" for idx in self.idx)  # Format multiple indices
+        return f"{self.var}{indices_str}"
+    #     return self.var.__str__() + "[" + self.idx.__str__() + "]"

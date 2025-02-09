@@ -37,9 +37,12 @@ penCommand : 'penup' | 'pendown' ;
 
 pauseCommand : 'pause' ;
 
+array
+ : '[' ( expression ( ',' expression )* )? ']'
+ ;
 
 assignment : 
-		   VAR '=' expression 
+		  ( VAR | arrayAccess| memberAccess )  '=' expression      
 	   ;
 
 printStatement : 'print' '(' expression ')' ;
@@ -61,9 +64,15 @@ expression :
 		   | expression additive expression        #addExpr
 		   | '(' expression ')'                    #parenExpr
 		   | value                                 #valueExpr
-	       | VAR '=' expression                    #assignExpr
+	       | ( VAR | arrayAccess | memberAccess )  '=' expression   #assignExpr
 
  	   ;
+
+arrayAccess
+    : VAR ('[' expression ']')+
+    ;
+memberAccess 
+    : value ('.' value)+ ;
 
 
 
@@ -96,6 +105,8 @@ NOT: '!' ;
 
 value : NUM
       | VAR
+	  | array
+	  | arrayAccess
       ;
 
 NUM  : [0-9]+        ;
