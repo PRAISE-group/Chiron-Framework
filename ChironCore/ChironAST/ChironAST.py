@@ -11,6 +11,12 @@ class AST(object):
 class Instruction(AST):
     pass
 
+class PrintCommand(Instruction):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def __str__(self):
+        return self.expr.__str__()
 
 class AssignmentCommand(Instruction):
     def __init__(self, leftvar, rexpr):

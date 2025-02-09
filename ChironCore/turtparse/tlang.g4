@@ -11,6 +11,7 @@ strict_ilist : (instruction)+
              ;
 
 instruction : assignment
+		| printStatement
 	    | conditional
 	    | loop
 	    | moveCommand
@@ -41,6 +42,7 @@ assignment :
 		   VAR '=' expression 
 	   ;
 
+printStatement : 'print' '(' expression ')' ;
 
 multiplicative : MUL | DIV;
 additive : PLUS | MINUS;

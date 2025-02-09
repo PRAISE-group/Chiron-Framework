@@ -66,7 +66,10 @@ class astGenPass(tlangVisitor):
 
         # return "("+ ChironAST.AssignmentCommand(lval, rval) + ")"
         # return   # Calls visitAssignment
-
+    
+    def visitPrintStatement(self, ctx: tlangParser.PrintStatementContext):
+        expr_value = self.visit(ctx.expression())  # Evaluate the expression
+        return [(ChironAST.PrintCommand(expr_value), 1)]  # Return value in case it's used elsewhere
 
 
     def visitIfConditional(self, ctx:tlangParser.IfConditionalContext):

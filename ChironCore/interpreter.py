@@ -97,6 +97,8 @@ class ConcreteInterpreter(Interpreter):
 
         if isinstance(stmt, ChironAST.AssignmentCommand):
             ntgt = self.handleAssignment(stmt, tgt)
+        elif isinstance(stmt, ChironAST.PrintCommand):
+            ntgt = self.handlePrint(stmt, tgt)
         elif isinstance(stmt, ChironAST.ConditionCommand):
             ntgt = self.handleCondition(stmt, tgt)
         elif isinstance(stmt, ChironAST.MoveCommand):
@@ -139,6 +141,12 @@ class ConcreteInterpreter(Interpreter):
         rhs = addContext(stmt.rexpr)
         exec("setattr(self.prg,\"%s\",%s)" % (lhs,rhs))
         return 1
+    
+    def handlePrint(self,stmt,tgt):
+        print( " PrintCommand")
+        expr = addContext(stmt.expr)
+        exec("print(%s)" % expr)
+        return 1
 
     def handleCondition(self, stmt, tgt):
         print("  Branch Instruction")
@@ -150,6 +158,8 @@ class ConcreteInterpreter(Interpreter):
         print("  MoveCommand")
         exec("self.trtl.%s(%s)" % (stmt.direction,addContext(stmt.expr)))
         return 1
+    
+
 
     def handleNoOpCommand(self, stmt, tgt):
         print("  No-Op Command")

@@ -79,6 +79,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#printStatement.
+    def visitPrintStatement(self, ctx:tlangParser.PrintStatementContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#multiplicative.
     def visitMultiplicative(self, ctx:tlangParser.MultiplicativeContext):
         return self.visitChildren(ctx)
