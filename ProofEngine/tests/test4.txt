@@ -3,7 +3,7 @@ b:yabr<8
 c:zf>=70
 d:x<=40
 e:zf!=100
-f:pst==50
+f:pst=50
 
 a,b
 c,~a

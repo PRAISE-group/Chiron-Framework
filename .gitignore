@@ -165,3 +165,4 @@ testcases/
 build/
 
 virtual/
+.vscode/
