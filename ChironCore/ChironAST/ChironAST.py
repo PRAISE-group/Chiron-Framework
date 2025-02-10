@@ -34,7 +34,7 @@ class AssertCommand(Instruction):
         self.cond = condition
 
     def __str__(self):
-        return "assert: " + self.cond.__str__()
+        return self.cond.__str__()
 
 class MoveCommand(Instruction):
     def __init__(self, motion, expr):
@@ -74,19 +74,6 @@ class PauseCommand(Instruction):
     def __str__(self):
         return "pause"
 
-# Phi function for SSA form
-class PhiAssignmentCommand(Instruction):
-    def __init__(self, lvar, varlist):
-        self.lvar = lvar
-        self.varlist = varlist
-
-    def __str__(self):
-        output = self.lvar.__str__() + " = PHI("
-        for var in self.varlist:
-            output += var.__str__() + ", "
-        return output + ")"
-    
-        
 class Expression(AST):
     pass
 

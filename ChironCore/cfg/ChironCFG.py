@@ -13,9 +13,6 @@ class BasicBlock:
 
     def __str__(self):
         return self.name
-    
-    def prepend(self, instruction):
-        self.instrlist.insert(0, instruction)
 
     def append(self, instruction):
         self.instrlist.append(instruction)
@@ -41,8 +38,6 @@ class ChironCFG:
         self.nxgraph = nx.DiGraph(name=gname)
         self.entry = "0"
         self.exit = "END"
-        self.df = None
-        self.idom = None
 
     def __iter__(self):
         return self.nxgraph.__iter__()
@@ -92,17 +87,3 @@ class ChironCFG:
         return edata['label'] if len(edata) else 'T'
 
     # TODO: add more methods to expose other methods of the Networkx.DiGraph
-    def compute_dominance(self):
-        # find entry node
-        entry = None
-        for node in self.nxgraph.nodes():
-            if node.name == "START":
-                entry = node
-                break
-
-        if entry is None:
-            raise ValueError("No entry node found")
-
-        self.df = nx.dominance.dominance_frontiers(self.nxgraph, entry)
-        self.idom = nx.dominance.immediate_dominators(self.nxgraph, entry)
-
