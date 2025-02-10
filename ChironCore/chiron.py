@@ -200,7 +200,7 @@ if __name__ == "__main__":
     cmdparser.add_argument(
         "-bmc",
         "--bmc",
-        action="store_true",
+        type=str,
         help="Run Bounded Model Checking on a Chiron Program.",
     )
 
@@ -403,9 +403,14 @@ if __name__ == "__main__":
 
     if args.bmc:
         print("Bounded Model Checking..")
-        print("Converting program to SMT-LIB format..")
-        smt = bmc.SMTConverter(ir)
-        smt.convert()
-        smt.solve()
+        print("Converting program to 3 address code...")
+        print("input statement: ", args.bmc)
+        tacGen = TACGenerator(ir)
+        tacGen.generateTAC()
+        tacGen.printTAC()
+        # print("Converting program to SMT-LIB format..")
+        # smt = bmc.SMTConverter(ir)
+        # smt.convert()
+        # smt.solve()
         
-        print("DONE..")
+        # print("DONE..")

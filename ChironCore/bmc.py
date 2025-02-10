@@ -57,7 +57,7 @@ def parseExpression(node):
             return z3.Int(node.varname)
 
 
-class SMTConverter:
+class BMC:
     def __init__(self, ir):
         self.solver = z3.Solver()
         self.ir = ir

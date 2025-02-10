@@ -6,6 +6,7 @@ from turtparse.tlangParser import tlangParser
 from turtparse.tlangLexer import tlangLexer
 
 from ChironAST import ChironAST
+from ChironAST import ChironTAC
 
 
 def getParseTree(progfl):
@@ -123,10 +124,347 @@ class IRHandler:
 
     def pretty_print(self, irList):
         """
-            We pass a IR list and print it here.
+        We pass a IR list and print it here.
         """
         print("\n========== Chiron IR ==========\n")
-        print("The first label before the opcode name represents the IR index or label \non the control flow graph for that node.\n")
-        print("The number after the opcode name represents the jump offset \nrelative to that statement.\n")
+        print(
+            "The first label before the opcode name represents the IR index or label \non the control flow graph for that node.\n"
+        )
+        print(
+            "The number after the opcode name represents the jump offset \nrelative to that statement.\n"
+        )
         for idx, item in enumerate(irList):
             print(f"[L{idx}]".rjust(5), item[0], f"[{item[1]}]")
+
+
+"""
+Class for converting IR to Three Address Code (TAC)
+"""
+
+
+class TACGenerator:
+    def __init__(self, ir):
+        self.ir = ir
+        self.tac = []
+        self.tempCount = 0
+        self.branchCount = 0
+        self.assertCount = 0
+        self.moveCount = 0
+        self.gotoCount = 0
+        self.ast_to_tac_line = {}
+        self.line = 0
+
+    def parseExpresssion(self, expr, dest):
+        """
+        Parse the expression and return the TAC for the expression.
+        """
+        if isinstance(expr, ChironAST.BinArithOp):
+            left = None
+            right = None
+            if isinstance(expr.lexpr, ChironAST.Num):
+                left = ChironTAC.TAC_Num(expr.lexpr.val)
+            elif isinstance(expr.lexpr, ChironAST.Var):
+                left = ChironTAC.TAC_Var(expr.lexpr.varname)
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                left = temp
+                self.parseExpresssion(expr.lexpr, temp)
+
+            if isinstance(expr.rexpr, ChironAST.Num):
+                right = ChironTAC.TAC_Num(expr.rexpr.val)
+            elif isinstance(expr.rexpr, ChironAST.Var):
+                right = ChironTAC.TAC_Var(expr.rexpr.varname)
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                right = temp
+                self.parseExpresssion(expr.rexpr, temp)
+
+            self.line += 1
+            self.tac.append(
+                (ChironTAC.TAC_AssignmentCommand(dest, left, right, expr.symbol), 1)
+            )
+        elif isinstance(expr, ChironAST.UMinus):
+            if isinstance(expr.expr, ChironAST.Num):
+                self.line += 1
+                self.tac.append(
+                    (
+                        ChironTAC.TAC_AssignmentCommand(
+                            dest,
+                            ChironTAC.TAC_Num(0),
+                            ChironTAC.TAC_Num(expr.expr.val),
+                            "-",
+                        )
+                    ),
+                    1,
+                )
+            elif isinstance(expr.expr, ChironAST.Var):
+                self.line += 1
+                self.tac.append(
+                    (
+                        ChironTAC.TAC_AssignmentCommand(
+                            dest,
+                            ChironTAC.TAC_Num(0),
+                            ChironTAC.TAC_Var(expr.expr.varname),
+                            "-",
+                        )
+                    ),
+                    1,
+                )
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                self.parseExpresssion(expr.expr, temp)
+                self.line += 1
+                self.tac.append(
+                    (
+                        ChironTAC.TAC_AssignmentCommand(
+                            dest, ChironTAC.TAC_Num(0), temp, "-"
+                        ),
+                        1,
+                    )
+                )
+        elif isinstance(expr, ChironAST.BinCondOp) and not (
+            isinstance(expr, ChironAST.AND)
+            or isinstance(expr, ChironAST.OR)
+            or isinstance(expr, ChironAST.NOT)
+        ):
+            left = None
+            right = None
+            if isinstance(expr.lexpr, ChironAST.Num):
+                left = ChironTAC.TAC_Num(expr.lexpr.val)
+            elif isinstance(expr.lexpr, ChironAST.Var):
+                left = ChironTAC.TAC_Var(expr.lexpr.varname)
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                left = temp
+                self.parseExpresssion(expr.lexpr, temp)
+
+            if isinstance(expr.rexpr, ChironAST.Num):
+                right = ChironTAC.TAC_Num(expr.rexpr.val)
+            elif isinstance(expr.rexpr, ChironAST.Var):
+                right = ChironTAC.TAC_Var(expr.rexpr.varname)
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                right = temp
+                self.parseExpresssion(expr.rexpr, temp)
+
+            self.line += 1
+            self.tac.append(
+                (ChironTAC.TAC_AssignmentCommand(dest, left, right, expr.symbol), 1)
+            )
+        elif isinstance(expr, ChironAST.AND) or isinstance(expr, ChironAST.OR):
+            left = None
+            right = None
+            if isinstance(expr.lexpr, ChironAST.BoolTrue):
+                left = ChironTAC.TAC_BoolTrue()
+            elif isinstance(expr.lexpr, ChironAST.BoolFalse):
+                left = ChironTAC.TAC_BoolFalse()
+            elif isinstance(expr.lexpr, ChironAST.Var):
+                left = ChironTAC.TAC_Var(expr.lexpr.varname)
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                left = temp
+                self.parseExpresssion(expr.lexpr, temp)
+
+            if isinstance(expr.rexpr, ChironAST.BoolTrue):
+                right = ChironTAC.TAC_BoolTrue()
+            elif isinstance(expr.rexpr, ChironAST.BoolFalse):
+                right = ChironTAC.TAC_BoolFalse()
+            elif isinstance(expr.rexpr, ChironAST.Var):
+                right = ChironTAC.TAC_Var(expr.rexpr.varname)
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                right = temp
+                self.parseExpresssion(expr.rexpr, temp)
+
+            self.line += 1
+            self.tac.append(
+                (ChironTAC.TAC_AssignmentCommand(dest, left, right, expr.symbol), 1)
+            )
+        elif isinstance(expr, ChironAST.NOT):
+            if isinstance(expr.expr, ChironAST.BoolTrue):
+                self.line += 1
+                self.tac.append(
+                    (
+                        ChironTAC.TAC_AssignmentCommand(
+                            dest,
+                            ChironTAC.TAC_Unused(),
+                            ChironTAC.TAC_BoolTrue(),
+                            "not",
+                        ),
+                        1,
+                    )
+                )
+            elif isinstance(expr.expr, ChironAST.BoolFalse):
+                self.line += 1
+                self.tac.append(
+                    (
+                        ChironTAC.TAC_AssignmentCommand(
+                            dest,
+                            ChironTAC.TAC_Unused(),
+                            ChironTAC.TAC_BoolFalse(),
+                            "not",
+                        ),
+                        1,
+                    )
+                )
+            elif isinstance(expr.expr, ChironAST.Var):
+                self.line += 1
+                self.tac.append(
+                    (
+                        ChironTAC.TAC_AssignmentCommand(
+                            dest,
+                            ChironTAC.TAC_Unused(),
+                            ChironTAC.TAC_Var(expr.expr.varname),
+                            "not",
+                        ),
+                        1,
+                    )
+                )
+            else:
+                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                self.tempCount += 1
+                self.parseExpresssion(expr.expr, temp)
+                self.line += 1
+                self.tac.append(
+                    (ChironTAC.TAC_AssignmentCommand(dest, None, temp, "not"), 1)
+                )
+        elif isinstance(expr, ChironAST.Var):
+            self.line += 1
+            self.tac.append(
+                (
+                    ChironTAC.TAC_AssignmentCommand(
+                        dest, ChironTAC.TAC_Num(0), ChironTAC.TAC_Var(expr.varname), "+"
+                    ),
+                    1,
+                )
+            )
+        elif isinstance(expr, ChironAST.Num):
+            self.line += 1
+            self.tac.append(
+                (
+                    ChironTAC.TAC_AssignmentCommand(
+                        dest, ChironTAC.TAC_Num(0), ChironTAC.TAC_Num(expr.val), "+"
+                    ),
+                    1,
+                )
+            )
+        elif isinstance(expr, ChironAST.BoolTrue):
+            self.line += 1
+            self.tac.append(
+                (
+                    ChironTAC.TAC_AssignmentCommand(
+                        dest, ChironTAC.TAC_Unused(), ChironTAC.TAC_BoolTrue(), ""
+                    ),
+                    1,
+                )
+            )
+        elif isinstance(expr, ChironAST.BoolFalse):
+            self.line += 1
+            self.tac.append(
+                (
+                    ChironTAC.TAC_AssignmentCommand(
+                        dest, ChironTAC.TAC_Unused(), ChironTAC.TAC_BoolFalse(), ""
+                    ),
+                    1,
+                )
+            )
+        else:
+            raise NotImplementedError(
+                "Unknown expression: %s, %s." % (type(expr), expr)
+            )
+
+    def generateTAC(self):
+        line_number = 0
+        for stmt, tgt in self.ir:
+            self.ast_to_tac_line[line_number] = self.line
+            line_number += 1
+
+            if isinstance(stmt, ChironAST.AssignmentCommand):
+                self.parseExpresssion(stmt.rexpr, ChironTAC.TAC_Var(stmt.lvar.varname))
+
+            elif isinstance(stmt, ChironAST.ConditionCommand):
+                branchvar = None
+                if isinstance(stmt.cond, ChironAST.BoolTrue):
+                    branchvar = ChironTAC.TAC_BoolTrue()
+                elif isinstance(stmt.cond, ChironAST.BoolFalse):
+                    branchvar = ChironTAC.TAC_BoolFalse()
+                elif isinstance(stmt.cond, ChironAST.Var):
+                    branchvar = ChironTAC.TAC_Var(stmt.cond.varname)
+                else:
+                    branchvar = ChironTAC.TAC_Var(f"__branch_{self.branchCount}")
+                    self.branchCount += 1
+                    self.parseExpresssion(stmt.cond, branchvar)
+                newtgt = line_number - 1 + tgt  # Adjusted later
+                self.line += 1
+                self.tac.append((ChironTAC.TAC_ConditionCommand(branchvar), newtgt))
+            elif isinstance(stmt, ChironAST.AssertCommand):
+                assertvar = ChironTAC.TAC_Var(f"__assert_{self.assertCount}")
+                self.assertCount += 1
+                self.parseExpresssion(stmt.cond, assertvar)
+                self.line += 1
+                self.tac.append((ChironTAC.TAC_AssertCommand(assertvar), 1))
+            elif isinstance(stmt, ChironAST.MoveCommand):
+                movevar = None
+                if isinstance(stmt.expr, ChironAST.Num):
+                    movevar = ChironTAC.TAC_Num(stmt.expr.val)
+                elif isinstance(stmt.expr, ChironAST.Var):
+                    movevar = ChironTAC.TAC_Var(stmt.expr.varname)
+                else:
+                    movevar = ChironTAC.TAC_Var(f"__move_{self.moveCount}")
+                    self.moveCount += 1
+                    self.parseExpresssion(stmt.expr, movevar)
+                self.line += 1
+                self.tac.append((ChironTAC.TAC_MoveCommand(stmt.direction, movevar), 1))
+            elif isinstance(stmt, ChironAST.PenCommand):
+                self.line += 1
+                self.tac.append((ChironTAC.TAC_PenCommand(stmt.status), 1))
+            elif isinstance(stmt, ChironAST.GotoCommand):
+                xvar = None
+                yvar = None
+                if isinstance(stmt.xcor, ChironAST.Num):
+                    xvar = ChironTAC.TAC_Num(stmt.xcor.val)
+                elif isinstance(stmt.xcor, ChironAST.Var):
+                    xvar = ChironTAC.TAC_Var(stmt.xcor.varname)
+                else:
+                    xvar = ChironTAC.TAC_Var(f"__x_{self.gotoCount}")
+                    self.gotoCount += 1
+                    self.parseExpresssion(stmt.xcor, xvar)
+                if isinstance(stmt.ycor, ChironAST.Num):
+                    yvar = ChironTAC.TAC_Num(stmt.ycor.val)
+                elif isinstance(stmt.ycor, ChironAST.Var):
+                    yvar = ChironTAC.TAC_Var(stmt.ycor.varname)
+                else:
+                    yvar = ChironTAC.TAC_Var(f"__y_{self.gotoCount}")
+                    self.gotoCount += 1
+                    self.parseExpresssion(stmt.ycor, yvar)
+                self.line += 1
+                self.tac.append((ChironTAC.TAC_GotoCommand(xvar, yvar), 1))
+            elif isinstance(stmt, ChironAST.NoOpCommand):
+                self.line += 1
+                self.tac.append((ChironTAC.TAC_NoOpCommand(), 1))
+            elif isinstance(stmt, ChironAST.PauseCommand):
+                self.line += 1
+                self.tac.append((ChironTAC.TAC_PauseCommand(), 1))
+            else:
+                raise NotImplementedError(
+                    "Unknown instruction: %s, %s." % (type(stmt), stmt)
+                )
+
+        self.ast_to_tac_line[line_number] = self.line
+
+        for i in range(len(self.tac)):
+            stmt, tgt = self.tac[i]
+            if isinstance(stmt, ChironTAC.TAC_ConditionCommand):
+                newtgt = self.ast_to_tac_line[tgt] - i
+                self.tac[i] = (stmt, newtgt)
+
+    def printTAC(self):
+        for (stmt, tgt), line in zip(self.tac, range(len(self.tac))):
+            print(f"[L{line}]".rjust(5), stmt, f"[{tgt}]")
