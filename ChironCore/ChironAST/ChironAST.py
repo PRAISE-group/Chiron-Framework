@@ -25,6 +25,18 @@ class AssignmentCommand(Instruction):
 
     def __str__(self):
         return self.lvar.__str__() + " = " + self.rexpr.__str__()
+    
+class ClassDeclarationCommand(Instruction):
+
+
+    def __init__(self, className, attributes):
+        self.className = className  # Class name as a string
+        self.attributes = attributes  # List of AssignmentCommand objects
+
+    def __str__(self):
+        attr_str = "\n    ".join(str(attr) for attr in self.attributes)
+        return f"class {self.className} {{\n    {attr_str if attr_str else '    // No attributes'}\n}}"
+    
 
 
 class ConditionCommand(Instruction):
@@ -247,12 +259,36 @@ class Array(Value):
     def __str__(self):
         return self.arr
     
-class ArrayAccess(Value):
-    def __init__(self, var, index):
+# class ArrayAccess(Value):
+#     def __init__(self, var, index):
+#         self.var = var
+#         self.idx = index
+    
+#     def __str__(self):
+#         indices_str = "".join(f"[{idx}]" for idx in self.idx)  # Format multiple indices
+#         return f"{self.var}{indices_str}"
+#     #     return self.var.__str__() + "[" + self.idx.__str__() + "]"
+
+class ObjectOrArrayAccess(Value):
+    def __init__(self, var, accesses):
         self.var = var
-        self.idx = index
+        self.accesses = accesses  # List of attribute names or indices
     
     def __str__(self):
-        indices_str = "".join(f"[{idx}]" for idx in self.idx)  # Format multiple indices
-        return f"{self.var}{indices_str}"
-    #     return self.var.__str__() + "[" + self.idx.__str__() + "]"
+        result = self.var
+        for access in self.accesses:
+            if isinstance(access, list):  # Array indexing
+                indices_str = "".join(f"[{idx}]" for idx in access)
+                result += indices_str
+            else:  # Object attribute access
+                result += f".{access}"
+        return result
+    
+    
+class ObjectInstantiationCommand(Instruction):
+    def __init__(self, target, class_name):
+        self.target = target  # Variable name or Object/Array Access
+        self.class_name = class_name  # The class being instantiated
+
+    def __str__(self):
+        return f"{self.target} = new {self.class_name}()"

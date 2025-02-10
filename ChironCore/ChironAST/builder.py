@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join("..", "turtparse"))
 
 from turtparse.tlangParser import tlangParser
 from turtparse.tlangVisitor import tlangVisitor
+from antlr4.tree.Tree import TerminalNodeImpl  # Import TerminalNodeImpl
 
 from ChironAST import ChironAST
 
@@ -20,10 +21,13 @@ class astGenPass(tlangVisitor):
         self.stmtList=[]
 
     def getLval(self,ctx):
+        
         if ctx.VAR():
+            if isinstance(ctx.VAR(),list):
+                return ChironAST.Var(ctx.VAR()[0].getText())
             return ChironAST.Var(ctx.VAR().getText())
-        elif ctx.arrayAccess():
-            return self.visitArrayAccess(ctx.arrayAccess())
+        elif ctx.objectOrArrayAccess():
+            return self.visitObjectOrArrayAccess(ctx.objectOrArrayAccess())
 
     def visitStart(self, ctx:tlangParser.StartContext):
         stmtList = self.visit(ctx.instruction_list())
@@ -63,13 +67,64 @@ class astGenPass(tlangVisitor):
     # Otherwise, just return a normal assignment
         return [(ChironAST.AssignmentCommand(lval, rval), 1)]
     
-    def visitArrayAccess(self, ctx:tlangParser.ArrayAccessContext):
-        var = ctx.VAR().getText()
-        indices = [self.visit(expr).val for expr in ctx.expression()]  # Visit all expressions in []
+    def visitObjectOrArrayAccess(self, ctx: tlangParser.ObjectOrArrayAccessContext):
+    # Start with the base variable (first part of access)
+        base = ctx.baseAccess().VAR().getText()
 
-        # print(var, indices, "Inside multi-dimensional array access")
+        # Traverse through the nested access ('.' for attributes, '[]' for indices)
+        accesses = []
+        i = 1  # Start from second child (skip baseAccess)
+
+        while i < len(ctx.children):
+            child = ctx.children[i]
+
+            if isinstance(child, TerminalNodeImpl) and child.getText() == '.':
+                # Next child must be a VAR (attribute access)
+                i += 1  # Move to VAR
+                accesses.append(ctx.children[i].getText())
+
+            elif child.getText() == '[':
+                # Array access: Process the expression inside `[]`
+                i += 1  # Move to expression inside brackets
+                expr = self.visit(ctx.children[i])  # Visit and evaluate expression
+                accesses.append([expr.val])  # Store index as a list
+
+                i += 1  # Skip closing ']'
+
+            i += 1  # Move to the next child
+          
+
+        return ChironAST.ObjectOrArrayAccess(base, accesses)
     
-        return ChironAST.ArrayAccess(var, indices)  # Return an object handling multiple indices
+    def visitObjectInstantiation(self, ctx: tlangParser.ObjectInstantiationContext):
+        # Extract the left-hand side (target variable or object access)
+        lval = self.getLval(ctx)
+        # Extract the class name
+        class_name = ctx.VAR()[-1].getText()  # The last VAR is the class being instantiated
+
+        return [(ChironAST.ObjectInstantiationCommand(lval, class_name),1)]
+
+
+    def visitClassDeclaration(self, ctx: tlangParser.ClassDeclarationContext):
+        className = ctx.VAR().getText()  # Extract class name
+
+        attributes = []
+        if ctx.classBody():
+            for attrDecl in ctx.classBody().classAttributeDeclaration():
+                assign_list= self.visitAssignment(attrDecl.assignment())
+                attributes.extend(assign_list)
+        
+        print(className,attributes)
+
+        return [(ChironAST.ClassDeclarationCommand(className, attributes),1)]
+
+    # def visitArrayAccess(self, ctx:tlangParser.ArrayAccessContext):
+    #     var = ctx.VAR().getText()
+    #     indices = [self.visit(expr).val for expr in ctx.expression()]  # Visit all expressions in []
+
+    #     # print(var, indices, "Inside multi-dimensional array access")
+    
+    #     return ChironAST.ArrayAccess(var, indices)  # Return an object handling multiple indices
     
     def visitValue(self, ctx:tlangParser.ValueContext):
         if ctx.NUM():
@@ -78,9 +133,9 @@ class astGenPass(tlangVisitor):
             return ChironAST.Var(ctx.VAR().getText())
         elif ctx.array():
             return ChironAST.Array(ctx.array().getText())
-        elif ctx.arrayAccess():
+        elif ctx.objectOrArrayAccess():
             print("entering heaven")
-            return self.visitArrayAccess(ctx.arrayAccess())
+            return self.visitObjectOrArrayAccess(ctx.objectOrArrayAccess())
 
     
     def visitAssignExpr(self, ctx: tlangParser.AssignExprContext):

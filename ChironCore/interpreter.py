@@ -2,11 +2,14 @@
 from ChironAST import ChironAST
 from ChironHooks import Chironhooks
 import turtle
-
+import re
 Release="Chiron v5.3"
 
 def addContext(s):
-    return str(s).strip().replace(":", "self.prg.")
+    s= re.sub(r'(?<!\.):', 'self.prg.', str(s).strip())
+    s= str(s).strip().replace(":", "")
+    return s
+
 
 class Interpreter:
     # Turtle program should not contain variable with names "ir", "pc", "t_screen"
@@ -109,6 +112,11 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleGotoCommand(stmt, tgt)
         elif isinstance(stmt, ChironAST.NoOpCommand):
             ntgt = self.handleNoOpCommand(stmt, tgt)
+        elif isinstance(stmt, ChironAST.ClassDeclarationCommand):
+            ntgt = self.handleClassDeclaration(stmt, tgt)
+        elif isinstance(stmt, ChironAST.ObjectInstantiationCommand):
+            ntgt = self.handleObjectInstantiation(stmt, tgt)
+             
         else:
             raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
 
@@ -133,6 +141,47 @@ class ConcreteInterpreter(Interpreter):
             var = key.replace(":","")
             exec("setattr(self.prg,\"%s\",%s)" % (var, val))
     
+    def handleClassDeclaration(self, stmt, tgt):
+        print(f"  Class Declaration: {stmt.className}")
+
+        className = stmt.className.replace(":","")
+        attributes = stmt.attributes  # List of attribute assignments
+
+        class_def = f"class {className}:\n"
+
+        for attr in attributes:
+            attr, target= attr
+            attr_name = str(attr.lvar).replace(":", "")
+            attr_value = addContext(attr.rexpr) if attr.rexpr else None
+            class_def += f"    {attr_name} = {attr_value}\n"
+
+        print(class_def, "Class Definition")
+
+        exec(class_def, globals(), self.prg.__dict__)  # Define class dynamically
+
+        return 1        
+
+
+    def handleObjectInstantiation(self, stmt, tgt):
+        print(f"Creating new instance of {stmt.class_name} for {stmt.target}")
+
+        x= self.prg.a()
+        print(x)
+
+
+        lhs = str(stmt.target).replace(":","")
+        rhs = addContext(stmt.class_name)
+
+        # Generate and execute Python class instantiation dynamically
+        instance_code = f"{lhs} = {rhs}()"
+        print(instance_code)
+        # exec(instance_code, globals(), self.prg.__dict__)  # Store in self.prg
+        exec(f"self.prg.{lhs} = {rhs}()")
+
+        return 1
+
+    
+    
     def handleAssignment(self, stmt, tgt):
         print("  Assignment Statement")
         lhs = str(stmt.lvar).replace(":","")
@@ -145,6 +194,7 @@ class ConcreteInterpreter(Interpreter):
     def handlePrint(self,stmt,tgt):
         print( " PrintCommand")
         expr = addContext(stmt.expr)
+        print("Executing print with expression:", expr)
         exec("print(%s)" % expr)
         return 1
 

@@ -18,6 +18,8 @@ instruction : assignment
 	    | penCommand
 	    | gotoCommand
 	    | pauseCommand
+		| classDeclaration
+		| objectInstantiation
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -42,7 +44,7 @@ array
  ;
 
 assignment : 
-		  ( VAR | arrayAccess| memberAccess )  '=' expression      
+		  ( VAR | objectOrArrayAccess )  '=' expression      
 	   ;
 
 printStatement : 'print' '(' expression ')' ;
@@ -64,15 +66,26 @@ expression :
 		   | expression additive expression        #addExpr
 		   | '(' expression ')'                    #parenExpr
 		   | value                                 #valueExpr
-	       | ( VAR | arrayAccess | memberAccess )  '=' expression   #assignExpr
+	       | ( VAR | objectOrArrayAccess)  '=' expression   #assignExpr
 
  	   ;
 
-arrayAccess
-    : VAR ('[' expression ']')+
-    ;
-memberAccess 
-    : value ('.' value)+ ;
+
+classDeclaration : 'class' VAR '{' classBody '}' ;
+
+classBody : (classAttributeDeclaration)* ;
+
+classAttributeDeclaration : assignment ';' ;
+
+objectInstantiation : ( VAR | objectOrArrayAccess) '=' 'new' VAR '(' ')' ;
+
+objectOrArrayAccess : baseAccess ('.' VAR | '[' expression ']')+ ;
+
+baseAccess : VAR ;
+
+
+
+
 
 
 
@@ -106,7 +119,7 @@ NOT: '!' ;
 value : NUM
       | VAR
 	  | array
-	  | arrayAccess
+	  | objectOrArrayAccess
       ;
 
 NUM  : [0-9]+        ;
