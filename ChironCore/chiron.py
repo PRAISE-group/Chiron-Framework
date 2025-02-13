@@ -408,9 +408,12 @@ if __name__ == "__main__":
         tacGen = TACGenerator(ir)
         tacGen.generateTAC()
         tacGen.printTAC()
-        # print("Converting program to SMT-LIB format..")
-        # smt = bmc.SMTConverter(ir)
-        # smt.convert()
-        # smt.solve()
+        cfg = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False)
+        cfgB.dumpCFG(cfg, 'tac_cfg.png')
+        tac_ir = tacGen.tac
+        print("Converting program to SMT-LIB format..")
+        smt = bmc.BMC(tac_ir)
+        smt.convert()
+        smt.solve()
         
         # print("DONE..")

@@ -115,7 +115,7 @@ class IRHandler:
             print("[Skip] Instruction Type not supported for removal. \n")
             return
 
-        if "__rep_counter_" in str(stmtList[pos][0]):
+        if ":__rep_counter_" in str(stmtList[pos][0]):
             print("[Skip] Instruction affecting loop counter. \n")
             return
 
@@ -166,7 +166,7 @@ class TACGenerator:
             elif isinstance(expr.lexpr, ChironAST.Var):
                 left = ChironTAC.TAC_Var(expr.lexpr.varname)
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 left = temp
                 self.parseExpresssion(expr.lexpr, temp)
@@ -176,7 +176,7 @@ class TACGenerator:
             elif isinstance(expr.rexpr, ChironAST.Var):
                 right = ChironTAC.TAC_Var(expr.rexpr.varname)
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 right = temp
                 self.parseExpresssion(expr.rexpr, temp)
@@ -195,9 +195,9 @@ class TACGenerator:
                             ChironTAC.TAC_Num(0),
                             ChironTAC.TAC_Num(expr.expr.val),
                             "-",
-                        )
+                        ),
+                        1,
                     ),
-                    1,
                 )
             elif isinstance(expr.expr, ChironAST.Var):
                 self.line += 1
@@ -208,12 +208,12 @@ class TACGenerator:
                             ChironTAC.TAC_Num(0),
                             ChironTAC.TAC_Var(expr.expr.varname),
                             "-",
-                        )
+                        ),
+                        1,
                     ),
-                    1,
                 )
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 self.parseExpresssion(expr.expr, temp)
                 self.line += 1
@@ -237,7 +237,7 @@ class TACGenerator:
             elif isinstance(expr.lexpr, ChironAST.Var):
                 left = ChironTAC.TAC_Var(expr.lexpr.varname)
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 left = temp
                 self.parseExpresssion(expr.lexpr, temp)
@@ -247,7 +247,7 @@ class TACGenerator:
             elif isinstance(expr.rexpr, ChironAST.Var):
                 right = ChironTAC.TAC_Var(expr.rexpr.varname)
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 right = temp
                 self.parseExpresssion(expr.rexpr, temp)
@@ -266,7 +266,7 @@ class TACGenerator:
             elif isinstance(expr.lexpr, ChironAST.Var):
                 left = ChironTAC.TAC_Var(expr.lexpr.varname)
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 left = temp
                 self.parseExpresssion(expr.lexpr, temp)
@@ -278,7 +278,7 @@ class TACGenerator:
             elif isinstance(expr.rexpr, ChironAST.Var):
                 right = ChironTAC.TAC_Var(expr.rexpr.varname)
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 right = temp
                 self.parseExpresssion(expr.rexpr, temp)
@@ -328,7 +328,7 @@ class TACGenerator:
                     )
                 )
             else:
-                temp = ChironTAC.TAC_Var(f"__temp_{self.tempCount}")
+                temp = ChironTAC.TAC_Var(f":__temp_{self.tempCount}")
                 self.tempCount += 1
                 self.parseExpresssion(expr.expr, temp)
                 self.line += 1
@@ -398,14 +398,14 @@ class TACGenerator:
                 elif isinstance(stmt.cond, ChironAST.Var):
                     branchvar = ChironTAC.TAC_Var(stmt.cond.varname)
                 else:
-                    branchvar = ChironTAC.TAC_Var(f"__branch_{self.branchCount}")
+                    branchvar = ChironTAC.TAC_Var(f":__branch_{self.branchCount}")
                     self.branchCount += 1
                     self.parseExpresssion(stmt.cond, branchvar)
                 newtgt = line_number - 1 + tgt  # Adjusted later
                 self.line += 1
                 self.tac.append((ChironTAC.TAC_ConditionCommand(branchvar), newtgt))
             elif isinstance(stmt, ChironAST.AssertCommand):
-                assertvar = ChironTAC.TAC_Var(f"__assert_{self.assertCount}")
+                assertvar = ChironTAC.TAC_Var(f":__assert_{self.assertCount}")
                 self.assertCount += 1
                 self.parseExpresssion(stmt.cond, assertvar)
                 self.line += 1
@@ -417,7 +417,7 @@ class TACGenerator:
                 elif isinstance(stmt.expr, ChironAST.Var):
                     movevar = ChironTAC.TAC_Var(stmt.expr.varname)
                 else:
-                    movevar = ChironTAC.TAC_Var(f"__move_{self.moveCount}")
+                    movevar = ChironTAC.TAC_Var(f":__move_{self.moveCount}")
                     self.moveCount += 1
                     self.parseExpresssion(stmt.expr, movevar)
                 self.line += 1
@@ -433,7 +433,7 @@ class TACGenerator:
                 elif isinstance(stmt.xcor, ChironAST.Var):
                     xvar = ChironTAC.TAC_Var(stmt.xcor.varname)
                 else:
-                    xvar = ChironTAC.TAC_Var(f"__x_{self.gotoCount}")
+                    xvar = ChironTAC.TAC_Var(f":__x_{self.gotoCount}")
                     self.gotoCount += 1
                     self.parseExpresssion(stmt.xcor, xvar)
                 if isinstance(stmt.ycor, ChironAST.Num):
@@ -441,7 +441,7 @@ class TACGenerator:
                 elif isinstance(stmt.ycor, ChironAST.Var):
                     yvar = ChironTAC.TAC_Var(stmt.ycor.varname)
                 else:
-                    yvar = ChironTAC.TAC_Var(f"__y_{self.gotoCount}")
+                    yvar = ChironTAC.TAC_Var(f":__y_{self.gotoCount}")
                     self.gotoCount += 1
                     self.parseExpresssion(stmt.ycor, yvar)
                 self.line += 1
