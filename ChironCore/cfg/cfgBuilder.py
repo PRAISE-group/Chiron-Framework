@@ -81,8 +81,16 @@ def buildCFG(ir, cfgName="", isSingle=False):
                 nextBB = indices2LeadersMap[irIdx + 1] if (irIdx + 1 < len(ir)) else endBB
                 cfg.add_edge(node, nextBB, label='flow_edge', color='blue')
 
-    return cfg
+    line2BlockMap = {}
+    last_block = None
 
+    for line in range(len(ir)):
+        if line in indices2LeadersMap.keys():
+            last_block = indices2LeadersMap[line]
+        line2BlockMap[line] = last_block
+    line2BlockMap[len(ir)] = endBB
+
+    return cfg, line2BlockMap
 
 
 def dumpCFG(cfg, filename="out"):

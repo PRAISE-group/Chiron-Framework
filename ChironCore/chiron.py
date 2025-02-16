@@ -22,6 +22,7 @@ from fuzzer import *
 import sExecution as se
 import cfg.cfgBuilder as cfgB
 import bmc as bmc
+from ChironSSA.ssaBuilder import * 
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
@@ -408,12 +409,17 @@ if __name__ == "__main__":
         tacGen = TACGenerator(ir)
         tacGen.generateTAC()
         tacGen.printTAC()
-        cfg = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False)
+        cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False)
         cfgB.dumpCFG(cfg, 'tac_cfg.png')
-        tac_ir = tacGen.tac
-        print("Converting program to SMT-LIB format..")
-        smt = bmc.BMC(tac_ir)
-        smt.convert()
-        smt.solve()
+
+        print()
+        ssa = buildSSA(tacGen.tac, cfg, line2BlockMap)
+        printSSA(ssa)
+        
+        # tac_ir = tacGen.tac
+        # print("Converting program to SMT-LIB format..")
+        # smt = bmc.BMC(tac_ir)
+        # smt.convert()
+        # smt.solve()
         
         # print("DONE..")
