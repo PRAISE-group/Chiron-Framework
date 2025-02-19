@@ -20,6 +20,8 @@ instruction : assignment
 	    | pauseCommand
 		| classDeclaration
 		| objectInstantiation
+		| functionDeclaration
+		| functionCall
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -83,10 +85,15 @@ objectOrArrayAccess : baseAccess ('.' VAR | '[' expression ']')+ ;
 
 baseAccess : VAR ;
 
+// function call
+functionCall : NAME '(' arguments ')' ;
 
+// function declaration
+functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist RETURN '}' ;
+RETURN : 'return' ;
 
-
-
+parameters : ( VAR ( ',' VAR )* )? ;
+arguments : ( expression ( ',' expression )* )? ;
 
 
 // TODO :

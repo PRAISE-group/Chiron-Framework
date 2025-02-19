@@ -164,6 +164,26 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#functionCall.
+    def visitFunctionCall(self, ctx:tlangParser.FunctionCallContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#functionDeclaration.
+    def visitFunctionDeclaration(self, ctx:tlangParser.FunctionDeclarationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#parameters.
+    def visitParameters(self, ctx:tlangParser.ParametersContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#arguments.
+    def visitArguments(self, ctx:tlangParser.ArgumentsContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#condition.
     def visitCondition(self, ctx:tlangParser.ConditionContext):
         return self.visitChildren(ctx)

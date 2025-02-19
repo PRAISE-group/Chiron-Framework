@@ -64,7 +64,7 @@ class Interpreter:
     def sanityCheck(self, irInstr):
         stmt, tgt = irInstr
         # if not a condition command, rel. jump can't be anything but 1
-        if not isinstance(stmt, ChironAST.ConditionCommand):
+        if not isinstance(stmt, ChironAST.ConditionCommand) and not isinstance(stmt, ChironAST.FunctionDeclarationCommand):
             if tgt != 1:
                 raise ValueError("Improper relative jump for non-conditional instruction", str(stmt), tgt)
     
@@ -82,6 +82,12 @@ class ConcreteInterpreter(Interpreter):
     # Ref: https://realpython.com/beginners-guide-python-turtle
     cond_eval = None # used as a temporary variable within the embedded program interpreter
     prg = None
+    argument = None
+
+    # map of function name to their pc in the IR
+    function_addresses = {}
+    #stack for handling function calls
+    call_stack = []
 
     def __init__(self, irHandler, params):
         super().__init__(irHandler, params)
@@ -116,6 +122,14 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleClassDeclaration(stmt, tgt)
         elif isinstance(stmt, ChironAST.ObjectInstantiationCommand):
             ntgt = self.handleObjectInstantiation(stmt, tgt)
+        elif isinstance(stmt, ChironAST.FunctionDeclarationCommand):
+            ntgt = self.handleFunctionDeclaration(stmt, tgt)
+        elif isinstance(stmt, ChironAST.FunctionCallCommand):
+            ntgt = self.handleFunctionCall(stmt, tgt)
+        elif isinstance(stmt, ChironAST.ReturnCommand):
+            ntgt = self.handleFunctionReturn(stmt, tgt)
+        elif isinstance(stmt, ChironAST.ParametersPassingCommand):
+            ntgt = self.handleParametersPassing(stmt, tgt)
              
         else:
             raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
@@ -141,6 +155,40 @@ class ConcreteInterpreter(Interpreter):
             var = key.replace(":","")
             exec("setattr(self.prg,\"%s\",%s)" % (var, val))
     
+    def handleFunctionDeclaration(self, stmt, tgt):
+        print(f"Function Declaration: {stmt.name}")
+        self.function_addresses[stmt.name] = self.pc + 1
+        return tgt
+    
+    def handleFunctionCall(self, stmt, tgt):
+        print(f"Function Call: {stmt.name}")
+        self.call_stack.append(self.pc + 1)
+        # Save the current program context
+        self.call_stack.append(self.prg)
+        # Initialize a new program context for the function call
+        for arg in stmt.args:
+            arg_value = addContext(arg)
+            exec(f"self.argument = {arg_value}")
+            self.call_stack.append(self.argument)
+        self.prg = ProgramContext()
+        self.pc = self.function_addresses[stmt.name]
+        return 0
+
+    def handleFunctionReturn(self, stmt, tgt):
+        print(f"Function Return: {stmt}")
+        # Restore the previous program context
+        self.prg = self.call_stack.pop()
+        self.pc = self.call_stack.pop()
+        return 0
+
+    def handleParametersPassing(self, stmt, tgt):
+        print(f"Parameters Passing: {stmt.params}")
+        for param in reversed(stmt.params):
+            param = str(param).replace(":", "")
+            param_value = self.call_stack.pop()
+            exec(f"self.prg.{param} = {param_value}")
+        return 1
+
     def handleClassDeclaration(self, stmt, tgt):
         print(f"  Class Declaration: {stmt.className}")
 
