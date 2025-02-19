@@ -22,6 +22,8 @@ instruction : assignment
 		| objectInstantiation
 		| functionDeclaration
 		| functionCall
+		| functionCallWithReturnValues
+		| returnStatement
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -62,6 +64,8 @@ MUL  	 : '*' ;
 DIV      : '/' ;
 
 
+returnStatement : 'return' ( expression ( ',' expression )* )? ;
+
 expression : 
              unaryArithOp expression               #unaryExpr
            | expression multiplicative expression  #mulExpr
@@ -88,9 +92,10 @@ baseAccess : VAR ;
 // function call
 functionCall : NAME '(' arguments ')' ;
 
+functionCallWithReturnValues : VAR ( ',' VAR )* '=' functionCall ;
+
 // function declaration
-functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist RETURN '}' ;
-RETURN : 'return' ;
+functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
 
 parameters : ( VAR ( ',' VAR )* )? ;
 arguments : ( expression ( ',' expression )* )? ;

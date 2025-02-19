@@ -123,11 +123,16 @@ class FunctionCallCommand(Instruction):
 
 
 class ReturnCommand(Instruction):
-    def __init__(self, numParams):
-        self.numParams = numParams
-
+    def __init__(self, returnValues):
+        self.returnValues = returnValues
     def __str__(self):
-        return f"return {self.numParams}"
+        return f"return {self.returnValues}"
+
+class ReadReturnCommand(Instruction):
+    def __init__(self, returnValues):
+        self.returnValues = returnValues
+    def __str__(self):
+        return f"read {self.returnValues}"
 
 
 class ParametersPassingCommand(Instruction):

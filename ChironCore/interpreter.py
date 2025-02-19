@@ -83,6 +83,7 @@ class ConcreteInterpreter(Interpreter):
     cond_eval = None # used as a temporary variable within the embedded program interpreter
     prg = None
     argument = None
+    return_value = None
 
     # map of function name to their pc in the IR
     function_addresses = {}
@@ -130,6 +131,8 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleFunctionReturn(stmt, tgt)
         elif isinstance(stmt, ChironAST.ParametersPassingCommand):
             ntgt = self.handleParametersPassing(stmt, tgt)
+        elif isinstance(stmt, ChironAST.ReadReturnCommand):
+            ntgt = self.handleReturnRead(stmt, tgt)
              
         else:
             raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
@@ -173,13 +176,27 @@ class ConcreteInterpreter(Interpreter):
         self.prg = ProgramContext()
         self.pc = self.function_addresses[stmt.name]
         return 0
+    
+    def handleReturnRead(self, stmt, tgt):
+        print(f"Read Return: {stmt.returnValues}")
+        for rval in reversed(stmt.returnValues):
+            rval = str(rval).replace(":", "")
+            exec(f"self.prg.{rval} = self.call_stack.pop()")
+        return 1
 
     def handleFunctionReturn(self, stmt, tgt):
         print(f"Function Return: {stmt}")
         # Restore the previous program context
+        rval_list = []
+        for rval in stmt.returnValues:
+            rval_value = addContext(rval)
+            exec(f"self.return_value = {rval_value}")
+            rval_list.append(self.return_value)
         self.prg = self.call_stack.pop()
         self.pc = self.call_stack.pop()
+        self.call_stack.extend(rval_list)
         return 0
+    
 
     def handleParametersPassing(self, stmt, tgt):
         print(f"Parameters Passing: {stmt.params}")

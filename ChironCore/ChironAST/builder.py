@@ -46,18 +46,30 @@ class astGenPass(tlangVisitor):
             instrList.extend(visvalue)
 
         return instrList
-    
+
     def visitFunctionDeclaration(self, ctx: tlangParser.FunctionDeclarationContext):
         functionName = ctx.NAME().getText()
-        functionParams = [ param.getText() for param in ctx.parameters().VAR() ] if ctx.parameters() is not None else None
+        functionParams = [param.getText() for param in ctx.parameters(
+        ).VAR()] if ctx.parameters() is not None else None
         functionBody = self.visit(ctx.strict_ilist())
-        numParams = 0 if functionParams is None else len(functionParams)
-        return [(ChironAST.FunctionDeclarationCommand(functionName, functionParams, functionBody), len(functionBody) + 3)] + [(ChironAST.ParametersPassingCommand(functionParams), 1)] + functionBody + [(ChironAST.ReturnCommand(numParams), 1)]
+        return [(ChironAST.FunctionDeclarationCommand(functionName, functionParams, functionBody), len(functionBody) + 2)] + [(ChironAST.ParametersPassingCommand(functionParams), 1)] + functionBody
 
     def visitFunctionCall(self, ctx: tlangParser.FunctionCallContext):
         functionName = ctx.NAME().getText()
-        functionArgs = [ self.visit(arg) for arg in ctx.arguments().expression() ] if ctx.arguments() is not None else None
+        functionArgs = [self.visit(arg) for arg in ctx.arguments(
+        ).expression()] if ctx.arguments() is not None else None
         return [(ChironAST.FunctionCallCommand(functionName, functionArgs), 1)]
+
+    def visitFunctionCallWithReturnValues(self, ctx: tlangParser.FunctionCallWithReturnValuesContext):
+        functionCallCommand = self.visitFunctionCall(ctx.functionCall())
+        returnLocations = [var.getText() for var in ctx.VAR()]
+        readReturnCommand = ChironAST.ReadReturnCommand(returnLocations)
+        return functionCallCommand + [(readReturnCommand, 1)]
+
+    def visitReturnStatement(self, ctx: tlangParser.ReturnStatementContext):
+        returnValues = [self.visit(expr) for expr in ctx.expression(
+        )] if ctx.expression() is not None else None
+        return [(ChironAST.ReturnCommand(returnValues), 1)]
 
     # computes list of recursive assign statements
     def visitAssignment(self, ctx: tlangParser.AssignmentContext):
