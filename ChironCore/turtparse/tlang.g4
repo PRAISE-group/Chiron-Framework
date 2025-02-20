@@ -92,7 +92,7 @@ baseAccess : VAR ;
 // function call
 functionCall : NAME '(' arguments ')' ;
 
-functionCallWithReturnValues : VAR ( ',' VAR )* '=' functionCall ;
+functionCallWithReturnValues : ( VAR | objectOrArrayAccess) ( ',' ( VAR | objectOrArrayAccess) )* '=' functionCall ;
 
 // function declaration
 functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
