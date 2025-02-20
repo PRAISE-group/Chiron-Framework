@@ -1,5 +1,4 @@
 from cfg.ChironCFG import *
-import ChironAST.ChironAST as ChironAST
 import ChironAST.ChironTAC as ChironTAC
 import ChironSSA.ChironSSA as ChironSSA
 
@@ -179,5 +178,6 @@ def printSSA(ssa):
     """
     Prints SSA form.
     """
+    print("\nSSA Form:")
     for (stmt, tgt), line in zip(ssa, range(len(ssa))):
             print(f"[L{line}]".rjust(5), stmt, f"[{tgt}]")

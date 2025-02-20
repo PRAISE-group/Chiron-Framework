@@ -403,26 +403,23 @@ if __name__ == "__main__":
         print("DONE..")
 
     if args.bmc:
-        print("Bounded Model Checking..")
-        print("Converting program to 3 address code...")
-        print("input statement: ", args.bmc)
-        tacGen = TACGenerator(ir)
+        print("\nBounded Model Checking..")
+
+        tacGen = TACGenerator(ir) # Converting IR to TAC
         tacGen.generateTAC()
-        tacGen.printTAC()
-        cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False)
+        # tacGen.printTAC() # Printing TAC
+
+        cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
         cfgB.dumpCFG(cfg, 'tac_cfg.png')
 
-        print()
-        ssa = buildSSA(tacGen.tac, cfg, line2BlockMap)
-        printSSA(ssa)
+        ssa = buildSSA(tacGen.tac, cfg, line2BlockMap) # Building SSA
+        printSSA(ssa) # Printing SSA
 
-        ssa_cfg, ssa_line2BlockMap = cfgB.buildCFG(ssa, "ssa_cfg", False)
+        ssa_cfg, ssa_line2BlockMap = cfgB.buildCFG(ssa, "ssa_cfg", False) # Building CFG for SSA
         cfgB.dumpCFG(ssa_cfg, 'ssa_cfg.png')
 
-        # tac_ir = tacGen.tac
-        # print("Converting program to SMT-LIB format..")
-        # smt = bmc.BMC(tac_ir)
-        # smt.convert()
-        # smt.solve()
-        
-        # print("DONE..")
+        print("\nConverting program to SMT-LIB format..\n")
+        smt = bmc.BMC(ssa)
+        smt.convert_SSA_to_SMT()
+        smt.solve()
+        print("DONE..")
