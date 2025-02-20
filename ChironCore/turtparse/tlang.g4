@@ -10,7 +10,8 @@ instruction_list : (instruction)*
 strict_ilist : (instruction)+
              ;
 
-instruction : assignment
+instruction : functionCallWithReturnValues
+		| assignment
 		| printStatement
 	    | conditional
 	    | loop
@@ -22,7 +23,6 @@ instruction : assignment
 		| objectInstantiation
 		| functionDeclaration
 		| functionCall
-		| functionCallWithReturnValues
 		| returnStatement
 	    ;
 
@@ -73,6 +73,7 @@ expression :
 		   | '(' expression ')'                    #parenExpr
 		   | value                                 #valueExpr
 	       | ( VAR | objectOrArrayAccess)  '=' expression   #assignExpr
+		   | functionCall 							#functionCallExpr
 
  	   ;
 
@@ -92,7 +93,7 @@ baseAccess : VAR ;
 // function call
 functionCall : NAME '(' arguments ')' ;
 
-functionCallWithReturnValues : ( VAR | objectOrArrayAccess) ( ',' ( VAR | objectOrArrayAccess) )* '=' functionCall ;
+functionCallWithReturnValues : ( VAR | objectOrArrayAccess) ( ',' ( VAR | objectOrArrayAccess) )+ '=' functionCall ;
 
 // function declaration
 functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
