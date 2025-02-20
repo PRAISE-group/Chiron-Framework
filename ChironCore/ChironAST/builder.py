@@ -16,6 +16,8 @@ class astGenPass(tlangVisitor):
     def __init__(self):
         self.repeatInstrCount = 0  # keeps count for no of 'repeat' instructions
         self.stmtList = []
+        self.subStmtList = []
+        self.virtualRegCount = 0
 
     def getLval(self, ctx):
 
@@ -34,7 +36,9 @@ class astGenPass(tlangVisitor):
     def visitInstruction_list(self, ctx: tlangParser.Instruction_listContext):
         instrList = []
         for instr in ctx.instruction():
-            self.stmtList.extend(self.visit(instr))
+            self.stmtList.extend(self.subStmtList + self.visit(instr))
+            self.subStmtList = []
+            self.virtualRegCount = 0
 
         return []
 
@@ -43,7 +47,9 @@ class astGenPass(tlangVisitor):
         instrList = []
         for instr in ctx.instruction():
             visvalue = self.visit(instr)
-            instrList.extend(visvalue)
+            instrList.extend(self.subStmtList + visvalue)
+            self.subStmtList = []
+            self.virtualRegCount = 0
 
         return instrList
 
@@ -77,13 +83,6 @@ class astGenPass(tlangVisitor):
         # print(ctx.VAR().getText(),ctx.expression().getText())
         lval = self.getLval(ctx)
         rval = self.visit(ctx.expression())
-        # print(rval)
-        if isinstance(rval, list):
-            print(rval[-1][0])
-            rvaln = rval[-1][0].lvar  # Get the last assigned variable as rval
-            return rval + [(ChironAST.AssignmentCommand(lval, rvaln), 1)]
-
-    # Otherwise, just return a normal assignment
         return [(ChironAST.AssignmentCommand(lval, rval), 1)]
 
     def visitObjectOrArrayAccess(self, ctx: tlangParser.ObjectOrArrayAccessContext):
@@ -158,14 +157,25 @@ class astGenPass(tlangVisitor):
             print("entering heaven")
             return self.visitObjectOrArrayAccess(ctx.objectOrArrayAccess())
 
+    def visitFunctionCallExpr(self, ctx: tlangParser.FunctionCallExprContext):
+        functionCallCtx = ctx.functionCall()
+        functionName = functionCallCtx.NAME().getText()
+        functionArgs = [self.visit(arg) for arg in functionCallCtx.arguments(
+        ).expression()] if functionCallCtx.arguments() is not None else None
+        returnLocation = ChironAST.Var(":__reg_" + str(self.virtualRegCount))
+        self.virtualRegCount += 1
+        currStmtList = [(ChironAST.FunctionCallCommand(functionName, functionArgs), 1)] + [(ChironAST.ReadReturnCommand([returnLocation]), 1)]
+        self.subStmtList.extend(currStmtList)
+        return returnLocation
+
     def visitAssignExpr(self, ctx: tlangParser.AssignExprContext):
 
         print("Assignment Expr")
-
-        list = self.visitAssignment(ctx)
-        self.stmtList.extend(list)
-
-        return list[-1][0].lvar
+        lval = self.getLval(ctx)
+        rval = self.visit(ctx.expression())
+        currentStmtList = [(ChironAST.AssignmentCommand(lval, rval), 1)]
+        self.subStmtList.extend(currentStmtList)
+        return lval
 
         # return "("+ ChironAST.AssignmentCommand(lval, rval) + ")"
         # return   # Calls visitAssignment

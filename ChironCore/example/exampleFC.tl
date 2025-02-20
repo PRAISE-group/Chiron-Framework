@@ -43,7 +43,7 @@ def drawCircle()
         left 45
         ]
         penup
-        return
+        return :vara, :varb
 }
 
 def factorial(:n)
@@ -51,9 +51,9 @@ def factorial(:n)
     if :n == 1 [
         return 1
     ]
-    :ret = factorial(:n - 1)
-    return :ret * :n
+    return :n * factorial(:n - 1)
 }
 
 drawRectangle(50, 50)
-drawCircle()
+:a, :b = drawCircle()
+print(factorial(6))
