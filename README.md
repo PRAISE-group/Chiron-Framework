@@ -41,8 +41,9 @@ If you want to cite this work, you may use this.
 ### Installing Dependencies
 
 ```bash
-$ pip install antlr4-python3-runtime==4.7.2 networkx z3-solver numpy 
-$ sudo apt-get install python3-tk
+pip install antlr4-python3-runtime==4.7.2 networkx z3-solver numpy 
+sudo apt-get install python3-tk
+pip install pygraphviz
 ```
 
 ### Generating the ANTLR files.
@@ -51,8 +52,8 @@ The `antlr` files need to be rebuilt if any changes are made to the `tlang.g4` f
 We use a visitor pattern to generate the AST from parsing. 
 
 ```
-$ cd ChironCore/turtparse
-$ java -cp ../extlib/antlr-4.7.2-complete.jar org.antlr.v4.Tool \
+cd ChironCore/turtparse
+java -cp ../extlib/antlr-4.7.2-complete.jar org.antlr.v4.Tool \
   -Dlanguage=Python3 -visitor -no-listener tlang.g4
 ```
 
@@ -62,8 +63,8 @@ The main directory for source files is `ChironCore`. We have examples of the tur
 To pass parameters (input params) for running a turtle program, use the `-d` flag. Pass the parameters as a python dictionary. 
 
 ```bash
-$ cd ChironCore
-$ ./chiron.py -r ./example/example1.tl -d '{":x": 20, "y": 30, ":z": 20, ":p": 40}'
+cd ChironCore
+./chiron.py -r ./example/example1.tl -d '{":x": 20, "y": 30, ":z": 20, ":p": 40}'
 ```
 
 ### See help for other command line options
