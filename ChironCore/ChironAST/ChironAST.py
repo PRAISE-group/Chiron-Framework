@@ -297,6 +297,13 @@ class Num(Value):
     def __str__(self):
         return str(self.val)
 
+class Real(Value):
+    def __init__(self, v):
+        self.val = float(v)
+
+    def __str__(self):
+        return str(self.val)
+
 
 class Var(Value):
     def __init__(self, vname):

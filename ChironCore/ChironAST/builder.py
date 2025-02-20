@@ -148,6 +148,8 @@ class astGenPass(tlangVisitor):
     def visitValue(self, ctx: tlangParser.ValueContext):
         if ctx.NUM():
             return ChironAST.Num(ctx.NUM().getText())
+        if ctx.REAL():
+            return ChironAST.Real(ctx.REAL().getText())
         elif ctx.VAR():
             return ChironAST.Var(ctx.VAR().getText())
         elif ctx.array():

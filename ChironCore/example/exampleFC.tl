@@ -1,35 +1,59 @@
+
 def drawRectangle(:l, :b)
 {
-    if :l == 0 [
-        return
-    ]
-    if :l <= 1 [
-        :b = :b + 40
-    ] else [
-        :b = :b + 22
-    ]
-    drawRectangle(:l - 1, :b)
+    penup
+    goto (:l, :b)
+    pendown
+    forward :l
+    right 90
+    forward :b
+    right 90
+    forward :l
+    right 90
+    forward :b
+    penup
     return
 }
 
 def drawCircle()
 {
-    :r = 10
-    :p1 = 80
-    :p2 = 80
-    if :p1 == 0 [
-        :p1 = 2
-    ] else [
-        :p2 = 1
-    ]
-    return :p2, :p1
+    :vara = 20
+    :varb = 100
+    :varc = 60
+    repeat 1 [
+        goto (0, 0)
+        pendown
+        repeat 6 [
+            if (:vara != :varb) [
+                if ( :vara > :varb) [ right :vara ]
+                else [ left :varb ]
+            ]
+            else [
+            if ((:vara <= :varc) || (:varb <= :varc)) [
+                :vara = :varc / :vara
+                :varb = :varb / :varc
+                :varc = :varb
+            ]
+            ]
+            forward :vara
+            right :varb
+            forward :varc
+            left :varc
+        ]
+        left 45
+        ]
+        penup
+        return
 }
 
-:l, :b = drawCircle()
-print(:b)
-if :b <= 42 [
-   :l = :l + 40
-] else [
-   :l = :l + 22
-]
-print(:l)
+def factorial(:n)
+{
+    if :n == 1 [
+        return 1
+    ]
+    :ret = factorial(:n - 1)
+    return :ret * :n
+}
+
+drawRectangle(50, 50)
+drawCircle()
