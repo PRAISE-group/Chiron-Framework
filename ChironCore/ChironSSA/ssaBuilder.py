@@ -18,9 +18,10 @@ def buildSSA(tac, cfg, line2BlockMap):
     for (stmt, tgt), line in zip(tac, range(len(tac))):
         if isinstance(stmt, ChironTAC.TAC_AssignmentCommand):
             varCounter[stmt.lvar.__str__()] = 0
-            lastDeclaration[line2BlockMap[line]] = {}
+
     for node in cfg:
         phiStatements[node] = {}
+        lastDeclaration[node] = {}
 
     # Renamed the declarations of variables in TAC
     for (stmt, tgt), line in zip(tac, range(len(tac))):
