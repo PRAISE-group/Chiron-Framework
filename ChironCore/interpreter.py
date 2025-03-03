@@ -77,6 +77,9 @@ class Interpreter:
 class ProgramContext:
     pass
 
+class ClassList:
+    pass
+
 # TODO: move to a different file
 class ConcreteInterpreter(Interpreter):
     # Ref: https://realpython.com/beginners-guide-python-turtle
@@ -84,6 +87,7 @@ class ConcreteInterpreter(Interpreter):
     prg = None
     argument = None
     return_value = None
+    class_list = None
 
     # map of function name to their pc in the IR
     function_addresses = {}
@@ -93,6 +97,7 @@ class ConcreteInterpreter(Interpreter):
     def __init__(self, irHandler, params):
         super().__init__(irHandler, params)
         self.prg = ProgramContext()
+        self.class_list = ClassList()
         # Hooks Object:
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
@@ -207,41 +212,50 @@ class ConcreteInterpreter(Interpreter):
         return 1
 
     def handleClassDeclaration(self, stmt, tgt):
-        print(f"  Class Declaration: {stmt.className}")
+        print(f"Class Declaration: {stmt.className}")
 
-        className = stmt.className.replace(":","")
+        className = stmt.className.replace(":", "")
         attributes = stmt.attributes  # List of attribute assignments
 
         class_def = f"class {className}:\n"
 
+        # Handle normal attributes
         for attr in attributes:
-            attr, target= attr
+            attr, target = attr
             attr_name = str(attr.lvar).replace(":", "")
             attr_value = addContext(attr.rexpr) if attr.rexpr else None
             class_def += f"    {attr_name} = {attr_value}\n"
 
+        # Handle object attributes (initialize to None first)
+        for objectAttr in stmt.objectAttributes:
+            objectAttr, target = objectAttr
+            lhs = str(objectAttr.target).replace(":", "")
+            class_def += f"    {lhs} = None\n"  # ✅ Set to None first
+
         print(class_def, "Class Definition")
 
-        exec(class_def, globals(), self.prg.__dict__)  # Define class dynamically
+        # Step 1: Execute the class definition
+        exec(class_def, globals(), self.class_list.__dict__)
 
-        return 1        
+        # Step 2: Assign object attributes after class creation
+        for objectAttr in stmt.objectAttributes:
+            objectAttr, target = objectAttr
+            lhs = str(objectAttr.target).replace(":", "")
+            rhs = addContext(objectAttr.class_name).replace("self.prg.", "self.class_list.")
+            # setattr(getattr(self.class_list, className), lhs, getattr(self.class_list, rhs)())
+            exec(f"self.class_list.{className}.{lhs} = {rhs}()")
 
+        return 1
 
     def handleObjectInstantiation(self, stmt, tgt):
         print(f"Creating new instance of {stmt.class_name} for {stmt.target}")
 
-        x= self.prg.a()
-        print(x)
-
-
         lhs = str(stmt.target).replace(":","")
-        rhs = addContext(stmt.class_name)
+        rhs = addContext(stmt.class_name).replace("self.prg.", "self.class_list.")
 
-        # Generate and execute Python class instantiation dynamically
-        instance_code = f"{lhs} = {rhs}()"
-        print(instance_code)
         # exec(instance_code, globals(), self.prg.__dict__)  # Store in self.prg
         exec(f"self.prg.{lhs} = {rhs}()")
+        print(f"Instance created: {lhs} -> {getattr(self.prg, lhs)}")
 
         return 1
 

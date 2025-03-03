@@ -80,9 +80,9 @@ expression :
 
 classDeclaration : 'class' VAR '{' classBody '}' ;
 
-classBody : (classAttributeDeclaration)* ;
+classBody : (classAttributeDeclaration)* (functionDeclaration)*;
 
-classAttributeDeclaration : assignment ';' ;
+classAttributeDeclaration : assignment | objectInstantiation ;
 
 objectInstantiation : ( VAR | objectOrArrayAccess) '=' 'new' VAR '(' ')' ;
 
@@ -98,9 +98,10 @@ functionCallWithReturnValues : ( VAR | objectOrArrayAccess) ( ',' ( VAR | object
 // function declaration
 functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
 
-parameters : ( VAR ( ',' VAR )* )? ;
+parameters : ( ( VAR | Self ) ( ',' VAR )* )? ;
 arguments : ( expression ( ',' expression )* )? ;
 
+Self : 'self' ;
 
 // TODO :
 // procedure_declaration : 'to' NAME (VAR)+ strict_ilist 'end' ;

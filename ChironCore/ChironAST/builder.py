@@ -125,16 +125,18 @@ class astGenPass(tlangVisitor):
 
     def visitClassDeclaration(self, ctx: tlangParser.ClassDeclarationContext):
         className = ctx.VAR().getText()  # Extract class name
-
         attributes = []
+        objectAttributes = []
         if ctx.classBody():
             for attrDecl in ctx.classBody().classAttributeDeclaration():
-                assign_list = self.visitAssignment(attrDecl.assignment())
-                attributes.extend(assign_list)
-
-        print(className, attributes)
-
-        return [(ChironAST.ClassDeclarationCommand(className, attributes), 1)]
+                if isinstance(attrDecl.assignment(), tlangParser.AssignmentContext):
+                    assign_instr = self.visitAssignment(attrDecl.assignment())
+                    attributes.extend(assign_instr)
+                if isinstance(attrDecl.objectInstantiation(), tlangParser.ObjectInstantiationContext):
+                    objectAttributes.extend(self.visitObjectInstantiation(attrDecl.objectInstantiation()))
+        
+        # Extract methods of the class
+        return [(ChironAST.ClassDeclarationCommand(className, attributes, objectAttributes), 1)]
 
     # def visitArrayAccess(self, ctx:tlangParser.ArrayAccessContext):
     #     var = ctx.VAR().getText()

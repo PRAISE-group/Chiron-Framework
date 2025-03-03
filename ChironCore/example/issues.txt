@@ -1,3 +1,5 @@
 1. loop should have expression rather than just value
 2. condition should be true for non zero values and not just true/false
-3. 
+3. class currently should have at least one member or python dynamic class initiation throw indentation error
+4. Setting objects to N0ne in declaration is not done yet
+5. instruction_list can contain both function declaration and classDeclaration this can cause problems

@@ -36,7 +36,6 @@ def sqroot(:n)
 
 def drawRangoli(:size)
 {
-    penup
     pendown
     forward :size
     left 90
@@ -56,5 +55,12 @@ def drawRangoli(:size)
     return
 }
 
-goto (0, 0)
+penup
+class :Point {
+    :x = -300
+    :y = -300
+}
+:point = new :Point()
+goto (:point.:x, :point.:y)
+
 drawRangoli(:size)

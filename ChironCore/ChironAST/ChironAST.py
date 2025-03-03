@@ -31,13 +31,15 @@ class AssignmentCommand(Instruction):
 
 class ClassDeclarationCommand(Instruction):
 
-    def __init__(self, className, attributes):
+    def __init__(self, className, attributes, objectAttributes):
         self.className = className  # Class name as a string
         self.attributes = attributes  # List of AssignmentCommand objects
+        self.objectAttributes = objectAttributes
 
     def __str__(self):
         attr_str = "\n    ".join(str(attr) for attr in self.attributes)
-        return f"class {self.className} {{\n    {attr_str if attr_str else '    // No attributes'}\n}}"
+        obj_attr_str = "\n    ".join(str(attr[0]) for attr in self.objectAttributes)
+        return f"class {self.className} {{\n    {attr_str if attr_str else '    // No attributes'}\n\n    {obj_attr_str if obj_attr_str else '    // No object attributes'}\n}}"
 
 
 class ConditionCommand(Instruction):
