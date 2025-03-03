@@ -1,3 +1,5 @@
+#pragma once
+
 #include "llvm/IR/Value.h"
 #include <algorithm>
 #include <memory>
@@ -58,14 +60,14 @@ public:
 };
 
 class BinCondExpressionAST : public ExpressionAST {
-    char op;
+    std::string op;
     std::unique_ptr<ExpressionAST> LHS, RHS;
 
 public:
-    BinCondExpressionAST(char op, std::unique_ptr<ExpressionAST> LHS, std::unique_ptr<ExpressionAST> RHS) :
+    BinCondExpressionAST(std::string op, std::unique_ptr<ExpressionAST> LHS, std::unique_ptr<ExpressionAST> RHS) :
         op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
 
-    llvm::Value* codegen() override; 
+    llvm::Value* codegen() override;
 };
 
 class CallExpressionAST : public ExpressionAST {
