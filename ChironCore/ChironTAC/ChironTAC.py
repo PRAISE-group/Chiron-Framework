@@ -3,10 +3,10 @@ class TAC(object):
     pass
 
 # Instruction Classes
-class TAC_Instruction(TAC):
+class Instruction(TAC):
     pass
 
-class TAC_AssignmentCommand(TAC_Instruction):
+class AssignmentCommand(Instruction):
     def __init__(self, lvar, rvar1, rvar2, op):
         self.lvar = lvar
         self.rvar1 = rvar1
@@ -16,21 +16,21 @@ class TAC_AssignmentCommand(TAC_Instruction):
     def __str__(self):
         return self.lvar.__str__() + " = " + self.rvar1.__str__() + " " + self.op + " " + self.rvar2.__str__()
     
-class TAC_ConditionCommand(TAC_Instruction):
+class ConditionCommand(Instruction):
     def __init__(self, condition):
         self.cond = condition
 
     def __str__(self):
         return "BRANCH: " + self.cond.__str__()
     
-class TAC_AssertCommand(TAC_Instruction):
+class AssertCommand(Instruction):
     def __init__(self, condition):
         self.cond = condition
 
     def __str__(self):
         return "ASSERT: " + self.cond.__str__()
     
-class TAC_MoveCommand(TAC_Instruction):
+class MoveCommand(Instruction):
     def __init__(self, motion, var):
         self.direction = motion
         self.var = var
@@ -38,14 +38,14 @@ class TAC_MoveCommand(TAC_Instruction):
     def __str__(self):
         return "MOVE: " + self.direction + " " + self.var.__str__()
     
-class TAC_PenCommand(TAC_Instruction):
+class PenCommand(Instruction):
     def __init__(self, penstat):
         self.status = penstat
 
     def __str__(self):
         return "PEN: " + self.status
     
-class TAC_GotoCommand(TAC_Instruction):
+class GotoCommand(Instruction):
     def __init__(self, x, y):
         self.xcor = x
         self.ycor = y
@@ -53,22 +53,22 @@ class TAC_GotoCommand(TAC_Instruction):
     def __str__(self):
         return "goto " + str(self.xcor) + " " + str(self.ycor)
     
-class TAC_NoOpCommand(TAC_Instruction):
+class NoOpCommand(Instruction):
     def __str__(self):
         return "NoOp"
     
-class TAC_PauseCommand(TAC_Instruction):
+class PauseCommand(Instruction):
     def __str__(self):
         return "Pause"
     
 
-class TAC_Expression(TAC):
+class Expression(TAC):
     pass
 # -- Arithmetic Expressions ------------------------------------------
-class TAC_ArithExpr(TAC_Expression):
+class ArithExpr(Expression):
     pass
 
-class TAC_BinArithOp(TAC_ArithExpr):
+class BinArithOp(ArithExpr):
     def __init__(self, lvar, rvar, op):
         self.lvar = lvar
         self.rvar = rvar
@@ -77,24 +77,24 @@ class TAC_BinArithOp(TAC_ArithExpr):
     def __str__(self):
         return self.lvar.__str__() + " " + self.op + " " + self.rvar.__str__()
 
-class TAC_Sum(TAC_BinArithOp):
+class Sum(BinArithOp):
     def __init__(self, lvar, rvar):
-        TAC_BinArithOp.__init__(self, lvar, rvar, "+")
+        BinArithOp.__init__(self, lvar, rvar, "+")
 
-class TAC_Sub(TAC_BinArithOp):
+class Sub(BinArithOp):
     def __init__(self, lvar, rvar):
-        TAC_BinArithOp.__init__(self, lvar, rvar, "-")
+        BinArithOp.__init__(self, lvar, rvar, "-")
 
-class TAC_Mul(TAC_BinArithOp):
+class Mul(BinArithOp):
     def __init__(self, lvar, rvar):
-        TAC_BinArithOp.__init__(self, lvar, rvar, "*")
+        BinArithOp.__init__(self, lvar, rvar, "*")
 
-class TAC_Div(TAC_BinArithOp):
+class Div(BinArithOp):
     def __init__(self, lvar, rvar):
-        TAC_BinArithOp.__init__(self, lvar, rvar, "/")
+        BinArithOp.__init__(self, lvar, rvar, "/")
 
 
-class TAC_UnaryArithOp(TAC_ArithExpr):
+class UnaryArithOp(ArithExpr):
     def __init__(self, op, var):
         self.op = op
         self.var = var
@@ -102,16 +102,16 @@ class TAC_UnaryArithOp(TAC_ArithExpr):
     def __str__(self):
         return self.op + " " + self.var.__str__()
 
-class TAC_UMinus(TAC_UnaryArithOp):
+class UMinus(UnaryArithOp):
     def __init__(self, var):
-        TAC_UnaryArithOp.__init__(self, "-", var)
+        UnaryArithOp.__init__(self, "-", var)
 
 
 # -- Boolean Expressions --------------------------------------------
-class TAC_BoolExpr(TAC_Expression):
+class BoolExpr(Expression):
     pass
 
-class TAC_BinBoolOp(TAC_BoolExpr):
+class BinBoolOp(BoolExpr):
     def __init__(self, lvar, rvar, op):
         self.lvar = lvar
         self.rvar = rvar
@@ -120,75 +120,75 @@ class TAC_BinBoolOp(TAC_BoolExpr):
     def __str__(self):
         return self.lvar.__str__() + " " + self.op + " " + self.rvar.__str__()
     
-class TAC_And(TAC_BinBoolOp):
+class And(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, "and")
+        BinBoolOp.__init__(self, lvar, rvar, "and")
 
-class TAC_Or(TAC_BinBoolOp):
+class Or(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, "or")
+        BinBoolOp.__init__(self, lvar, rvar, "or")
 
-class TAC_LT(TAC_BinBoolOp):
+class LT(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, "<")
+        BinBoolOp.__init__(self, lvar, rvar, "<")
 
-class TAC_GT(TAC_BinBoolOp):
+class GT(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, ">")
+        BinBoolOp.__init__(self, lvar, rvar, ">")
 
-class TAC_LTE(TAC_BinBoolOp):
+class LTE(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, "<=")
+        BinBoolOp.__init__(self, lvar, rvar, "<=")
 
-class TAC_GTE(TAC_BinBoolOp):
+class GTE(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, ">=")
+        BinBoolOp.__init__(self, lvar, rvar, ">=")
 
-class TAC_EQ(TAC_BinBoolOp):
+class EQ(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, "==")
+        BinBoolOp.__init__(self, lvar, rvar, "==")
 
-class TAC_NEQ(TAC_BinBoolOp):
+class NEQ(BinBoolOp):
     def __init__(self, lvar, rvar):
-        TAC_BinBoolOp.__init__(self, lvar, rvar, "!=")
+        BinBoolOp.__init__(self, lvar, rvar, "!=")
 
-class TAC_Not(TAC_BoolExpr):
+class Not(BoolExpr):
     def __init__(self, var):
         self.var = var
 
     def __str__(self):
         return "not " + self.var.__str__()
     
-class TAC_PenStatus(TAC_Expression):
+class PenStatus(Expression):
     def __str__(self):
         return "penstatus"
     
-class TAC_BoolTrue(TAC_Expression):
+class BoolTrue(Expression):
     def __str__(self):
         return "true"
     
-class TAC_BoolFalse(TAC_Expression):
+class BoolFalse(Expression):
     def __str__(self):
         return "false"
     
 # -- Value Expressions ----------------------------------------------
-class TAC_Value(TAC_Expression):
+class Value(Expression):
     pass
 
-class TAC_Num(TAC_Value):
+class Num(Value):
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return str(self.value)
     
-class TAC_Var(TAC_Value):
+class Var(Value):
     def __init__(self, name):
         self.name = name
 
     def __str__(self):
         return self.name
     
-class TAC_Unused(TAC_Value):
+class Unused(Value):
     def __str__(self):
         return ""

@@ -410,13 +410,13 @@ if __name__ == "__main__":
         # tacGen.printTAC() # Printing TAC
 
         cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
-        cfgB.dumpCFG(cfg, 'tac_cfg.png')
+        cfgB.dumpCFG(cfg, 'tac_cfg')
 
         ssa = buildSSA(tacGen.tac, cfg, line2BlockMap) # Building SSA
         printSSA(ssa) # Printing SSA
 
         ssa_cfg, ssa_line2BlockMap = cfgB.buildCFG(ssa, "ssa_cfg", False) # Building CFG for SSA
-        cfgB.dumpCFG(ssa_cfg, 'ssa_cfg.png')
+        cfgB.dumpCFG(ssa_cfg, 'ssa_cfg')
 
         print("\nConverting program to SMT-LIB format..\n")
         smt = bmc.BMC(ssa)
