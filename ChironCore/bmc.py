@@ -28,8 +28,8 @@ class BMC:
 
             elif isinstance(stmt, ChironSSA.AssignmentCommand):
                 lvar = None
-                rvar1 = None
-                rvar2 = None
+                rvar1 = ChironSSA.Unused()
+                rvar2 = ChironSSA.Unused()
                 if stmt.op in ["+", "-", "*", "/"]:
                     lvar = z3.Int(stmt.lvar.name)
                     if isinstance(stmt.rvar1, ChironSSA.Var):
@@ -68,6 +68,8 @@ class BMC:
                         rvar1 = z3.BoolVal(True)
                     elif isinstance(stmt.rvar1, ChironSSA.BoolFalse):
                         rvar1 = z3.BoolVal(False)
+                elif stmt.op == "":
+                    continue
                 else:
                     raise Exception("Unknown SSA instruction")                    
 

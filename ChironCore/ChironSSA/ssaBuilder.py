@@ -61,8 +61,8 @@ def buildSSA(tac, cfg, line2BlockMap):
                     varCounter[var] += 1
 
         if isinstance(stmt, ChironTAC.AssignmentCommand):
-            rvar1 = None
-            rvar2 = None
+            rvar1 = ChironSSA.Unused()
+            rvar2 = ChironSSA.Unused()
             if isinstance(stmt.rvar1, ChironTAC.Var):
                 if stmt.rvar1.__str__() not in lastUsed.keys():
                     lastUsed[stmt.rvar1.__str__()] = 0
@@ -182,3 +182,4 @@ def printSSA(ssa):
     print("\nSSA Form:")
     for (stmt, tgt), line in zip(ssa, range(len(ssa))):
             print(f"[L{line}]".rjust(5), stmt, f"[{tgt}]")
+

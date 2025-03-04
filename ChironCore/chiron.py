@@ -407,7 +407,7 @@ if __name__ == "__main__":
 
         tacGen = TACGenerator(ir) # Converting IR to TAC
         tacGen.generateTAC()
-        # tacGen.printTAC() # Printing TAC
+        tacGen.printTAC() # Printing TAC
 
         cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
         cfgB.dumpCFG(cfg, 'tac_cfg')
