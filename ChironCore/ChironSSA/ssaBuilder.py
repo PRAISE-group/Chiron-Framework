@@ -34,6 +34,9 @@ def buildSSA(tac, cfg, line2BlockMap):
     for node in cfg:
         predes = cfg.predecessors(node)
         for parent in predes:
+            if lastDeclaration.get(parent) == None:
+                continue
+
             for var in lastDeclaration[parent]:
                 if var not in phiStatements[node]:
                     phiStatements[node][var] = []
