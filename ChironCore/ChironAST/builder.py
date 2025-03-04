@@ -53,8 +53,11 @@ class astGenPass(tlangVisitor):
 
         return instrList
 
-    def visitFunctionDeclaration(self, ctx: tlangParser.FunctionDeclarationContext):
-        functionName = ctx.NAME().getText()
+    def visitFunctionDeclaration(self, ctx: tlangParser.FunctionDeclarationContext, className = None):
+        if className:
+            functionName = className + "@" + ctx.NAME().getText()
+        else:
+            functionName = ctx.NAME().getText()
         functionParams = [param.getText() for param in ctx.parameters(
         ).VAR()] if ctx.parameters() is not None else None
         functionBody = self.visit(ctx.strict_ilist())
@@ -62,9 +65,16 @@ class astGenPass(tlangVisitor):
 
     def visitFunctionCall(self, ctx: tlangParser.FunctionCallContext):
         functionName = ctx.NAME().getText()
+        print("######caller context", ctx.methodCaller())
+        callerClass = self.visitMethodCaller(ctx.methodCaller()) if ctx.methodCaller().children is not None else None
         functionArgs = [self.visit(arg) for arg in ctx.arguments(
-        ).expression()] if ctx.arguments() is not None else None
-        return [(ChironAST.FunctionCallCommand(functionName, functionArgs), 1)]
+        ).expression()] if ctx.arguments() is not None else []
+        if callerClass:
+            print("###Caller Class", str(callerClass))
+            print("##########")
+            functionArgs.insert(0, callerClass) 
+        print(functionArgs)
+        return [(ChironAST.FunctionCallCommand(functionName, functionArgs, callerClass), 1)]
 
     def visitFunctionCallWithReturnValues(self, ctx: tlangParser.FunctionCallWithReturnValuesContext):
         functionCallCommand = self.visitFunctionCall(ctx.functionCall())
@@ -83,11 +93,13 @@ class astGenPass(tlangVisitor):
         # print(ctx.VAR().getText(),ctx.expression().getText())
         lval = self.getLval(ctx)
         rval = self.visit(ctx.expression())
+        print(lval, rval, "Inside assignment")
         return [(ChironAST.AssignmentCommand(lval, rval), 1)]
 
     def visitObjectOrArrayAccess(self, ctx: tlangParser.ObjectOrArrayAccessContext):
-        # Start with the base variable (first part of access)
+
         base = ctx.baseAccess().VAR().getText()
+        
 
         # Traverse through the nested access ('.' for attributes, '[]' for indices)
         accesses = []
@@ -113,6 +125,32 @@ class astGenPass(tlangVisitor):
             i += 1  # Move to the next child
 
         return ChironAST.ObjectOrArrayAccess(base, accesses)
+    
+    def visitMethodCaller(self, ctx: tlangParser.MethodCallerContext):
+        accesses = []
+        i = 0 
+
+        while i < len(ctx.children):
+            child = ctx.children[i]
+
+            if isinstance(child, TerminalNodeImpl) :
+                # Current child must be a VAR (attribute access)
+                accesses.append(ctx.children[i].getText())
+                i += 1  # skip '.'
+
+            elif child.getText() == '[':
+                # Array access: Process the expression inside `[]`
+                i += 1  # Move to expression inside brackets
+                # Visit and evaluate expression
+                expr = self.visit(ctx.children[i])
+                accesses.append([expr.val])  # Store index as a list
+
+                i += 2  # Skip closing ']'
+
+            i += 1  # Move to the next child
+
+        print(accesses)
+        return ChironAST.MethodCaller(accesses)
 
     def visitObjectInstantiation(self, ctx: tlangParser.ObjectInstantiationContext):
         # Extract the left-hand side (target variable or object access)
@@ -124,9 +162,11 @@ class astGenPass(tlangVisitor):
         return [(ChironAST.ObjectInstantiationCommand(lval, class_name), 1)]
 
     def visitClassDeclaration(self, ctx: tlangParser.ClassDeclarationContext):
-        className = ctx.VAR().getText()  # Extract class name
+        className = ctx.VAR()[0].getText()  # Extract class name
+        baseClasses = [var.getText() for var in ctx.VAR()[1:]] if len(ctx.VAR()) > 1 else None # Extract base classes
         attributes = []
         objectAttributes = []
+        methods = []
         if ctx.classBody():
             for attrDecl in ctx.classBody().classAttributeDeclaration():
                 if isinstance(attrDecl.assignment(), tlangParser.AssignmentContext):
@@ -134,9 +174,10 @@ class astGenPass(tlangVisitor):
                     attributes.extend(assign_instr)
                 if isinstance(attrDecl.objectInstantiation(), tlangParser.ObjectInstantiationContext):
                     objectAttributes.extend(self.visitObjectInstantiation(attrDecl.objectInstantiation()))
-        
+            for methodCtx in ctx.classBody().functionDeclaration():
+                methods.extend(self.visitFunctionDeclaration(methodCtx, className))
         # Extract methods of the class
-        return [(ChironAST.ClassDeclarationCommand(className, attributes, objectAttributes), 1)]
+        return [(ChironAST.ClassDeclarationCommand(className, baseClasses, attributes, objectAttributes), 1)] + methods
 
     # def visitArrayAccess(self, ctx:tlangParser.ArrayAccessContext):
     #     var = ctx.VAR().getText()
@@ -162,11 +203,14 @@ class astGenPass(tlangVisitor):
     def visitFunctionCallExpr(self, ctx: tlangParser.FunctionCallExprContext):
         functionCallCtx = ctx.functionCall()
         functionName = functionCallCtx.NAME().getText()
+        callerClass = self.visitMethodCaller(functionCallCtx.methodCaller()) if functionCallCtx.methodCaller().children is not None else None
         functionArgs = [self.visit(arg) for arg in functionCallCtx.arguments(
-        ).expression()] if functionCallCtx.arguments() is not None else None
+        ).expression()] if functionCallCtx.arguments() is not None else []
+        if callerClass:
+            functionArgs.insert(0, callerClass)
         returnLocation = ChironAST.Var(":__reg_" + str(self.virtualRegCount))
         self.virtualRegCount += 1
-        currStmtList = [(ChironAST.FunctionCallCommand(functionName, functionArgs), 1)] + [(ChironAST.ReadReturnCommand([returnLocation]), 1)]
+        currStmtList = [(ChironAST.FunctionCallCommand(functionName, functionArgs, callerClass), 1)] + [(ChironAST.ReadReturnCommand([returnLocation]), 1)]
         self.subStmtList.extend(currStmtList)
         return returnLocation
 

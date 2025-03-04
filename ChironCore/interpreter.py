@@ -8,6 +8,7 @@ Release="Chiron v5.3"
 def addContext(s):
     s= re.sub(r'(?<!\.):', 'self.prg.', str(s).strip())
     s= str(s).strip().replace(":", "")
+
     return s
 
 
@@ -102,10 +103,14 @@ class ConcreteInterpreter(Interpreter):
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
+        print("###########################Intermediate Representation (IR):#############")
+        for index, instruction in enumerate(self.ir):
+            print(f"{index}: {instruction} | {instruction[0]}")
 
     def interpret(self):
         print("Program counter : ", self.pc)
         stmt, tgt = self.ir[self.pc]
+
         print(stmt, stmt.__class__.__name__, tgt)
 
         self.sanityCheck(self.ir[self.pc])
@@ -169,7 +174,13 @@ class ConcreteInterpreter(Interpreter):
         return tgt
     
     def handleFunctionCall(self, stmt, tgt):
-        print(f"Function Call: {stmt.name}")
+        print("[1]", stmt, "printing stmt")
+        if stmt.caller:
+            print("FINDING CLASS NAME!###################")
+            print("Caller: ", stmt.caller)
+            caller_class = eval(addContext(stmt.caller)).__class__.__name__
+            print(caller_class)
+            stmt.name = ":" + str(caller_class)+ "@" + str(stmt.name)
         self.call_stack.append(self.pc + 1)
         # Save the current program context
         self.call_stack.append(self.prg)
@@ -208,7 +219,9 @@ class ConcreteInterpreter(Interpreter):
         for param in reversed(stmt.params):
             param = str(param).replace(":", "")
             param_value = self.call_stack.pop()
-            exec(f"self.prg.{param} = {param_value}")
+            print("PRINTING PARAM VALUE###############", param_value, param)
+            setattr(self.prg, param, param_value)
+            print("PRINTING PARAM VALUE###############", getattr(self.prg, param))
         return 1
 
     def handleClassDeclaration(self, stmt, tgt):
@@ -217,7 +230,18 @@ class ConcreteInterpreter(Interpreter):
         className = stmt.className.replace(":", "")
         attributes = stmt.attributes  # List of attribute assignments
 
-        class_def = f"class {className}:\n"
+        # Handle inheritance if base classes exist
+        if hasattr(stmt, "baseClasses") and stmt.baseClasses:
+            # Build a comma-separated list of base classes.
+            # We assume the base classes are already stored in self.class_list.
+            base_classes = [getattr(self.class_list, str(b).replace(":","")) for b in stmt.baseClasses]
+            base_str = ", ".join([b.__name__ for b in base_classes])
+            class_header = f"class {className}({base_str}):\n"
+
+        else:
+            class_header = f"class {className}:\n"
+
+        class_def = class_header
 
         # Handle normal attributes
         for attr in attributes:
@@ -230,11 +254,11 @@ class ConcreteInterpreter(Interpreter):
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
-            class_def += f"    {lhs} = None\n"  # ✅ Set to None first
+            class_def += f"    {lhs} = None\n"
 
         print(class_def, "Class Definition")
 
-        # Step 1: Execute the class definition
+        # Step 1: Execute the class definition (store it inside self.class_list)
         exec(class_def, globals(), self.class_list.__dict__)
 
         # Step 2: Assign object attributes after class creation
@@ -242,10 +266,10 @@ class ConcreteInterpreter(Interpreter):
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
             rhs = addContext(objectAttr.class_name).replace("self.prg.", "self.class_list.")
-            # setattr(getattr(self.class_list, className), lhs, getattr(self.class_list, rhs)())
             exec(f"self.class_list.{className}.{lhs} = {rhs}()")
 
         return 1
+
 
     def handleObjectInstantiation(self, stmt, tgt):
         print(f"Creating new instance of {stmt.class_name} for {stmt.target}")

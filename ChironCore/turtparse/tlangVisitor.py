@@ -179,6 +179,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#methodCaller.
+    def visitMethodCaller(self, ctx:tlangParser.MethodCallerContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#functionCallWithReturnValues.
     def visitFunctionCallWithReturnValues(self, ctx:tlangParser.FunctionCallWithReturnValuesContext):
         return self.visitChildren(ctx)

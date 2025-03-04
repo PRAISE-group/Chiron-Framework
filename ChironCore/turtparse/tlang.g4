@@ -78,7 +78,7 @@ expression :
  	   ;
 
 
-classDeclaration : 'class' VAR '{' classBody '}' ;
+classDeclaration : 'class' VAR ('(' (VAR)* ')')? '{' classBody '}' ;
 
 classBody : (classAttributeDeclaration)* (functionDeclaration)*;
 
@@ -91,17 +91,16 @@ objectOrArrayAccess : baseAccess ('.' VAR | '[' expression ']')+ ;
 baseAccess : VAR ;
 
 // function call
-functionCall : NAME '(' arguments ')' ;
+functionCall : methodCaller NAME '(' arguments ')' ;
+methodCaller : ((VAR | '[' expression ']') '.')* ;
 
 functionCallWithReturnValues : ( VAR | objectOrArrayAccess) ( ',' ( VAR | objectOrArrayAccess) )+ '=' functionCall ;
 
 // function declaration
 functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
 
-parameters : ( ( VAR | Self ) ( ',' VAR )* )? ;
+parameters : ( VAR  ( ',' VAR )* )? ;
 arguments : ( expression ( ',' expression )* )? ;
-
-Self : 'self' ;
 
 // TODO :
 // procedure_declaration : 'to' NAME (VAR)+ strict_ilist 'end' ;

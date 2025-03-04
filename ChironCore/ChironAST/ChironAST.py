@@ -31,10 +31,11 @@ class AssignmentCommand(Instruction):
 
 class ClassDeclarationCommand(Instruction):
 
-    def __init__(self, className, attributes, objectAttributes):
+    def __init__(self, className, baseClasses, attributes, objectAttributes):
         self.className = className  # Class name as a string
         self.attributes = attributes  # List of AssignmentCommand objects
         self.objectAttributes = objectAttributes
+        self.baseClasses = baseClasses
 
     def __str__(self):
         attr_str = "\n    ".join(str(attr) for attr in self.attributes)
@@ -115,13 +116,17 @@ class FunctionDeclarationCommand(Instruction):
 
 
 class FunctionCallCommand(Instruction):
-    def __init__(self, fname, arguments=None):
+    def __init__(self, fname, arguments=None, caller = None):
         self.name = fname
         self.args = arguments if arguments is not None else []
+        self.caller = caller
 
     def __str__(self):
         args_str = ", ".join(str(arg) for arg in self.args)
-        return f"{self.name}({args_str})"
+        if self.caller:
+            return f"{self.caller}.{self.name}({args_str})"
+        else:
+            return f"{self.name}({args_str})"
 
 
 class ReturnCommand(Instruction):
@@ -348,6 +353,19 @@ class ObjectOrArrayAccess(Value):
                 result += f".{access}"
         return result
 
+class MethodCaller:
+    def __init__(self, caller):
+        self.caller = caller
+
+    def __str__(self):
+        result = ""
+        for access in self.caller:
+            if isinstance(access, list):  # Array indexing
+                indices_str = "".join(f"[{idx}]" for idx in access)
+                result += indices_str
+            else:  # Object attribute access
+                result += f".{access}"
+        return result[1:]
 
 class ObjectInstantiationCommand(Instruction):
     def __init__(self, target, class_name):
