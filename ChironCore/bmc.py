@@ -3,13 +3,31 @@ This file is used to convert the SSA IR to SMT-LIB format.
 '''
 import z3
 from ChironSSA import ChironSSA
+from cfg import cfgBuilder
 
 class BMC:
     def __init__(self, ir):
         self.solver = z3.Solver()
         self.ir = ir
+        self.cfg, _ = cfgBuilder.buildCFG(ir)
+        self.buildConditions()
 
-    def convert_SSA_to_SMT(self):
+    def buildConditions(self):
+        topological_order = list(self.cfg.get_topological_order())
+        for node in topological_order:
+            for next in self.cfg.successors(node):
+                next.add_condition(node.get_condition())
+
+            if len(list(self.cfg.successors(node))) > 1:
+                condition = z3.Bool(node.instrlist[-1][0].cond.name)
+                for next in self.cfg.successors(node):
+                    if self.cfg.get_edge_label(node, next) == 'Cond_True':
+                        next.add_condition(condition)
+                    else:
+                        next.add_condition(z3.Not(condition))
+            print(f"Node {node.name} has condition {node.get_condition()}")
+
+    def convertBasicBlock(self):
         for stmt, tgt in self.ir:
             if isinstance(stmt, ChironSSA.PhiCommand): # TODO: Add support for Phi commands
                 lvar = z3.Int(stmt.lvar.name)
@@ -130,3 +148,4 @@ class BMC:
             print(self.solver.model())
         else:
             print("Condition always holds true!")
+

@@ -1,11 +1,13 @@
 #!/usr/bin/python3.8
 
 import networkx as nx
+import z3
 
 class BasicBlock:
     def __init__(self, bbname):
         self.name = bbname
         self.instrlist = []
+        self.condition = z3.BoolVal(True)
         if bbname == "START" or bbname == "END":
             self.irID = bbname
         else:
@@ -20,9 +22,15 @@ class BasicBlock:
     def extend(self, instructions):
         self.instrlist.extend(instructions)
 
+    def add_condition(self, condition):
+        self.condition = z3.And(self.condition, condition)
+
+    def get_condition(self):
+        return self.condition
+
     def label(self):
         if len(self.instrlist):
-            return '\n'.join(str(instr[0])+'; L'+ str(instr[1]) for instr in self.instrlist)
+            return self.name + '\n' + '\n'.join(str(instr[0])+'; L'+ str(instr[1]) for instr in self.instrlist)
         else:
             return self.name
 
@@ -86,4 +94,6 @@ class ChironCFG:
         edata = self.nxgraph.get_edge_data(u,v)
         return edata['label'] if len(edata) else 'T'
 
+    def get_topological_order(self):
+        return list(nx.topological_sort(self.nxgraph))
     # TODO: add more methods to expose other methods of the Networkx.DiGraph

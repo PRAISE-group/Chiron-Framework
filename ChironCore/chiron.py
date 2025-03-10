@@ -420,6 +420,6 @@ if __name__ == "__main__":
 
         print("\nConverting program to SMT-LIB format..\n")
         smt = bmc.BMC(ssa)
-        smt.convert_SSA_to_SMT()
+        smt.convertBasicBlock()
         smt.solve()
         print("DONE..")
