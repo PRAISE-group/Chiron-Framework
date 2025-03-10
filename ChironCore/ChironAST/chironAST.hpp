@@ -33,6 +33,10 @@ class VariableExpressionAST : public ExpressionAST {
 public:
     VariableExpressionAST(const std::string &Name) : 
         name(Name) {}
+    // Adding to handle loop counter variable - clone method
+    unique_ptr<VariableExpressionAST> clone() {
+        return make_unique<VariableExpressionAST>(name);
+    }
 
     llvm::Value *codegen() override;
 };
