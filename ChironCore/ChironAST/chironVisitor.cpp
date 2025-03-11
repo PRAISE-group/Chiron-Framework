@@ -1,5 +1,5 @@
 #include "tlangVisitor.h"
-#include "ChironAST.hpp"
+#include "chironAST.hpp"
 #include <any>
 #include <memory>
 #include <vector>
@@ -25,7 +25,12 @@ public:
     }
 
     any visitStrict_ilist(tlangParser::Strict_ilistContext *ctx) override {
-        return visitInstruction_list(ctx);
+        vector<unique_ptr<InstrAST>> instructions;
+        for (auto *instr : ctx->instruction()) {
+            auto result = any_cast<vector<unique_ptr<InstrAST>>>(visit(instr));
+            move(result.begin(), result.end(), back_inserter(instructions));
+        }
+        return instructions;
     }
 
     any visitInstruction(tlangParser::InstructionContext *ctx) override {
@@ -72,7 +77,7 @@ public:
         auto yNum = dynamic_cast<NumberExpressionAST*>(y.get());
         if (!xNum || !yNum) throw runtime_error("Goto requires numeric arguments");
         
-        return vector<unique_ptr<InstrAST>>{make_unique<GotoCallExprAST>(xNum->val, yNum->val)};
+        return vector<unique_ptr<InstrAST>>{make_unique<GotoCallExprAST>(xNum->getVal(), yNum->getVal())};
     }
 
     any visitAssignment(tlangParser::AssignmentContext *ctx) override {
@@ -99,21 +104,21 @@ public:
 
     any visitUnaryExpr(tlangParser::UnaryExprContext *ctx) override {
         auto expr = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression()));
-        return make_unique<UnaryArithExpressionAST>('-', move(expr));
+        return vector<unique_ptr<InstrAST>>{make_unique<UnaryArithExpressionAST>('-', move(expr))};
     }
 
     any visitAddExpr(tlangParser::AddExprContext *ctx) override {
         auto lhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(0)));
         auto rhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(1)));
         string op = ctx->additive()->PLUS() ? "+" : "-";
-        return make_unique<BinArithExpressionAST>(op[0], move(lhs), move(rhs));
+        return vector<unique_ptr<InstrAST>>{make_unique<BinArithExpressionAST>(op[0], move(lhs), move(rhs))};
     }
 
     any visitMulExpr(tlangParser::MulExprContext *ctx) override {
         auto lhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(0)));
         auto rhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(1)));
         string op = ctx->multiplicative()->MUL() ? "*" : "/";
-        return make_unique<BinArithExpressionAST>(op[0], move(lhs), move(rhs));
+        return vector<unique_ptr<InstrAST>>{make_unique<BinArithExpressionAST>(op[0], move(lhs), move(rhs))};
     }
 
     any visitParenExpr(tlangParser::ParenExprContext *ctx) override {
@@ -122,19 +127,19 @@ public:
 
     any visitCondition(tlangParser::ConditionContext *ctx) override {
         if (ctx->PENCOND()) {
-            return make_unique<PenCallExprAST>(false);
+            return vector<unique_ptr<InstrAST>>{make_unique<PenCallExprAST>(false)};
         }
 
         if (ctx->NOT()) {
             auto cond = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition(0)));
-            return make_unique<UnaryArithExpressionAST>('!', move(cond));
+            return vector<unique_ptr<InstrAST>>{make_unique<UnaryArithExpressionAST>('!', move(cond))};
         }
 
         if (auto logicOp = ctx->logicOp()) {
             auto lhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition(0)));
             auto rhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition(1)));
             string op = logicOp->AND() ? "&&" : "||";
-            return make_unique<BinCondExpressionAST>(op, move(lhs), move(rhs));
+            return vector<unique_ptr<InstrAST>>{make_unique<BinCondExpressionAST>(op, move(lhs), move(rhs))};
         }
 
         if (auto binOp = ctx->binCondOp()) {
@@ -147,7 +152,7 @@ public:
             else if (binOp->NEQ()) op = "!=";
             else if (binOp->LTE()) op = "<=";
             else if (binOp->GTE()) op = ">=";
-            return make_unique<BinCondExpressionAST>(op, move(lhs), move(rhs));
+            return vector<unique_ptr<InstrAST>>{make_unique<BinCondExpressionAST>(op, move(lhs), move(rhs))};
         }
 
         return visitChildren(ctx);
@@ -155,10 +160,10 @@ public:
 
     any visitValue(tlangParser::ValueContext *ctx) override {
         if (ctx->NUM()) {
-            return make_unique<NumberExpressionAST>(stoi(ctx->NUM()->getText()));
+            return vector<unique_ptr<InstrAST>>{make_unique<NumberExpressionAST>(stoi(ctx->NUM()->getText()))};
         }
         if (ctx->VAR()) {
-            return make_unique<VariableExpressionAST>(ctx->VAR()->getText());
+            return vector<unique_ptr<InstrAST>>{make_unique<VariableExpressionAST>(ctx->VAR()->getText())};
         }
         throw runtime_error("Invalid value");
     }
@@ -223,6 +228,6 @@ private:
     }
 };
 
-unique_ptr<tlangParser::tlangVisitor> createChironVisitor() {
+unique_ptr<tlangVisitor> createChironVisitor() {
     return make_unique<ChironVisitorImpl>();
 }

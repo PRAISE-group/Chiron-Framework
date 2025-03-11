@@ -1,6 +1,7 @@
 #pragma once
 
 #include "llvm/IR/Value.h"
+#include <Support/raw_ostream.h>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -24,7 +25,11 @@ public:
     NumberExpressionAST(int val) : 
         val(val) {}
 
-    llvm::Value* codegen() override; 
+    llvm::Value* codegen() override;
+
+    int getVal() {
+        return val;
+    }
 };
 
 class VariableExpressionAST : public ExpressionAST {
@@ -34,11 +39,15 @@ public:
     VariableExpressionAST(const std::string &Name) : 
         name(Name) {}
     // Adding to handle loop counter variable - clone method
-    unique_ptr<VariableExpressionAST> clone() {
-        return make_unique<VariableExpressionAST>(name);
+    std::unique_ptr<VariableExpressionAST> clone() {
+        return std::make_unique<VariableExpressionAST>(name);
     }
 
     llvm::Value *codegen() override;
+
+    const std::string &getName() const {
+        return name;
+    }
 };
 
 class BinArithExpressionAST : public ExpressionAST {
