@@ -7,7 +7,7 @@ class BasicBlock:
     def __init__(self, bbname):
         self.name = bbname
         self.instrlist = []
-        self.condition = z3.BoolVal(True)
+        self.condition = z3.BoolVal(False)
         if bbname == "START" or bbname == "END":
             self.irID = bbname
         else:
@@ -22,8 +22,8 @@ class BasicBlock:
     def extend(self, instructions):
         self.instrlist.extend(instructions)
 
-    def add_condition(self, condition):
-        self.condition = z3.And(self.condition, condition)
+    def setCondition(self, condition):
+        self.condition = condition
 
     def get_condition(self):
         return self.condition

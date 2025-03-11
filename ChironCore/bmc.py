@@ -14,18 +14,25 @@ class BMC:
 
     def buildConditions(self):
         topological_order = list(self.cfg.get_topological_order())
+        start = topological_order[0]
+        start.setCondition(z3.BoolVal(True))
+        topological_order.pop(0)
         for node in topological_order:
-            for next in self.cfg.successors(node):
-                next.add_condition(node.get_condition())
-
-            if len(list(self.cfg.successors(node))) > 1:
-                condition = z3.Bool(node.instrlist[-1][0].cond.name)
-                for next in self.cfg.successors(node):
-                    if self.cfg.get_edge_label(node, next) == 'Cond_True':
-                        next.add_condition(condition)
-                    else:
-                        next.add_condition(z3.Not(condition))
-            print(f"Node {node.name} has condition {node.get_condition()}")
+            for pred in self.cfg.predecessors(node):
+                instr = pred.instrlist[-1][0]
+                current_cond = node.get_condition()
+                if isinstance(instr, ChironSSA.ConditionCommand) and type(instr.cond) == ChironSSA.Var:
+                    cond = z3.Bool(instr.cond.name)
+                    label = self.cfg.get_edge_label(pred, node)
+                    if label == 'Cond_True':
+                        node.setCondition(z3.Or(current_cond, z3.And(pred.get_condition(), cond)))
+                    elif label == 'Cond_False':
+                        node.setCondition(z3.Or(current_cond, z3.And(pred.get_condition(), z3.Not(cond))))
+                else:
+                    node.setCondition(z3.Or(pred.get_condition(), current_cond))
+            
+            t = z3.Tactic('ctx-simplify').apply(node.get_condition()).as_expr()
+            node.setCondition(t)
 
     def convertBasicBlock(self):
         for stmt, tgt in self.ir:
