@@ -123,7 +123,17 @@ llvm::Value* CallExpressionAST::codegen() {
 
     return Builder->CreateCall(CalleeFunc, ArgsValue, "calltmp");
 }
+llvm::Value* PenCallExprAST::codegen() {
+    return nullptr;
+}
 
+llvm::Value* GotoCallExprAST::codegen() {
+    return nullptr;
+}
+
+llvm::Value* MoveCallExprAST::codegen() {
+    return nullptr;
+}
 void IntializeModule() {
     CodeGenContext = std::make_unique<llvm::LLVMContext>();
     CodeGenModule = std::make_unique<llvm::Module>("Chiron Module", *CodeGenContext);

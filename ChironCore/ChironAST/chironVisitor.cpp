@@ -1,11 +1,23 @@
 #include "tlangVisitor.h"
 #include "chironAST.hpp"
 #include <any>
-#include <memory>
 #include <vector>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 using namespace std;
+
+// Helper function to extract a single ExpressionAST* from an any
+static ExpressionAST* getSingleExpr(const any &result) {
+    auto vec = any_cast<vector<InstrAST*>>(result);
+    if (vec.size() != 1)
+        throw runtime_error("Expected a single expression");
+    ExpressionAST* expr = dynamic_cast<ExpressionAST*>(vec[0]);
+    if (!expr)
+        throw runtime_error("Expression is not of type ExpressionAST*");
+    return expr;
+}
 
 class ChironVisitorImpl : public tlangVisitor {
     int repeatInstrCount = 0;
@@ -16,30 +28,31 @@ public:
     }
 
     any visitInstruction_list(tlangParser::Instruction_listContext *ctx) override {
-        vector<unique_ptr<InstrAST>> instructions;
+        vector<InstrAST*> instructions;
         for (auto *instr : ctx->instruction()) {
-            auto result = any_cast<vector<unique_ptr<InstrAST>>>(visit(instr));
-            move(result.begin(), result.end(), back_inserter(instructions));
+            auto subInstr = any_cast<vector<InstrAST*>>(visit(instr));
+            instructions.insert(instructions.end(), subInstr.begin(), subInstr.end());
         }
         return instructions;
     }
 
     any visitStrict_ilist(tlangParser::Strict_ilistContext *ctx) override {
-        vector<unique_ptr<InstrAST>> instructions;
+        vector<InstrAST*> instructions;
         for (auto *instr : ctx->instruction()) {
-            auto result = any_cast<vector<unique_ptr<InstrAST>>>(visit(instr));
-            move(result.begin(), result.end(), back_inserter(instructions));
+            auto subInstr = any_cast<vector<InstrAST*>>(visit(instr));
+            instructions.insert(instructions.end(), subInstr.begin(), subInstr.end());
         }
         return instructions;
     }
 
     any visitInstruction(tlangParser::InstructionContext *ctx) override {
-        if (auto assign = ctx->assignment()) return visit(assign);
-        if (auto cond = ctx->conditional()) return visit(cond);
-        if (auto loop = ctx->loop()) return visit(loop);
-        if (auto move = ctx->moveCommand()) return visit(move);
-        if (auto pen = ctx->penCommand()) return visit(pen);
-        if (auto gotoCmd = ctx->gotoCommand()) return visit(gotoCmd);
+        if (ctx->assignment())    return visit(ctx->assignment());
+        if (ctx->conditional())   return visit(ctx->conditional());
+        if (ctx->loop())          return visit(ctx->loop());
+        if (ctx->moveCommand())   return visit(ctx->moveCommand());
+        if (ctx->penCommand())    return visit(ctx->penCommand());
+        if (ctx->gotoCommand())   return visit(ctx->gotoCommand());
+        if (ctx->pauseCommand())  return visit(ctx->pauseCommand());
         throw runtime_error("Unsupported instruction type");
     }
 
@@ -48,77 +61,158 @@ public:
     }
 
     any visitIfConditional(tlangParser::IfConditionalContext *ctx) override {
-        auto cond = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition()));
-        auto thenBlock = any_cast<vector<unique_ptr<InstrAST>>>(visit(ctx->strict_ilist()));
-        
-        vector<unique_ptr<InstrAST>> result;
-        result.push_back(make_unique<BinCondExpressionAST>("if", move(cond), nullptr));
-        move(thenBlock.begin(), thenBlock.end(), back_inserter(result));
+        ExpressionAST* cond = getSingleExpr(visit(ctx->condition()));
+        vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<BinCondExpressionAST>(
+                "if",
+                unique_ptr<ExpressionAST>(cond),
+                nullptr
+            ).release()
+        );
+        result.insert(result.end(), thenBlock.begin(), thenBlock.end());
         return result;
     }
 
     any visitIfElseConditional(tlangParser::IfElseConditionalContext *ctx) override {
-        auto cond = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition()));
-        auto thenBlock = any_cast<vector<unique_ptr<InstrAST>>>(visit(ctx->strict_ilist(0)));
-        auto elseBlock = any_cast<vector<unique_ptr<InstrAST>>>(visit(ctx->strict_ilist(1)));
-        
-        vector<unique_ptr<InstrAST>> result;
-        result.push_back(make_unique<BinCondExpressionAST>("ifelse", move(cond), nullptr));
-        move(thenBlock.begin(), thenBlock.end(), back_inserter(result));
-        move(elseBlock.begin(), elseBlock.end(), back_inserter(result));
+        ExpressionAST* cond = getSingleExpr(visit(ctx->condition()));
+        vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist(0)));
+        vector<InstrAST*> elseBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist(1)));
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<BinCondExpressionAST>(
+                "ifelse",
+                unique_ptr<ExpressionAST>(cond),
+                nullptr
+            ).release()
+        );
+        result.insert(result.end(), thenBlock.begin(), thenBlock.end());
+        result.insert(result.end(), elseBlock.begin(), elseBlock.end());
         return result;
     }
 
+    any visitLoop(tlangParser::LoopContext *ctx) override {
+        repeatInstrCount++;
+        ExpressionAST* repeatNum = getSingleExpr(visit(ctx->value()));
+        VariableExpressionAST* counterVar = new VariableExpressionAST("__rep_counter_" + to_string(repeatInstrCount));
+        vector<InstrAST*> instructions;
+        {   // Create assignment: __rep_counter = repeatNum
+            vector<unique_ptr<ExpressionAST>> args;
+            args.push_back(counterVar->clone());
+            args.push_back(unique_ptr<ExpressionAST>(repeatNum));
+            instructions.push_back(
+                make_unique<CallExpressionAST>("assign", move(args)).release()
+            );
+        }
+        // Create while condition: __rep_counter > 0
+        unique_ptr<ExpressionAST> cond = make_unique<BinCondExpressionAST>(
+            ">",
+            counterVar->clone(),
+            make_unique<NumberExpressionAST>(0)
+        );
+        // Get loop body instructions.
+        vector<InstrAST*> body = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
+        // Create decrement: __rep_counter = __rep_counter - 1
+        unique_ptr<ExpressionAST> decrementExpr = make_unique<BinArithExpressionAST>(
+            '-',
+            counterVar->clone(),
+            make_unique<NumberExpressionAST>(1)
+        );
+        vector<unique_ptr<ExpressionAST>> argsDec;
+        argsDec.push_back(counterVar->clone());
+        argsDec.push_back(move(decrementExpr));
+        InstrAST* decrementCall = make_unique<CallExpressionAST>("assign", move(argsDec)).release();
+        instructions.push_back(
+            make_unique<BinCondExpressionAST>("while", move(cond), nullptr).release()
+        );
+        instructions.insert(instructions.end(), body.begin(), body.end());
+        instructions.push_back(decrementCall);
+        return instructions;
+    }
+
     any visitGotoCommand(tlangParser::GotoCommandContext *ctx) override {
-        auto x = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(0)));
-        auto y = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(1)));
-        
-        auto xNum = dynamic_cast<NumberExpressionAST*>(x.get());
-        auto yNum = dynamic_cast<NumberExpressionAST*>(y.get());
-        if (!xNum || !yNum) throw runtime_error("Goto requires numeric arguments");
-        
-        return vector<unique_ptr<InstrAST>>{make_unique<GotoCallExprAST>(xNum->getVal(), yNum->getVal())};
+        ExpressionAST* x = getSingleExpr(visit(ctx->expression(0)));
+        ExpressionAST* y = getSingleExpr(visit(ctx->expression(1)));
+        auto xNum = dynamic_cast<NumberExpressionAST*>(x);
+        auto yNum = dynamic_cast<NumberExpressionAST*>(y);
+        if (!xNum || !yNum)
+            throw runtime_error("Goto requires numeric arguments");
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<GotoCallExprAST>(xNum->getVal(), yNum->getVal()).release()
+        );
+        return result;
     }
 
     any visitAssignment(tlangParser::AssignmentContext *ctx) override {
-        auto var = make_unique<VariableExpressionAST>(ctx->VAR()->getText());
-        auto expr = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression()));
-        
+        VariableExpressionAST* var = new VariableExpressionAST(ctx->VAR()->getText());
+        ExpressionAST* expr = getSingleExpr(visit(ctx->expression()));
         vector<unique_ptr<ExpressionAST>> args;
-        args.push_back(move(var));
-        args.push_back(move(expr));
-        return vector<unique_ptr<InstrAST>>{make_unique<CallExpressionAST>("assign", move(args))};
+        args.push_back(unique_ptr<ExpressionAST>(var));
+        args.push_back(unique_ptr<ExpressionAST>(expr));
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<CallExpressionAST>("assign", move(args)).release()
+        );
+        return result;
     }
 
     any visitMoveCommand(tlangParser::MoveCommandContext *ctx) override {
-        auto expr = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression()));
-        return vector<unique_ptr<InstrAST>>{
-            make_unique<MoveCallExprAST>(ctx->moveOp()->getText(), move(expr))
-        };
+        ExpressionAST* expr = getSingleExpr(visit(ctx->expression()));
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<MoveCallExprAST>(ctx->moveOp()->getText(), unique_ptr<ExpressionAST>(expr)).release()
+        );
+        return result;
     }
 
     any visitPenCommand(tlangParser::PenCommandContext *ctx) override {
-        bool status = ctx->getText() == "penup";
-        return vector<unique_ptr<InstrAST>>{make_unique<PenCallExprAST>(status)};
+        bool status = (ctx->getText() == "penup");
+        return vector<InstrAST*>{ new PenCallExprAST(status) };
+    }
+
+    any visitPauseCommand(tlangParser::PauseCommandContext *ctx) override {
+        return vector<InstrAST*>{ new CallExpressionAST("pause", vector<unique_ptr<ExpressionAST>>{}) };
     }
 
     any visitUnaryExpr(tlangParser::UnaryExprContext *ctx) override {
-        auto expr = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression()));
-        return vector<unique_ptr<InstrAST>>{make_unique<UnaryArithExpressionAST>('-', move(expr))};
+        ExpressionAST* expr = getSingleExpr(visit(ctx->expression()));
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<UnaryArithExpressionAST>('-', unique_ptr<ExpressionAST>(expr)).release()
+        );
+        return result;
     }
 
     any visitAddExpr(tlangParser::AddExprContext *ctx) override {
-        auto lhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(0)));
-        auto rhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(1)));
+        ExpressionAST* lhs = getSingleExpr(visit(ctx->expression(0)));
+        ExpressionAST* rhs = getSingleExpr(visit(ctx->expression(1)));
         string op = ctx->additive()->PLUS() ? "+" : "-";
-        return vector<unique_ptr<InstrAST>>{make_unique<BinArithExpressionAST>(op[0], move(lhs), move(rhs))};
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<BinArithExpressionAST>(
+                op[0],
+                unique_ptr<ExpressionAST>(lhs),
+                unique_ptr<ExpressionAST>(rhs)
+            ).release()
+        );
+        return result;
     }
 
     any visitMulExpr(tlangParser::MulExprContext *ctx) override {
-        auto lhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(0)));
-        auto rhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(1)));
+        ExpressionAST* lhs = getSingleExpr(visit(ctx->expression(0)));
+        ExpressionAST* rhs = getSingleExpr(visit(ctx->expression(1)));
         string op = ctx->multiplicative()->MUL() ? "*" : "/";
-        return vector<unique_ptr<InstrAST>>{make_unique<BinArithExpressionAST>(op[0], move(lhs), move(rhs))};
+        vector<InstrAST*> result;
+        result.push_back(
+            make_unique<BinArithExpressionAST>(
+                op[0],
+                unique_ptr<ExpressionAST>(lhs),
+                unique_ptr<ExpressionAST>(rhs)
+            ).release()
+        );
+        return result;
     }
 
     any visitParenExpr(tlangParser::ParenExprContext *ctx) override {
@@ -127,107 +221,62 @@ public:
 
     any visitCondition(tlangParser::ConditionContext *ctx) override {
         if (ctx->PENCOND()) {
-            return vector<unique_ptr<InstrAST>>{make_unique<PenCallExprAST>(false)};
+            return vector<InstrAST*>{ new PenCallExprAST(false) };
         }
-
         if (ctx->NOT()) {
-            auto cond = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition(0)));
-            return vector<unique_ptr<InstrAST>>{make_unique<UnaryArithExpressionAST>('!', move(cond))};
+            ExpressionAST* cond = getSingleExpr(visit(ctx->condition(0)));
+            return vector<InstrAST*>{
+                make_unique<UnaryArithExpressionAST>('!', unique_ptr<ExpressionAST>(cond)).release()
+            };
         }
-
-        if (auto logicOp = ctx->logicOp()) {
-            auto lhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition(0)));
-            auto rhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->condition(1)));
-            string op = logicOp->AND() ? "&&" : "||";
-            return vector<unique_ptr<InstrAST>>{make_unique<BinCondExpressionAST>(op, move(lhs), move(rhs))};
+        if (ctx->logicOp()) {
+            ExpressionAST* lhs = getSingleExpr(visit(ctx->condition(0)));
+            ExpressionAST* rhs = getSingleExpr(visit(ctx->condition(1)));
+            string op = ctx->logicOp()->AND() ? "&&" : "||";
+            return vector<InstrAST*>{
+                make_unique<BinCondExpressionAST>(op, unique_ptr<ExpressionAST>(lhs), unique_ptr<ExpressionAST>(rhs)).release()
+            };
         }
-
-        if (auto binOp = ctx->binCondOp()) {
-            auto lhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(0)));
-            auto rhs = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->expression(1)));
+        if (ctx->binCondOp()) {
+            ExpressionAST* lhs = getSingleExpr(visit(ctx->expression(0)));
+            ExpressionAST* rhs = getSingleExpr(visit(ctx->expression(1)));
             string op;
-            if (binOp->LT()) op = "<";
-            else if (binOp->GT()) op = ">";
-            else if (binOp->EQ()) op = "==";
-            else if (binOp->NEQ()) op = "!=";
-            else if (binOp->LTE()) op = "<=";
-            else if (binOp->GTE()) op = ">=";
-            return vector<unique_ptr<InstrAST>>{make_unique<BinCondExpressionAST>(op, move(lhs), move(rhs))};
+            if (ctx->binCondOp()->LT())      op = "<";
+            else if (ctx->binCondOp()->GT()) op = ">";
+            else if (ctx->binCondOp()->EQ()) op = "==";
+            else if (ctx->binCondOp()->NEQ()) op = "!=";
+            else if (ctx->binCondOp()->LTE()) op = "<=";
+            else if (ctx->binCondOp()->GTE()) op = ">=";
+            return vector<InstrAST*>{
+                make_unique<BinCondExpressionAST>(op, unique_ptr<ExpressionAST>(lhs), unique_ptr<ExpressionAST>(rhs)).release()
+            };
         }
-
         return visitChildren(ctx);
     }
 
     any visitValue(tlangParser::ValueContext *ctx) override {
         if (ctx->NUM()) {
-            return vector<unique_ptr<InstrAST>>{make_unique<NumberExpressionAST>(stoi(ctx->NUM()->getText()))};
+            return vector<InstrAST*>{ new NumberExpressionAST(stoi(ctx->NUM()->getText())) };
         }
         if (ctx->VAR()) {
-            return vector<unique_ptr<InstrAST>>{make_unique<VariableExpressionAST>(ctx->VAR()->getText())};
+            return vector<InstrAST*>{ new VariableExpressionAST(ctx->VAR()->getText()) };
         }
         throw runtime_error("Invalid value");
     }
 
-    any visitLoop(tlangParser::LoopContext *ctx) override {
-        repeatInstrCount++;
-        auto repeatNum = any_cast<unique_ptr<ExpressionAST>>(visit(ctx->value()));
-        
-        auto counterVar = make_unique<VariableExpressionAST>(
-            "__rep_counter_" + to_string(repeatInstrCount));
-        
-        vector<unique_ptr<InstrAST>> instructions;
-        instructions.push_back(make_unique<CallExpressionAST>("assign", 
-            vector<unique_ptr<ExpressionAST>>{
-                counterVar->clone(),
-                move(repeatNum)
-            }
-        ));
-
-        auto zero = make_unique<NumberExpressionAST>(0);
-        auto cond = make_unique<BinCondExpressionAST>(">", 
-            counterVar->clone(),
-            move(zero));
-
-        auto body = any_cast<vector<unique_ptr<InstrAST>>>(visit(ctx->strict_ilist()));
-
-        auto one = make_unique<NumberExpressionAST>(1);
-        auto decrement = make_unique<CallExpressionAST>("assign",
-            vector<unique_ptr<ExpressionAST>>{
-                counterVar->clone(),
-                make_unique<BinArithExpressionAST>('-', 
-                    counterVar->clone(),
-                    move(one))
-            }
-        );
-
-        instructions.push_back(make_unique<BinCondExpressionAST>("while", move(cond), nullptr));
-        move(body.begin(), body.end(), back_inserter(instructions));
-        instructions.push_back(move(decrement));
-
-        return instructions;
-    }
-
-    // Default implementations for remaining rules
+    // Default implementations for rules not used:
     any visitMoveOp(tlangParser::MoveOpContext*) override { return nullptr; }
-    any visitPauseCommand(tlangParser::PauseCommandContext*) override { return nullptr; }
-    any visitValueExpr(tlangParser::ValueExprContext *ctx) override { return visit(ctx->value()); }
-    any visitMultiplicative(tlangParser::MultiplicativeContext*) override { return nullptr; }
     any visitAdditive(tlangParser::AdditiveContext*) override { return nullptr; }
+    any visitMultiplicative(tlangParser::MultiplicativeContext*) override { return nullptr; }
     any visitUnaryArithOp(tlangParser::UnaryArithOpContext*) override { return nullptr; }
     any visitBinCondOp(tlangParser::BinCondOpContext*) override { return nullptr; }
     any visitLogicOp(tlangParser::LogicOpContext*) override { return nullptr; }
-
-private:
-    template<typename T, typename U>
-    unique_ptr<T> dynamic_unique_ptr_cast(unique_ptr<U>&& src) {
-        if (auto ptr = dynamic_cast<T*>(src.get())) {
-            src.release();
-            return unique_ptr<T>(ptr);
-        }
-        throw bad_cast();
-    }
+    any visitValueExpr(tlangParser::ValueExprContext *ctx) override { return visit(ctx->value()); }
 };
 
-unique_ptr<tlangVisitor> createChironVisitor() {
-    return make_unique<ChironVisitorImpl>();
+tlangVisitor* createChironVisitor() {
+    return new ChironVisitorImpl();
 }
+
+
+
