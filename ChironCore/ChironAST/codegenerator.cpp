@@ -1,6 +1,7 @@
 #include <chironAST.hpp>
 
 #include <map>
+#include <iostream>
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Constants.h>
@@ -31,6 +32,12 @@ static std::unique_ptr<llvm::Module> CodeGenModule;
 static std::unique_ptr<llvm::IRBuilder<>> Builder;
 static std::map<std::string, llvm::AllocaInst*> SymbolTable;
 
+static llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction, llvm::StringRef VarName) {
+    llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
+    TheFunction->getEntryBlock().begin());
+    return TmpB.CreateAlloca(llvm::Type::getDoubleTy(*CodeGenContext), nullptr, VarName);
+}
+
 llvm::Value* NumberExpressionAST::codegen() {
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), val);
 }
@@ -46,17 +53,17 @@ llvm::Value* VariableExpressionAST::codegen() {
 llvm::Value* BinArithExpressionAST::codegen() {
     if(op == ASSIGN){
         VariableExpressionAST *LHSE = static_cast<VariableExpressionAST*>(LHS.get());
+        llvm::AllocaInst *V = SymbolTable[LHSE->getName()];
+        if (!V) {
+            V = CreateEntryBlockAlloca(CodeGenModule->getFunction("main"), LHSE->getName());
+            SymbolTable[LHSE->getName()] = V;
+        }
         
         llvm::Value *R = RHS->codegen();
         if (!R) {
             return nullptr;
         }
 
-        llvm::AllocaInst *V = SymbolTable[LHSE->getName()];
-        if (!V) {
-            V = Builder->CreateAlloca(llvm::Type::getInt32Ty(*CodeGenContext), 0, LHSE->getName().c_str());
-            SymbolTable[LHSE->getName()] = V;
-        }
         
         return Builder->CreateStore(R, V);
     }
@@ -158,9 +165,14 @@ void IntializeModule() {
     Builder = std::make_unique<llvm::IRBuilder<>>(*CodeGenContext);
 }
 
-// void TempFunction() {
-//     llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getInt32Ty(*CodeGenContext), false);
-//     llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, "main", CodeGenModule.get());
-//     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*CodeGenContext, "entry", F);
-//     Builder->SetInsertPoint(BB);
-// }
+void TempFunction() {
+    llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getInt32Ty(*CodeGenContext), false);
+    llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, "main", CodeGenModule.get());
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*CodeGenContext, "entry", F);
+    Builder->SetInsertPoint(BB);
+}
+
+void tempPrint(){
+    llvm::Function *TheFunction = CodeGenModule->getFunction("main");
+    TheFunction->print(llvm::errs());
+}

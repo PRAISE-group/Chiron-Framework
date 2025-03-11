@@ -15,6 +15,8 @@ extern tlangVisitor* createChironVisitor();
 
 extern std::unique_ptr<tlangVisitor> ChironVisitorImpl();
 extern void IntializeModule();
+extern void TempFunction();
+extern void tempPrint();
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -23,6 +25,7 @@ int main(int argc, char *argv[]) {
     }
     std::string filename = argv[1];
 
+    
     std::ifstream file(filename);
     if (!file) {
         std::cerr << "Error: Cannot open file " << filename << "\n";
@@ -31,33 +34,33 @@ int main(int argc, char *argv[]) {
     std::stringstream buffer;
     buffer << file.rdbuf();
     std::string input_str = buffer.str();
-
+    
     antlr4::ANTLRInputStream input(input_str);
     tlangLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     tlangParser parser(&tokens);
     
-   
+    
     tlangParser::StartContext *ctx = parser.start();
     if (!ctx) {
         std::cerr << "Error: Failed to parse input.\n";
         return 1;
     }
-
+    
     
     tlangVisitor* visitor = createChironVisitor();
-
+    
     // Since our visitor returns a vector of raw pointers, update the type accordingly.
     std::vector<InstrAST*> instructions = std::any_cast<std::vector<InstrAST*>>(visitor->visitStart(ctx));
 
     IntializeModule();
+    TempFunction();
+
     for (auto instr : instructions) {
         llvm::Value* val = instr->codegen();
-        if (val) {
-            val->print(llvm::errs());
-            llvm::errs() << "\n";
-        }
     }
+
+    tempPrint();
 
     // Clean up the AST nodes (to avoid memory leaks).
     for (auto instr : instructions) {
