@@ -196,6 +196,13 @@ if __name__ == "__main__":
         type=bool,
     )
 
+    cmdparser.add_argument(
+        "-bl",
+        "--ballLarus",
+        action="store_true",
+        help="Run Ball-Larus path profiling on a Chiron program",
+    )
+
     args = cmdparser.parse_args()
     ir = ""
 
@@ -392,3 +399,7 @@ if __name__ == "__main__":
             writer = csv.writer(file)
             writer.writerows(spectrum)
         print("DONE..")
+
+    if args.ballLarus:
+        import ballLarus as bl
+        bl.run_ball_larus_profiling(irHandler, args)
