@@ -13,6 +13,9 @@
 
 extern tlangVisitor* createChironVisitor();
 
+extern std::unique_ptr<tlangVisitor> ChironVisitorImpl();
+extern void IntializeModule();
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <input file>\n";
@@ -47,7 +50,7 @@ int main(int argc, char *argv[]) {
     // Since our visitor returns a vector of raw pointers, update the type accordingly.
     std::vector<InstrAST*> instructions = std::any_cast<std::vector<InstrAST*>>(visitor->visitStart(ctx));
 
-   
+    IntializeModule();
     for (auto instr : instructions) {
         llvm::Value* val = instr->codegen();
         if (val) {

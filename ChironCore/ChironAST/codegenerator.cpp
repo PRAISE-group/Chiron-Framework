@@ -13,6 +13,7 @@ const char MINUS = '-';
 const char PLUS = '+';
 const char MUL = '*';
 const char DIV = '/';
+const char ASSIGN = '=';
 const char NOT = '!';
 
 const std::string LT = "<";
@@ -28,21 +29,38 @@ const std::string OR = "||";
 static std::unique_ptr<llvm::LLVMContext> CodeGenContext;
 static std::unique_ptr<llvm::Module> CodeGenModule;
 static std::unique_ptr<llvm::IRBuilder<>> Builder;
-static std::map<std::string, llvm::Value*> SymbolTable;
+static std::map<std::string, llvm::AllocaInst*> SymbolTable;
 
 llvm::Value* NumberExpressionAST::codegen() {
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), val);
 }
 
 llvm::Value* VariableExpressionAST::codegen() {
-    llvm::Value *V = SymbolTable[name];
+    llvm::AllocaInst *V = SymbolTable[name];
     if (!V) {
         return nullptr;
     }
-    return V;
+    return Builder->CreateLoad(V->getAllocatedType(), V, name.c_str());
 }
 
 llvm::Value* BinArithExpressionAST::codegen() {
+    if(op == ASSIGN){
+        VariableExpressionAST *LHSE = static_cast<VariableExpressionAST*>(LHS.get());
+        
+        llvm::Value *R = RHS->codegen();
+        if (!R) {
+            return nullptr;
+        }
+
+        llvm::AllocaInst *V = SymbolTable[LHSE->getName()];
+        if (!V) {
+            V = Builder->CreateAlloca(llvm::Type::getInt32Ty(*CodeGenContext), 0, LHSE->getName().c_str());
+            SymbolTable[LHSE->getName()] = V;
+        }
+        
+        return Builder->CreateStore(R, V);
+    }
+
     llvm::Value *L = LHS->codegen();
     llvm::Value *R = RHS->codegen();
     if (!L || !R) {
@@ -139,3 +157,10 @@ void IntializeModule() {
     CodeGenModule = std::make_unique<llvm::Module>("Chiron Module", *CodeGenContext);
     Builder = std::make_unique<llvm::IRBuilder<>>(*CodeGenContext);
 }
+
+// void TempFunction() {
+//     llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getInt32Ty(*CodeGenContext), false);
+//     llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, "main", CodeGenModule.get());
+//     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*CodeGenContext, "entry", F);
+//     Builder->SetInsertPoint(BB);
+// }

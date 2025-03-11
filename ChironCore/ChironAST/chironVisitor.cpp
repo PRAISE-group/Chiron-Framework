@@ -148,14 +148,9 @@ public:
     any visitAssignment(tlangParser::AssignmentContext *ctx) override {
         VariableExpressionAST* var = new VariableExpressionAST(ctx->VAR()->getText());
         ExpressionAST* expr = getSingleExpr(visit(ctx->expression()));
-        vector<unique_ptr<ExpressionAST>> args;
-        args.push_back(unique_ptr<ExpressionAST>(var));
-        args.push_back(unique_ptr<ExpressionAST>(expr));
-        vector<InstrAST*> result;
-        result.push_back(
-            make_unique<CallExpressionAST>("assign", move(args)).release()
-        );
-        return result;
+        return vector<InstrAST*>{
+            new BinArithExpressionAST('=', unique_ptr<ExpressionAST>(var), unique_ptr<ExpressionAST>(expr))
+        };
     }
 
     any visitMoveCommand(tlangParser::MoveCommandContext *ctx) override {
