@@ -34,8 +34,8 @@ class BMC:
             t = z3.Tactic('ctx-simplify').apply(node.get_condition()).as_expr()
             node.setCondition(t)
 
-    def convertBasicBlock(self):
-        for stmt, tgt in self.ir:
+    def convertBasicBlock(self, bb):
+        for stmt, _ in bb.instrlist:
             if isinstance(stmt, ChironSSA.PhiCommand): # TODO: Add support for Phi commands
                 lvar = z3.Int(stmt.lvar.name)
                 rvars = []
