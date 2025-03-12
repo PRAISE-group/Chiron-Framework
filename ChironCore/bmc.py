@@ -141,15 +141,22 @@ class BMC:
                     cond = z3.Bool(stmt.cond.name)
                 self.solver.add(z3.Not(cond))
 
-            # TODO add support for other SSA instructions
-            # elif isinstance(stmt, ChironSSA.SSA_ConditionCommand):
-            # elif isinstance(stmt, ChironSSA.SSA_MoveCommand):
-            # elif isinstance(stmt, ChironSSA.SSA_PenCommand):
-            # elif isinstance(stmt, ChironSSA.SSA_GotoCommand):
-            # elif isinstance(stmt, ChironSSA.SSA_NoOpCommand):
-            # elif isinstance(stmt, ChironSSA.SSA_PauseCommand):
+            # elif isinstance(stmt, ChironSSA.CosCommand):         # Problem: z3.Cos, z3.Sin is not supported
+            #     self.solver.add(z3.Real(stmt.lvar.name) == z3.Cos(z3.Real(stmt.rvar1.name)))
+            # elif isinstance(stmt, ChironSSA.SinCommand):
+            #     self.solver.add(z3.Real(stmt.lvar.name) == z3.Sin(z3.Real(stmt.rvar1.name)))
+
+            # elif isinstance(stmt, ChironSSA.MoveCommand):
+            # elif isinstance(stmt, ChironSSA.PenCommand):
+            # elif isinstance(stmt, ChironSSA.GotoCommand):
+            elif isinstance(stmt, ChironSSA.ConditionCommand):
+                pass
+            elif isinstance(stmt, ChironSSA.NoOpCommand):
+                pass
+            elif isinstance(stmt, ChironSSA.PauseCommand):
+                pass
             # else:
-            #     raise Exception("Unknown SSA instruction")
+                # raise Exception("Unknown SSA instruction")
 
     def solve(self, inputVars):
         print("Assertions are:")

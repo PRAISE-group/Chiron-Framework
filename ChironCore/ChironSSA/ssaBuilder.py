@@ -8,7 +8,7 @@ def buildSSA(tac, cfg, line2BlockMap):
     """
 
     ssa = []
-    lastDeclaration = {}         # lastDeclaration[bb][var] = version
+    lastDeclaration = {}         # lastDeclaration[bb][var] = last version of var in bb
     varCounter = {}              # varCounter[var] = counter
     phiStatements = {}           # phiStatements[bb][var] = [var_1, var_2, ...]
     ssaLineCounter = 0
@@ -26,6 +26,18 @@ def buildSSA(tac, cfg, line2BlockMap):
     # Renamed the declarations of variables in TAC
     for (stmt, tgt), line in zip(tac, range(len(tac))):
         if isinstance(stmt, ChironTAC.AssignmentCommand):
+            var = stmt.lvar.__str__()
+            lastDeclaration[line2BlockMap[line]][var] = varCounter[var]
+            varCounter[var] += 1
+            stmt.lvar = ChironTAC.Var(f"{var}__{varCounter[var] - 1}")
+            tac[line] = (stmt, tgt)
+        elif isinstance(stmt, ChironTAC.CosCommand):
+            var = stmt.lvar.__str__()
+            lastDeclaration[line2BlockMap[line]][var] = varCounter[var]
+            varCounter[var] += 1
+            stmt.lvar = ChironTAC.Var(f"{var}__{varCounter[var] - 1}")
+            tac[line] = (stmt, tgt)
+        elif isinstance(stmt, ChironTAC.SinCommand):
             var = stmt.lvar.__str__()
             lastDeclaration[line2BlockMap[line]][var] = varCounter[var]
             varCounter[var] += 1
@@ -163,6 +175,22 @@ def buildSSA(tac, cfg, line2BlockMap):
             ssa.append((ChironSSA.PauseCommand(), tgt))
             ssaLineCounter += 1
         
+        elif isinstance(stmt, ChironTAC.CosCommand):
+            if stmt.rvar.__str__() not in lastUsed.keys():
+                lastUsed[stmt.rvar.__str__()] = 0
+            ssa.append((ChironSSA.CosCommand(ChironSSA.Var(f"{stmt.lvar.__str__()}"), ChironSSA.Var(f"{stmt.rvar.__str__()}__{lastUsed[stmt.rvar.__str__()]}")), tgt))
+            lvar_string = lvar.__str__().rsplit('__', 1)[0]
+            lastUsed[lvar_string] = int(lvar.__str__().rsplit('__', 1)[1])
+            ssaLineCounter += 1
+
+        elif isinstance(stmt, ChironTAC.SinCommand):
+            if stmt.rvar.__str__() not in lastUsed.keys():
+                lastUsed[stmt.rvar.__str__()] = 0
+            ssa.append((ChironSSA.SinCommand(ChironSSA.Var(f"{stmt.lvar.__str__()}"), ChironSSA.Var(f"{stmt.rvar.__str__()}__{lastUsed[stmt.rvar.__str__()]}")), tgt))
+            lvar_string = lvar.__str__().rsplit('__', 1)[0]
+            lastUsed[lvar_string] = int(lvar.__str__().rsplit('__', 1)[1])
+            ssaLineCounter += 1
+
         else:
             raise Exception(f"Unknown TAC command: {stmt}")
     
