@@ -4,6 +4,7 @@
 Ball-Larus path profiling implementation for the Chiron Framework.
 """
 
+from hmac import new
 import sys
 import networkx as nx
 from ChironAST import ChironAST
@@ -220,11 +221,24 @@ class BallLarusProfiler:
         new_ir.insert(0, (init_path_register, 1))
         update_offsets(0)
 
+        entry_node = None
+        for node in self.cfg.nodes():
+            if node.name == "START":
+                entry_node = node
+                break
+        
+        exit_node = None
+        for node in self.cfg.nodes():
+            if node.name == "END":
+                exit_node = node
+                break
+
         # Iterate over CFG edges
         for source, target, attrs in self.cfg.nxgraph.edges(data=True):
-            # Skip back edges – TODO: handle back edge instrumentation separately
+
             if (source, target) in self.back_edges:
                 continue
+
 
             # DEBUG: print the complete IR
             print("--------------------------------")
@@ -265,6 +279,40 @@ class BallLarusProfiler:
         for source, target, attrs in self.cfg.nxgraph.edges(data=True):
             # Skip back edges – TODO: handle back edge instrumentation separately
             if (source, target) in self.back_edges:
+
+                # Part 1
+                weight = self.edge_weights.get((source, exit_node), 0)
+                update_instr = ChironAST.AssignmentCommand(
+                    path_register_var,
+                    ChironAST.Sum(path_register_var, ChironAST.Num(weight))
+                )
+                insertion_index = len(new_ir) 
+                new_ir.append((update_instr, 1))
+                update_offsets(insertion_index)
+                source_end = bb_last_index.get(source, 0)
+                instr, old_offset = new_ir[source_end]
+                new_offset = len(new_ir) - source_end - 1
+                new_ir[source_end] = (instr, new_offset)
+
+                inc_instr = ChironAST.IncrementCommand(path_register_var)
+                new_ir.append((inc_instr, 1))
+                update_offsets(len(new_ir)-1)
+
+                # Part 2
+                weight = self.edge_weights.get((entry_node, target), 0)
+                update_instr = ChironAST.AssignmentCommand(
+                    path_register_var,
+                    ChironAST.Num(weight)
+                )
+                insertion_index = len(new_ir)
+                new_ir.append((update_instr, 1))
+                update_offsets(insertion_index)
+                jump_instr = ChironAST.ConditionCommand(ChironAST.BoolFalse())
+                target_first = bb_first_index.get(target, 0)
+                val = target_first - len(new_ir)
+                new_ir.append((jump_instr, val))
+                update_offsets(len(new_ir)-1)  
+
                 continue
             
             
@@ -300,10 +348,11 @@ class BallLarusProfiler:
                 new_ir.append((jump_instr, val))
                 update_offsets(len(new_ir)-1)
 
-        # Print the path register variable
-        print_instr = ChironAST.PrintCommand(path_register_var)
-        new_ir.append((print_instr, 1))
-        # update_offsets(len(new_ir)-1)
+        # Dump the HashMap to a file
+        inc_instr = ChironAST.IncrementCommand(path_register_var)
+        new_ir.append((inc_instr, 1))
+        dump_instr = ChironAST.DumpCommand()
+        new_ir.append((dump_instr, 1))
 
         # Replace IR with instrumented version
         self.irHandler.ir = new_ir

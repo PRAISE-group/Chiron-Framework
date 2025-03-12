@@ -178,7 +178,6 @@ class astGenPass(tlangVisitor):
         return [(ChironAST.PrintCommand(expr), 1)]
 
     def visitIncrementCommand(self, ctx:tlangParser.IncrementCommandContext):
-        # Grab the VAR token (e.g. ":__path_register_var")
         var = ctx.VAR().getText()
         return [(ChironAST.IncrementCommand(var), 1)]
 
