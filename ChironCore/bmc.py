@@ -9,33 +9,36 @@ class BMC:
     def __init__(self, ir):
         self.solver = z3.Solver()
         self.ir = ir
-        self.cfg, _ = cfgBuilder.buildCFG(ir)
-        self.buildConditions()
+        self.cfg, self.line_to_bb_map = cfgBuilder.buildCFG(ir)
 
-    def buildConditions(self):
-        topological_order = list(self.cfg.get_topological_order())
-        start = topological_order[0]
-        start.setCondition(z3.BoolVal(True))
-        topological_order.pop(0)
-        for node in topological_order:
-            for pred in self.cfg.predecessors(node):
-                instr = pred.instrlist[-1][0]
-                current_cond = node.get_condition()
-                if isinstance(instr, ChironSSA.ConditionCommand) and type(instr.cond) == ChironSSA.Var:
-                    cond = z3.Bool(instr.cond.name)
-                    label = self.cfg.get_edge_label(pred, node)
-                    if label == 'Cond_True':
-                        node.setCondition(z3.Or(current_cond, z3.And(pred.get_condition(), cond)))
-                    elif label == 'Cond_False':
-                        node.setCondition(z3.Or(current_cond, z3.And(pred.get_condition(), z3.Not(cond))))
-                else:
-                    node.setCondition(z3.Or(pred.get_condition(), current_cond))
-            
-            t = z3.Tactic('ctx-simplify').apply(node.get_condition()).as_expr()
-            node.setCondition(t)
+        self.bbConditions = {} # bbConditions[bb] = condition for bb
+        for bb in self.cfg:
+            self.bbConditions[bb] = None
+        self.bbConditions[self.line_to_bb_map[0]] = z3.BoolVal(True)
 
-    def convertBasicBlock(self, bb):
-        for stmt, _ in bb.instrlist:
+        self.setConditions(self.line_to_bb_map[len(self.ir)])
+
+    def setConditions(self, node):        
+        for pred in self.cfg.predecessors(node):
+            if self.bbConditions[pred] == None:
+                self.setConditions(pred)
+            instr = pred.instrlist[-1][0]
+            temp_cond = None
+            if isinstance(instr, ChironSSA.ConditionCommand) and type(instr.cond) == ChironSSA.Var:
+                edge_label = self.cfg.get_edge_label(pred, node)
+                if edge_label == 'Cond_True':
+                    temp_cond = z3.And(self.bbConditions[pred], z3.Bool(instr.cond.name))
+                elif edge_label == 'Cond_False':
+                    temp_cond = z3.And(self.bbConditions[pred], z3.Not(z3.Bool(instr.cond.name)))
+            else:
+                temp_cond = self.bbConditions[pred]
+            if self.bbConditions[node] == None:
+                self.bbConditions[node] = temp_cond
+            else:
+                self.bbConditions[node] = z3.Or(self.bbConditions[node], temp_cond)
+
+    def convertSSAtoSMT(self):
+        for stmt, tgt in self.ir:
             if isinstance(stmt, ChironSSA.PhiCommand): # TODO: Add support for Phi commands
                 lvar = z3.Int(stmt.lvar.name)
                 rvars = []
@@ -87,12 +90,12 @@ class BMC:
                         rvar2 = z3.BoolVal(False)
                 elif stmt.op == "not":
                     lvar = z3.Bool(stmt.lvar.name)
-                    if isinstance(stmt.rvar1, ChironSSA.Var):
-                        rvar1 = z3.Bool(stmt.rvar1.name)
-                    elif isinstance(stmt.rvar1, ChironSSA.BoolTrue):
-                        rvar1 = z3.BoolVal(True)
-                    elif isinstance(stmt.rvar1, ChironSSA.BoolFalse):
-                        rvar1 = z3.BoolVal(False)
+                    if isinstance(stmt.rvar2, ChironSSA.Var):
+                        rvar2 = z3.Bool(stmt.rvar2.name)
+                    elif isinstance(stmt.rvar2, ChironSSA.BoolTrue):
+                        rvar2 = z3.BoolVal(True)
+                    elif isinstance(stmt.rvar2, ChironSSA.BoolFalse):
+                        rvar2 = z3.BoolVal(False)
                 elif stmt.op == "":
                     continue
                 else:
@@ -123,7 +126,7 @@ class BMC:
                 elif stmt.op == "or":
                     self.solver.add(lvar == z3.Or(rvar1, rvar2))
                 elif stmt.op == "not":
-                    self.solver.add(lvar == z3.Not(rvar1))
+                    self.solver.add(lvar == z3.Not(rvar2))
 
             elif isinstance(stmt, ChironSSA.AssertCommand):
                 cond = None
