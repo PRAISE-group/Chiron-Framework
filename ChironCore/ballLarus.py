@@ -8,7 +8,7 @@ import sys
 import networkx as nx
 from ChironAST import ChironAST
 from irhandler import IRHandler
-from cfgBuilder import dumpCFG2
+# from cfgBuilder import dumpCFG2
 
 class BallLarusProfiler:
     """
@@ -352,7 +352,7 @@ class BallLarusProfiler:
         else:
             print("Warning: CFG is still cyclic after removing back edges")
         
-        dumpCFG2(G, "acyclic_cfg.dot")
+        # dumpCFG2(G, "acyclic_cfg.dot")
         return G, self.back_edges
 
 def run_ball_larus_profiling(irHandler, args):
