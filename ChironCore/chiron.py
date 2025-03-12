@@ -401,5 +401,8 @@ if __name__ == "__main__":
         print("DONE..")
 
     if args.ballLarus:
+        cfg = cfgB.buildCFG(ir, "control_flow_graph")
+        irHandler.setCFG(cfg)
+        cfgB.dumpCFG(cfg, "control_flow_graph")
         import ballLarus as bl
         bl.run_ball_larus_profiling(irHandler, args)

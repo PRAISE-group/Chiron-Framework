@@ -8,6 +8,7 @@ import sys
 import networkx as nx
 from ChironAST import ChironAST
 from irhandler import IRHandler
+from cfgBuilder import dumpCFG2
 
 class BallLarusProfiler:
     """
@@ -27,7 +28,8 @@ class BallLarusProfiler:
         self.edge_weights = {}  # Maps (source, target) to weight
         self.path_counters = {}  # Maps path number to count
         self.original_ir = None  # To store the original IR before instrumentation
-    
+        self.back_edges = []  # List of back edges in the CFG
+
     def run_profiling(self):
         """
         Run the Ball-Larus path profiling algorithm.
@@ -47,7 +49,7 @@ class BallLarusProfiler:
         self.compute_edge_weights()
         
         # Instrument the IR
-        # self.instrument_ir()
+        self.instrument_ir()
         
         # The instrumented program will be run by the ConcreteInterpreter
         
@@ -129,9 +131,117 @@ class BallLarusProfiler:
     def instrument_ir(self):
         """
         Instrument the IR to track path execution.
+
+        This involves:
+        1. Adding a path register variable.
+        2. For each "flow_edge" and "Cond_True":
+             - Locate the last IR index of the source basic block and insert an update
+               instruction immediately after.
+        3. For each "Cond_False":
+             - Append at the end of the IR two instructions:
+                 a) an update to the path register,
+                 b) a goto command that jumps to the target basic block's first instruction.
+        4. Skip instrumentation for back edges (TODO: handle separately).
+        5. Finally, adjust all IR jump offsets to account for the inserted instructions.
         """
-        pass
-    
+
+        # Save original IR copy
+        if self.original_ir is None:
+            self.original_ir = self.ir.copy()
+
+        # Create a path register variable
+        path_register_var = ChironAST.Var(":__bl_path_register")
+        
+        # Insert an initialization instruction at the beginning
+        init_path_register = ChironAST.AssignmentCommand(
+            path_register_var, 
+            ChironAST.Num(0)
+        )
+        
+        # Build mapping from each basic block to its first and last IR indices
+        bb_last_index = {}
+        bb_first_index = {}
+        for bb in self.cfg.nodes():
+            if bb.instrlist:
+                bb_first_index[bb] = bb.instrlist[0][1]
+                bb_last_index[bb] = bb.instrlist[-1][1]
+
+        # Helper function to update bb indices and IR targets after an insertion.
+        def update_offsets(insertion_index, delta=1):
+            # Update basic block first and last indices
+            for bb in bb_first_index:
+                if bb_first_index[bb] >= insertion_index:
+                    bb_first_index[bb] += delta
+                if bb_last_index[bb] >= insertion_index:
+                    bb_last_index[bb] += delta
+            # Update each IR instruction's jump offset
+            for idx, (instr, tgt) in enumerate(new_ir):
+                jump_target = idx + tgt
+                if(idx == insertion_index - 1):
+                    if isinstance(instr, ChironAST.ConditionCommand):
+                        new_tgt = tgt + delta
+                        new_ir[idx] = (instr, new_tgt)
+                    continue
+
+                # For instructions before the insertion:
+                if idx < insertion_index and jump_target >= insertion_index:
+                    new_tgt = tgt + delta
+                    new_ir[idx] = (instr, new_tgt)
+                # For instructions at/after the insertion:
+                elif idx >= insertion_index and jump_target <= insertion_index:
+                    new_tgt = tgt - delta
+                    new_ir[idx] = (instr, new_tgt)
+        
+        # Work on a copy of the IR list for insertions
+        new_ir = self.irHandler.ir.copy()
+        new_ir.insert(0, (init_path_register, 1))
+        update_offsets(0)
+        
+        # Iterate over CFG edges
+        for source, target, attrs in self.cfg.nxgraph.edges(data=True):
+            # Skip back edges – TODO: handle back edge instrumentation separately
+            if (source, target) in self.back_edges:
+                continue
+
+            edge_label = attrs.get('label')
+            weight = self.edge_weights.get((source, target), 0)
+            
+            # Create the update instruction: path_register = path_register + weight
+            update_instr = ChironAST.AssignmentCommand(
+                path_register_var,
+                ChironAST.Sum(path_register_var, ChironAST.Num(weight))
+            )
+            
+            if edge_label in ('flow_edge', 'Cond_True'):
+                last_idx = bb_last_index.get(source)
+                if last_idx is not None:
+                    insertion_index = last_idx + 1
+                    new_ir.insert(insertion_index, (update_instr, 1))
+                    # After each insertion update indices and offsets.
+                    update_offsets(insertion_index)
+
+            elif edge_label == 'Cond_False':
+                insertion_index = len(new_ir) 
+                new_ir.append((update_instr, 1))
+                source_end = bb_last_index.get(source, 0)
+                target_first = bb_first_index.get(target, 0)
+                instr, old_offset = new_ir[source_end]
+                new_offset = len(new_ir) - source_end - 1
+                new_ir[source_end] = (instr, new_offset)
+                jump_instr = ChironAST.ConditionCommand(ChironAST.BoolFalse())
+                new_ir.append((jump_instr, target_first - len(new_ir)))
+                update_offsets(len(new_ir)-1)
+        
+        # Replace IR with instrumented version
+        self.irHandler.ir = new_ir
+        
+        print("--------------------------------")
+        print("IR:")
+        for instr, idx in self.irHandler.ir:
+            print(f"instr: {instr}, target: {idx}")
+        print("--------------------------------")
+        print("IR instrumented successfully for Ball-Larus path profiling")
+ 
     def report_results(self):
         """
         Report the results of path profiling.
@@ -215,7 +325,7 @@ class BallLarusProfiler:
         G = self.cfg.nxgraph.copy()
         
         # Identify back edges
-        back_edges = self.identify_back_edges()
+        self.back_edges = self.identify_back_edges()
 
         entry_node = None
         for node in self.cfg.nodes():
@@ -230,7 +340,7 @@ class BallLarusProfiler:
                 break
 
         # Remove back edges from the graph
-        for source, target in back_edges:
+        for source, target in self.back_edges:
             if G.has_edge(source, target):
                 G.remove_edge(source, target)
                 G.add_edge(entry_node, target)
@@ -242,8 +352,8 @@ class BallLarusProfiler:
         else:
             print("Warning: CFG is still cyclic after removing back edges")
         
-        # dumpCFG2(G, "acyclic_cfg.dot")
-        return G, back_edges
+        dumpCFG2(G, "acyclic_cfg.dot")
+        return G, self.back_edges
 
 def run_ball_larus_profiling(irHandler, args):
     """

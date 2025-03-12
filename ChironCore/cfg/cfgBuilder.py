@@ -97,3 +97,8 @@ def dumpCFG(cfg, filename="out"):
     A = to_agraph(G)
     A.layout('dot')
     A.draw(filename + ".png")
+
+def dumpCFG2(G, filename="out"):
+    A = to_agraph(G)
+    A.layout('dot')
+    A.draw(filename + ".png")
