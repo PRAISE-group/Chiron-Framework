@@ -18,6 +18,11 @@ class BMC:
 
         self.setConditions(self.line_to_bb_map[len(self.ir)])
 
+        self.varConditions = {} # varConditions[var] = condition for var
+        for (stmt, tgt), line in zip(self.ir, range(len(self.ir))):
+            if isinstance(stmt, ChironSSA.AssignmentCommand):
+                self.varConditions[stmt.lvar.name] = self.bbConditions[self.line_to_bb_map[line]]
+
     def setConditions(self, node):        
         for pred in self.cfg.predecessors(node):
             if self.bbConditions[pred] == None:
@@ -41,18 +46,13 @@ class BMC:
         for stmt, tgt in self.ir:
             if isinstance(stmt, ChironSSA.PhiCommand): # TODO: Add support for Phi commands
                 lvar = z3.Int(stmt.lvar.name)
-                rvars = []
-                for rvar in stmt.rvars:
-                    if isinstance(rvar, ChironSSA.Var):
-                        rvars.append(z3.Int(rvar.name))
-                    elif isinstance(rvar, ChironSSA.Num):
-                        rvars.append(z3.IntVal(rvar.value))
-                    elif isinstance(rvar, ChironSSA.BoolTrue):
-                        rvars.append(z3.BoolVal(True))
-                    elif isinstance(rvar, ChironSSA.BoolFalse):
-                        rvars.append(z3.BoolVal(False))
-                or_expr = z3.Or([lvar == rvar for rvar in rvars])
-                self.solver.add(or_expr)
+                rvars = [z3.Int(rvar.name) for rvar in stmt.rvars]
+                
+                rhs_expr = rvars[0]
+                for i in range(1, len(stmt.rvars)):
+                    rhs_expr = z3.If(self.varConditions[stmt.rvars[i].name], rvars[i], (rhs_expr))
+
+                self.solver.add(lvar == rhs_expr)
 
             elif isinstance(stmt, ChironSSA.AssignmentCommand):
                 lvar = None
