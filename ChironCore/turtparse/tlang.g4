@@ -18,6 +18,8 @@ instruction : assignment
 	    | gotoCommand
 	    | pauseCommand
 		| printCommand
+		| incrementCommand
+		| dumpCommand
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -41,6 +43,10 @@ penCommand : 'penup' | 'pendown' ;
 pauseCommand : 'pause' ;
 
 printCommand : 'print' '(' expression ')' ;
+
+incrementCommand : 'inc' '(' VAR ')' ;
+
+dumpCommand : 'dumpMap' ;
 
 expression : 
              unaryArithOp expression               #unaryExpr

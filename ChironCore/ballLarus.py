@@ -172,7 +172,7 @@ class BallLarusProfiler:
             self.original_ir = self.ir.copy()
 
         # Create a path register variable
-        path_register_var = ChironAST.Var(":__bl_path_register")
+        path_register_var = ChironAST.Var(":blPathRegister")
         
         # Insert an initialization instruction at the beginning
         init_path_register = ChironAST.AssignmentCommand(

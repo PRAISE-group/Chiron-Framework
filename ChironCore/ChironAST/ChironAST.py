@@ -81,6 +81,17 @@ class PrintCommand(Instruction):
     def __str__(self):
         return f"PrintCommand({self.expr})"
 
+class IncrementCommand(Instruction):
+    def __init__(self, var):
+        self.var = var  # e.g. ":__path_register_var"
+    def __str__(self):
+        return f"IncrementCommand({self.var})"
+
+
+class DumpCommand(Instruction):
+    def __str__(self):
+        return "DumpCommand()"
+
 class Expression(AST):
     pass
 
