@@ -8,14 +8,16 @@ import sys
 import networkx as nx
 from ChironAST import ChironAST
 from irhandler import IRHandler
-# from cfgBuilder import dumpCFG2
+from interpreter import ConcreteInterpreter
+import turtle
+from cfgBuilder import dumpCFG2
 
 class BallLarusProfiler:
     """
     Implements Ball-Larus path profiling algorithm.
     """
     
-    def __init__(self, irHandler):
+    def __init__(self, irHandler, args):
         """
         Initialize the Ball-Larus profiler.
         
@@ -29,6 +31,7 @@ class BallLarusProfiler:
         self.path_counters = {}  # Maps path number to count
         self.original_ir = None  # To store the original IR before instrumentation
         self.back_edges = []  # List of back edges in the CFG
+        self.args = args
 
     def run_profiling(self):
         """
@@ -50,8 +53,21 @@ class BallLarusProfiler:
         
         # Instrument the IR
         self.instrument_ir()
-        
+        # return
         # The instrumented program will be run by the ConcreteInterpreter
+        inptr = ConcreteInterpreter(self.irHandler, self.args)
+        terminated = False
+        inptr.initProgramContext(self.args.params)
+        while True:
+            terminated = inptr.interpret()
+            if terminated:
+                break
+        print("Program Ended.")
+        print()
+        print("Press ESCAPE to exit")
+        turtle.listen()
+        turtle.onkeypress(self.stopTurtle, "Escape")
+        turtle.mainloop()
         
     def compute_edge_weights(self):
         """
@@ -145,6 +161,12 @@ class BallLarusProfiler:
         5. Finally, adjust all IR jump offsets to account for the inserted instructions.
         """
 
+        # DEBUG: Print the original IR
+        print("Original IR:")
+        for instr, idx in self.ir:
+            print(f"instr: {instr}, target: {idx}")
+        print("--------------------------------")
+
         # Save original IR copy
         if self.original_ir is None:
             self.original_ir = self.ir.copy()
@@ -178,11 +200,12 @@ class BallLarusProfiler:
             for idx, (instr, tgt) in enumerate(new_ir):
                 jump_target = idx + tgt
                 if(idx == insertion_index - 1):
-                    if isinstance(instr, ChironAST.ConditionCommand):
+                    if isinstance(instr, ChironAST.ConditionCommand) and jump_target >= insertion_index:
                         new_tgt = tgt + delta
                         new_ir[idx] = (instr, new_tgt)
                     continue
-
+                if(idx == insertion_index):
+                    continue
                 # For instructions before the insertion:
                 if idx < insertion_index and jump_target >= insertion_index:
                     new_tgt = tgt + delta
@@ -196,16 +219,26 @@ class BallLarusProfiler:
         new_ir = self.irHandler.ir.copy()
         new_ir.insert(0, (init_path_register, 1))
         update_offsets(0)
-        
+
         # Iterate over CFG edges
         for source, target, attrs in self.cfg.nxgraph.edges(data=True):
             # Skip back edges – TODO: handle back edge instrumentation separately
             if (source, target) in self.back_edges:
                 continue
 
+            # DEBUG: print the complete IR
+            print("--------------------------------")
+            print(f"source: {source.name}, target: {target.name}")
+            print("Complete IR:")
+            for instr, idx in new_ir:
+                print(f"instr: {instr}, target: {idx}")
+            print("--------------------------------")
+
+
             edge_label = attrs.get('label')
             weight = self.edge_weights.get((source, target), 0)
-            
+            # if weight == 0:
+            #     continue
             # Create the update instruction: path_register = path_register + weight
             update_instr = ChironAST.AssignmentCommand(
                 path_register_var,
@@ -221,16 +254,52 @@ class BallLarusProfiler:
                     update_offsets(insertion_index)
 
             elif edge_label == 'Cond_False':
+                assert  target.name != "END"
+
+            if(target.name == "END"):
+                jump_instr = ChironAST.ConditionCommand(ChironAST.BoolFalse())
+                new_ir.append((jump_instr, 1))
+                update_offsets(len(new_ir)-1)
+        
+        # Iterate over CFG edges 2nd time to handle Cond_False edges
+        for source, target, attrs in self.cfg.nxgraph.edges(data=True):
+            # Skip back edges – TODO: handle back edge instrumentation separately
+            if (source, target) in self.back_edges:
+                continue
+            
+            
+            print("--------------------------------")
+            print(f"source: {source.name}, target: {target.name}")
+            print("Complete IR:")
+            for instr, idx in new_ir:
+                print(f"instr: {instr}, target: {idx}")
+            print("--------------------------------")
+            
+            
+            edge_label = attrs.get('label')
+            weight = self.edge_weights.get((source, target), 0)
+            # if weight == 0:
+            #     continue
+            # Create the update instruction: path_register = path_register + weight
+            update_instr = ChironAST.AssignmentCommand(
+                path_register_var,
+                ChironAST.Sum(path_register_var, ChironAST.Num(weight))
+            )
+            
+            if edge_label == 'Cond_False':
                 insertion_index = len(new_ir) 
                 new_ir.append((update_instr, 1))
+                update_offsets(insertion_index)
                 source_end = bb_last_index.get(source, 0)
                 target_first = bb_first_index.get(target, 0)
                 instr, old_offset = new_ir[source_end]
                 new_offset = len(new_ir) - source_end - 1
                 new_ir[source_end] = (instr, new_offset)
                 jump_instr = ChironAST.ConditionCommand(ChironAST.BoolFalse())
-                new_ir.append((jump_instr, target_first - len(new_ir)))
+                val = target_first - len(new_ir)
+                new_ir.append((jump_instr, val))
                 update_offsets(len(new_ir)-1)
+
         
         # Replace IR with instrumented version
         self.irHandler.ir = new_ir
@@ -352,8 +421,11 @@ class BallLarusProfiler:
         else:
             print("Warning: CFG is still cyclic after removing back edges")
         
-        # dumpCFG2(G, "acyclic_cfg.dot")
+        dumpCFG2(G, "acyclic_cfg.dot")
         return G, self.back_edges
+    
+    def stopTurtle(self):
+        turtle.bye()
 
 def run_ball_larus_profiling(irHandler, args):
     """
@@ -370,7 +442,7 @@ def run_ball_larus_profiling(irHandler, args):
         return
     
     # Create and run the profiler
-    profiler = BallLarusProfiler(irHandler)
+    profiler = BallLarusProfiler(irHandler,args)
     profiler.run_profiling()
     
     # The instrumented program will be run by the main Chiron interpreter
