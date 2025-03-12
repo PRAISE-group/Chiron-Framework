@@ -88,6 +88,9 @@ class ConcreteInterpreter(Interpreter):
         self.pc = 0
 
     def interpret(self):
+        # clear the output file
+        with open("print_output.txt", "w") as f:
+            f.write("")
         print("Program counter : ", self.pc)
         stmt, tgt = self.ir[self.pc]
         print(stmt, stmt.__class__.__name__, tgt)

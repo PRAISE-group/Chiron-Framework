@@ -300,7 +300,11 @@ class BallLarusProfiler:
                 new_ir.append((jump_instr, val))
                 update_offsets(len(new_ir)-1)
 
-        
+        # Print the path register variable
+        print_instr = ChironAST.PrintCommand(path_register_var)
+        new_ir.append((print_instr, 1))
+        # update_offsets(len(new_ir)-1)
+
         # Replace IR with instrumented version
         self.irHandler.ir = new_ir
         

@@ -1,3 +1,1 @@
-self.prg.var1 = 10
-self.prg.var2 = 20
-self.prg.sum = 30
+self.prg.__bl_path_register = 15
