@@ -421,5 +421,5 @@ if __name__ == "__main__":
         print("\nConverting program to SMT-LIB format..\n")
         smt = bmc.BMC(ssa)
         smt.convertSSAtoSMT()
-        smt.solve()
+        smt.solve(tacGen.getFreeVariables())
         print("DONE..")

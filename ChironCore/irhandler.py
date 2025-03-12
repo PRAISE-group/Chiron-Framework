@@ -153,6 +153,7 @@ class TACGenerator:
         self.gotoCount = 0
         self.ast_to_tac_line = {}
         self.line = 0
+        self.freeVars = set()
 
     def parseExpresssion(self, expr, dest):
         """
@@ -468,9 +469,9 @@ class TACGenerator:
         self.handleFreeVariables()
 
     def handleFreeVariables(self):
-        freeVars = self.getFreeVariables()
+        self.freeVars = self.getFreeVariables()
 
-        for var in freeVars:
+        for var in self.freeVars:
             self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(var), ChironTAC.Unused(), ChironTAC.Unused(), ""), 0))
 
     
@@ -478,31 +479,33 @@ class TACGenerator:
         """
         Returns free variables in TAC.
         """
-        freeVars = set()
+        if len(self.freeVars) > 0:
+            return self.freeVars
+
         boundVars = set()
         for (stmt, _), _ in zip(self.tac, range(len(self.tac))):
             if isinstance(stmt, ChironTAC.AssignmentCommand):
                 if isinstance(stmt.rvar1, ChironTAC.Var) and stmt.rvar1.__str__() not in boundVars:
-                    freeVars.add(stmt.rvar1.__str__())
+                    self.freeVars.add(stmt.rvar1.__str__())
                 if isinstance(stmt.rvar2, ChironTAC.Var) and stmt.rvar2.__str__() not in boundVars:
-                    freeVars.add(stmt.rvar2.__str__())
+                    self.freeVars.add(stmt.rvar2.__str__())
                 boundVars.add(stmt.lvar.__str__())
             elif isinstance(stmt, ChironTAC.ConditionCommand):
                 if isinstance(stmt.cond, ChironTAC.Var) and stmt.cond.__str__() not in boundVars:
-                    freeVars.add(stmt.cond.__str__())
+                    self.freeVars.add(stmt.cond.__str__())
             elif isinstance(stmt, ChironTAC.AssertCommand):
                 if isinstance(stmt.cond, ChironTAC.Var) and stmt.cond.__str__() not in boundVars:
-                    freeVars.add(stmt.cond.__str__())
+                    self.freeVars.add(stmt.cond.__str__())
             elif isinstance(stmt, ChironTAC.MoveCommand):
                 if isinstance(stmt.var, ChironTAC.Var) and stmt.var.__str__() not in boundVars:
-                    freeVars.add(stmt.var.__str__())
+                    self.freeVars.add(stmt.var.__str__())
             elif isinstance(stmt, ChironTAC.GotoCommand):
                 if isinstance(stmt.xcor, ChironTAC.Var) and stmt.xcor.__str__() not in boundVars:
-                    freeVars.add(stmt.xcor.__str__())
+                    self.freeVars.add(stmt.xcor.__str__())
                 if isinstance(stmt.ycor, ChironTAC.Var) and stmt.ycor.__str__() not in boundVars:
-                    freeVars.add(stmt.ycor.__str__())
+                    self.freeVars.add(stmt.ycor.__str__())
     
-        return freeVars
+        return self.freeVars
 
 
     def printTAC(self):
