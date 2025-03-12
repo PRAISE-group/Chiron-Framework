@@ -168,8 +168,11 @@ class ConcreteInterpreter(Interpreter):
 
     def handlePrintCommand(self, stmt, tgt):
         print(" PrintCommand")
-        # Using addContext to resolve any variable references in the expression.
-        # The helper will convert the expression to a string that eval can use.
+        # Convert the expression to a string that can be evaluated.
         exprStr = addContext(stmt.expr)
-        exec(f"print({exprStr})")
+        # Evaluate the expression in the current program context.
+        result = eval(exprStr)
+        # Dump the result to a file instead of printing to the console.
+        with open("print_output.txt", "a") as f:
+            f.write(str(exprStr) + " = " + str(result) + "\n")
         return 1

@@ -1,0 +1,3 @@
+self.prg.var1 = 10
+self.prg.var2 = 20
+self.prg.sum = 30
