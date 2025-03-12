@@ -17,6 +17,7 @@ instruction : assignment
 	    | penCommand
 	    | gotoCommand
 	    | pauseCommand
+		| printCommand
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -38,6 +39,8 @@ moveOp : 'forward' | 'backward' | 'left' | 'right' ;
 penCommand : 'penup' | 'pendown' ;
 
 pauseCommand : 'pause' ;
+
+printCommand : 'print' '(' expression ')' ;
 
 expression : 
              unaryArithOp expression               #unaryExpr

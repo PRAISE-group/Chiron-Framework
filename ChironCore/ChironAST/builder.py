@@ -172,3 +172,7 @@ class astGenPass(tlangVisitor):
 
     def visitPenCommand(self, ctx:tlangParser.PenCommandContext):
         return [(ChironAST.PenCommand(ctx.getText()), 1)]
+
+    def visitPrintCommand(self, ctx:tlangParser.PrintCommandContext):
+        expr = self.visit(ctx.expression())
+        return [(ChironAST.PrintCommand(expr), 1)]

@@ -74,6 +74,13 @@ class PauseCommand(Instruction):
     def __str__(self):
         return "pause"
 
+class PrintCommand(Instruction):
+    def __init__(self, expr):
+        self.expr = expr
+        
+    def __str__(self):
+        return f"PrintCommand({self.expr})"
+
 class Expression(AST):
     pass
 

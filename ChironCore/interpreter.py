@@ -1,4 +1,3 @@
-
 from ChironAST import ChironAST
 from ChironHooks import Chironhooks
 import turtle
@@ -107,6 +106,8 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleGotoCommand(stmt, tgt)
         elif isinstance(stmt, ChironAST.NoOpCommand):
             ntgt = self.handleNoOpCommand(stmt, tgt)
+        elif isinstance(stmt, ChironAST.PrintCommand):
+            ntgt = self.handlePrintCommand(stmt, tgt)
         else:
             raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
 
@@ -163,4 +164,12 @@ class ConcreteInterpreter(Interpreter):
         xcor = addContext(stmt.xcor)
         ycor = addContext(stmt.ycor)
         exec("self.trtl.goto(%s, %s)" % (xcor, ycor))
+        return 1
+
+    def handlePrintCommand(self, stmt, tgt):
+        print(" PrintCommand")
+        # Using addContext to resolve any variable references in the expression.
+        # The helper will convert the expression to a string that eval can use.
+        exprStr = addContext(stmt.expr)
+        exec(f"print({exprStr})")
         return 1
