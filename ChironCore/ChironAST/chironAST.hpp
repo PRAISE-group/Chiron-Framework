@@ -125,3 +125,26 @@ public:
 
     llvm::Value* codegen() override;
 };
+
+class IfExpressionAST : public ExpressionAST {
+    std::unique_ptr<ExpressionAST> condition;
+    std::vector<std::unique_ptr<InstrAST>> thenBlock;
+    std::vector<std::unique_ptr<InstrAST>> elseBlock;
+
+public:
+    IfExpressionAST(std::unique_ptr<ExpressionAST> condition, std::vector<std::unique_ptr<InstrAST>> thenBlock, std::vector<std::unique_ptr<InstrAST>> elseBlock) :
+        condition(std::move(condition)), thenBlock(std::move(thenBlock)), elseBlock(std::move(elseBlock)) {}
+
+    llvm::Value* codegen() override;
+};
+
+class LoopExpressionAST : public ExpressionAST {
+    std::unique_ptr<InstrAST> assignment;
+    std::vector<std::unique_ptr<InstrAST>> body;
+
+public:
+    LoopExpressionAST(std::unique_ptr<InstrAST> assignment, std::vector<std::unique_ptr<InstrAST>> body) :
+        assignment(std::move(assignment)), body(std::move(body)) {}
+
+    llvm::Value* codegen() override;
+};

@@ -63,72 +63,42 @@ public:
     any visitIfConditional(tlangParser::IfConditionalContext *ctx) override {
         ExpressionAST* cond = getSingleExpr(visit(ctx->condition()));
         vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
-        vector<InstrAST*> result;
-        result.push_back(
-            make_unique<BinCondExpressionAST>(
-                "if",
-                unique_ptr<ExpressionAST>(cond),
-                nullptr
-            ).release()
-        );
-        result.insert(result.end(), thenBlock.begin(), thenBlock.end());
-        return result;
+        return vector<InstrAST*>{
+            make_unique<IfExpressionAST>(unique_ptr<ExpressionAST>(cond), move(thenBlock), vector<InstrAST*>{}).release()
+        };
     }
 
     any visitIfElseConditional(tlangParser::IfElseConditionalContext *ctx) override {
         ExpressionAST* cond = getSingleExpr(visit(ctx->condition()));
         vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist(0)));
         vector<InstrAST*> elseBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist(1)));
-        vector<InstrAST*> result;
-        result.push_back(
-            make_unique<BinCondExpressionAST>(
-                "ifelse",
-                unique_ptr<ExpressionAST>(cond),
-                nullptr
-            ).release()
-        );
-        result.insert(result.end(), thenBlock.begin(), thenBlock.end());
-        result.insert(result.end(), elseBlock.begin(), elseBlock.end());
-        return result;
+        return vector<InstrAST*>{
+            make_unique<IfExpressionAST>(unique_ptr<ExpressionAST>(cond), move(thenBlock), move(elseBlock)).release()
+        };
     }
 
     any visitLoop(tlangParser::LoopContext *ctx) override {
         repeatInstrCount++;
         ExpressionAST* repeatNum = getSingleExpr(visit(ctx->value()));
         VariableExpressionAST* counterVar = new VariableExpressionAST("__rep_counter_" + to_string(repeatInstrCount));
-        vector<InstrAST*> instructions;
-        {   // Create assignment: __rep_counter = repeatNum
-            vector<unique_ptr<ExpressionAST>> args;
-            args.push_back(counterVar->clone());
-            args.push_back(unique_ptr<ExpressionAST>(repeatNum));
-            instructions.push_back(
-                make_unique<CallExpressionAST>("assign", move(args)).release()
-            );
-        }
-        // Create while condition: __rep_counter > 0
-        unique_ptr<ExpressionAST> cond = make_unique<BinCondExpressionAST>(
-            ">",
-            counterVar->clone(),
-            make_unique<NumberExpressionAST>(0)
-        );
-        // Get loop body instructions.
+        BinArithExpressionAST* counterInit = new BinArithExpressionAST('=', unique_ptr<ExpressionAST>(counterVar), unique_ptr<ExpressionAST>(repeatNum));
+        
         vector<InstrAST*> body = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
-        // Create decrement: __rep_counter = __rep_counter - 1
-        unique_ptr<ExpressionAST> decrementExpr = make_unique<BinArithExpressionAST>(
-            '-',
-            counterVar->clone(),
-            make_unique<NumberExpressionAST>(1)
-        );
-        vector<unique_ptr<ExpressionAST>> argsDec;
-        argsDec.push_back(counterVar->clone());
-        argsDec.push_back(move(decrementExpr));
-        InstrAST* decrementCall = make_unique<CallExpressionAST>("assign", move(argsDec)).release();
-        instructions.push_back(
-            make_unique<BinCondExpressionAST>("while", move(cond), nullptr).release()
-        );
-        instructions.insert(instructions.end(), body.begin(), body.end());
-        instructions.push_back(decrementCall);
-        return instructions;
+        
+        return vector<InstrAST*>{
+            make_unique<LoopExpressionAST>(
+                unique_ptr<InstrAST>(counterInit),
+                move(body)
+            ).release()
+        };
+    }
+    
+    any visitAssignment(tlangParser::AssignmentContext *ctx) override {
+        VariableExpressionAST* var = new VariableExpressionAST(ctx->VAR()->getText());
+        ExpressionAST* expr = getSingleExpr(visit(ctx->expression()));
+        return vector<InstrAST*>{
+            new BinArithExpressionAST('=', unique_ptr<ExpressionAST>(var), unique_ptr<ExpressionAST>(expr))
+        };
     }
 
     any visitGotoCommand(tlangParser::GotoCommandContext *ctx) override {
@@ -143,14 +113,6 @@ public:
             make_unique<GotoCallExprAST>(xNum->getVal(), yNum->getVal()).release()
         );
         return result;
-    }
-
-    any visitAssignment(tlangParser::AssignmentContext *ctx) override {
-        VariableExpressionAST* var = new VariableExpressionAST(ctx->VAR()->getText());
-        ExpressionAST* expr = getSingleExpr(visit(ctx->expression()));
-        return vector<InstrAST*>{
-            new BinArithExpressionAST('=', unique_ptr<ExpressionAST>(var), unique_ptr<ExpressionAST>(expr))
-        };
     }
 
     any visitMoveCommand(tlangParser::MoveCommandContext *ctx) override {
