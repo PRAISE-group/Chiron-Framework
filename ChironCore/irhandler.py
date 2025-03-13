@@ -405,12 +405,14 @@ class TACGenerator:
                 newtgt = line_number - 1 + tgt  # Adjusted later
                 self.line += 1
                 self.tac.append((ChironTAC.ConditionCommand(branchvar), newtgt))
+            
             elif isinstance(stmt, ChironAST.AssertCommand):
                 assertvar = ChironTAC.Var(f":__assert_{self.assertCount}")
                 self.assertCount += 1
                 self.parseExpresssion(stmt.cond, assertvar)
                 self.line += 1
                 self.tac.append((ChironTAC.AssertCommand(assertvar), 1))
+            
             elif isinstance(stmt, ChironAST.MoveCommand):
                 movevar = None
                 if isinstance(stmt.expr, ChironAST.Num):
@@ -423,9 +425,37 @@ class TACGenerator:
                     self.parseExpresssion(stmt.expr, movevar)
                 self.line += 1
                 self.tac.append((ChironTAC.MoveCommand(stmt.direction, movevar), 1))
+                if (stmt.direction == "forward" or stmt.direction == "backward"):
+                    self.line += 6
+                    self.tac.append((ChironTAC.CosCommand(ChironTAC.Var(":__cos_theta"), ChironTAC.Var(":__turtle_theta")), 1))
+                    self.tac.append((ChironTAC.SinCommand(ChironTAC.Var(":__sin_theta"), ChironTAC.Var(":__turtle_theta")), 1))
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__delta_x"), movevar, ChironTAC.Var(":__cos_theta"), "*"), 1))
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__delta_y"), movevar, ChironTAC.Var(":__sin_theta"), "*"), 1))
+                    if (stmt.direction == "forward"):
+                        self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_x"), ChironTAC.Var(":__turtle_x"), ChironTAC.Var(":__delta_x"), "+"), 1))
+                        self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_y"), ChironTAC.Var(":__turtle_y"), ChironTAC.Var(":__delta_y"), "+"), 1))
+                    elif (stmt.direction == "backward"):
+                        self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_x"), ChironTAC.Var(":__turtle_x"), ChironTAC.Var(":__delta_x"), "-"), 1))
+                        self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_y"), ChironTAC.Var(":__turtle_y"), ChironTAC.Var(":__delta_y"), "-"), 1))
+                elif (stmt.direction == "left"):
+                    self.line += 1
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_theta"), ChironTAC.Var(":__turtle_theta"), movevar, "-"), 1))
+                elif (stmt.direction == "right"):
+                    self.line += 1
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_theta"), ChironTAC.Var(":__turtle_theta"), movevar, "+"), 1))
+                else:
+                    raise NotImplementedError("Unknown move direction: %s, %s." % (type(stmt), stmt))
+            
             elif isinstance(stmt, ChironAST.PenCommand):
-                self.line += 1
+                self.line += 2
                 self.tac.append((ChironTAC.PenCommand(stmt.status), 1))
+                if (stmt.status == "penup"):
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_pen"), ChironTAC.Num(1), ChironTAC.Num(0), "+"), 1))
+                elif (stmt.status == "pendown"):
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_pen"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
+                else:
+                    raise NotImplementedError("Unknown pen status: %s, %s." % (type(stmt), stmt))
+            
             elif isinstance(stmt, ChironAST.GotoCommand):
                 xvar = None
                 yvar = None
@@ -445,14 +475,19 @@ class TACGenerator:
                     yvar = ChironTAC.Var(f":__y_{self.gotoCount}")
                     self.gotoCount += 1
                     self.parseExpresssion(stmt.ycor, yvar)
-                self.line += 1
+                self.line += 3
                 self.tac.append((ChironTAC.GotoCommand(xvar, yvar), 1))
+                self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_x"), xvar, ChironTAC.Num(0), "+"), 1))
+                self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_y"), yvar, ChironTAC.Num(0), "+"), 1))
+            
             elif isinstance(stmt, ChironAST.NoOpCommand):
                 self.line += 1
                 self.tac.append((ChironTAC.NoOpCommand(), 1))
+            
             elif isinstance(stmt, ChironAST.PauseCommand):
                 self.line += 1
                 self.tac.append((ChironTAC.PauseCommand(), 1))
+            
             else:
                 raise NotImplementedError(
                     "Unknown instruction: %s, %s." % (type(stmt), stmt)
@@ -466,15 +501,21 @@ class TACGenerator:
                 newtgt = self.ast_to_tac_line[tgt] - i
                 self.tac[i] = (stmt, newtgt)
 
+        self.handleMoveVariables()
         self.handleFreeVariables()
 
     def handleFreeVariables(self):
         self.freeVars = self.getFreeVariables()
 
         for var in self.freeVars:
-            self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(var), ChironTAC.Unused(), ChironTAC.Unused(), ""), 0))
-
+            self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(var), ChironTAC.Unused(), ChironTAC.Unused(), ""), 1))
     
+    def handleMoveVariables(self):
+        self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_x"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
+        self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_y"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
+        self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_theta"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
+        self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":__turtle_pen"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1)) # 0->down 1->up
+        
     def getFreeVariables(self):
         """
         Returns free variables in TAC.
