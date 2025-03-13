@@ -22,7 +22,7 @@ class BasicBlock:
     def extend(self, instructions):
         self.instrlist.extend(instructions)
 
-    def setCondition(self, condition):
+    def set_condition(self, condition):
         self.condition = condition
 
     def get_condition(self):
@@ -46,6 +46,8 @@ class ChironCFG:
         self.nxgraph = nx.DiGraph(name=gname)
         self.entry = "0"
         self.exit = "END"
+        self.df = None
+        self.idom = None
 
     def __iter__(self):
         return self.nxgraph.__iter__()
@@ -93,6 +95,19 @@ class ChironCFG:
     def get_edge_label(self, u, v):
         edata = self.nxgraph.get_edge_data(u,v)
         return edata['label'] if len(edata) else 'T'
+
+    def compute_dominance(self):
+        entry = None
+        for node in self.nxgraph.nodes():
+            if node.name == "START":
+                entry = node
+                break
+
+        if entry is None:
+            raise ValueError("CFG does not have an entry node")
+
+        self.idom = nx.immediate_dominators(self.nxgraph, entry)
+        self.df = nx.dominance_frontiers(self.nxgraph, entry)
 
     def get_topological_order(self):
         return list(nx.topological_sort(self.nxgraph))

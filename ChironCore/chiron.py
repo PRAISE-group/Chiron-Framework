@@ -23,6 +23,7 @@ import sExecution as se
 import cfg.cfgBuilder as cfgB
 import bmc as bmc
 from ChironSSA.ssaBuilder import * 
+from ChironSSA.builder import *
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
@@ -412,14 +413,17 @@ if __name__ == "__main__":
         cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
         cfgB.dumpCFG(cfg, 'tac_cfg')
 
-        ssa = buildSSA(tacGen.tac, cfg, line2BlockMap) # Building SSA
-        printSSA(ssa) # Printing SSA
+        amoghssa = SSABuilder(cfg)
+        amoghssa.build()
 
-        ssa_cfg, ssa_line2BlockMap = cfgB.buildCFG(ssa, "ssa_cfg", False) # Building CFG for SSA
-        cfgB.dumpCFG(ssa_cfg, 'ssa_cfg')
+        #ssa = buildSSA(tacGen.tac, cfg, line2BlockMap) # Building SSA
+        #printSSA(ssa) # Printing SSA
 
-        print("\nConverting program to SMT-LIB format..\n")
-        smt = bmc.BMC(ssa)
-        smt.convertSSAtoSMT()
-        smt.solve(tacGen.getFreeVariables())
+        #ssa_cfg, ssa_line2BlockMap = cfgB.buildCFG(ssa, "ssa_cfg", False) # Building CFG for SSA
+        #cfgB.dumpCFG(ssa_cfg, 'ssa_cfg')
+
+        #print("\nConverting program to SMT-LIB format..\n")
+        #smt = bmc.BMC(ssa)
+        #smt.convertSSAtoSMT()
+        #smt.solve(tacGen.getFreeVariables())
         print("DONE..")

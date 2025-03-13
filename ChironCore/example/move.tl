@@ -1,11 +1,13 @@
-if (:a > :b) [
-    :x = 3
+if :a > :b [
+    :x = :a
 ] else [
-    if (:b > :c) [
-        :x = 2
-    ] else [
-        :x = 3
-    ]
+    :x = :b - 2
 ]
-:y = :x
-assert :x == 3
+
+if :a > :b [
+    :y = :b - 1
+] else [
+    :y = :a + 100
+]
+
+assert :x >= :y
