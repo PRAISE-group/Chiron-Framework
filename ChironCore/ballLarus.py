@@ -66,6 +66,7 @@ class BallLarusProfiler:
         print("Program Ended.")
         print()
         print("Press ESCAPE to exit")
+
         turtle.listen()
         turtle.onkeypress(self.stopTurtle, "Escape")
         turtle.mainloop()
@@ -81,7 +82,7 @@ class BallLarusProfiler:
         """
         # Create an acyclic version of the CFG
         acyclic_cfg, back_edges = self.create_acyclic_cfg()
-        
+        self.acyclic_cfg = acyclic_cfg
         # Find the exit node (usually named "END")
         exit_node = None
         for node in self.cfg.nodes():
@@ -363,18 +364,65 @@ class BallLarusProfiler:
             print(f"instr: {instr}, target: {idx}")
         print("--------------------------------")
         print("IR instrumented successfully for Ball-Larus path profiling")
- 
+
+    def regenerate_path(self, path_number):
+        """
+        Regenerate the path from the path number.
+        
+        This method uses the edge weights to reconstruct the path taken
+        in the CFG to reach the given path number.
+        
+        Args:
+            path_number: The path number to regenerate
+        
+        Returns:
+            A list of basic block names representing the path
+        """
+
+        path = []
+        current_node = None
+        for node in self.acyclic_cfg.nodes():
+            if node.name == "START":
+                current_node = node
+                break
+        
+        while current_node is not None and current_node.name != "END":
+            path.append(current_node.name)
+            # Find the successor with the highest edge weight
+            max_weight = -1
+            next_node = None
+            for successor in self.acyclic_cfg.successors(current_node):
+                weight = self.edge_weights.get((current_node, successor), 0)
+                if weight > max_weight and path_number >= weight:
+                    max_weight = weight
+                    next_node = successor
+            path_number -= max_weight
+            current_node = next_node
+        path.append("END")
+        return path
     def report_results(self):
         """
         Report the results of path profiling.
         
         This method should be called after the instrumented program has been executed.
         """
-        # In a real implementation, we would read the path counters from the program state
-        # For now, we'll just print a message
-        print("\n=== Ball-Larus Path Profiling Results ===")
-        print("Path profiling completed successfully")
-        print("Note: This is a placeholder. In a real implementation, we would report actual path execution counts.")
+        # Open hash_dump.txt and read the hash map contents
+        # example contents ->
+        #  4: 3
+        # 15: 12
+        # for each key: value pair, we will replace the key with the actual path in the CFG by implementing the path regeneration algorithm
+        # then write back the path: value pair to hash_dump.txt
+        list_of_paths = []
+        with open("hash_dump.txt", "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                key, value = line.split(":")
+                path = self.regenerate_path(int(key))
+                #store the path: value pair in the hash_dump.txt file
+                list_of_paths.append((path, value))
+        with open("hash_dump.txt", "w") as f:
+            for path, value in list_of_paths:
+                f.write(f"{path}: {value}")
     
     def restore_original_ir(self):
         """
@@ -497,7 +545,7 @@ def run_ball_larus_profiling(irHandler, args):
     # Create and run the profiler
     profiler = BallLarusProfiler(irHandler,args)
     profiler.run_profiling()
-    
+
     # The instrumented program will be run by the main Chiron interpreter
     # After execution, report the results
     profiler.report_results()
