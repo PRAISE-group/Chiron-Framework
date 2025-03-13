@@ -1,7 +1,6 @@
 #pragma once
 
 #include "llvm/IR/Value.h"
-//#include <Support/raw_ostream.h>
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <memory>
@@ -139,12 +138,13 @@ public:
 };
 
 class LoopExpressionAST : public ExpressionAST {
-    std::unique_ptr<InstrAST> assignment;
+    int repCounter;
+    std::string varname;
     std::vector<std::unique_ptr<InstrAST>> body;
 
 public:
-    LoopExpressionAST(std::unique_ptr<InstrAST> assignment, std::vector<std::unique_ptr<InstrAST>> body) :
-        assignment(std::move(assignment)), body(std::move(body)) {}
+    LoopExpressionAST(int repCounter, std::string varname, std::vector<std::unique_ptr<InstrAST>> body) :
+        repCounter(repCounter), varname(varname), body(std::move(body)) {}
 
     llvm::Value* codegen() override;
 };

@@ -2,8 +2,10 @@
 
 #include <map>
 #include <iostream>
+#include <vector>
 
 #include <llvm/IR/Value.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -35,7 +37,7 @@ static std::map<std::string, llvm::AllocaInst*> SymbolTable;
 static llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction, llvm::StringRef VarName) {
     llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
     TheFunction->getEntryBlock().begin());
-    return TmpB.CreateAlloca(llvm::Type::getDoubleTy(*CodeGenContext), nullptr, VarName);
+    return TmpB.CreateAlloca(llvm::Type::getInt32Ty(*CodeGenContext), nullptr, VarName);
 }
 
 llvm::Value* NumberExpressionAST::codegen() {
@@ -55,7 +57,7 @@ llvm::Value* BinArithExpressionAST::codegen() {
         VariableExpressionAST *LHSE = static_cast<VariableExpressionAST*>(LHS.get());
         llvm::AllocaInst *V = SymbolTable[LHSE->getName()];
         if (!V) {
-            V = CreateEntryBlockAlloca(CodeGenModule->getFunction("main"), LHSE->getName());
+            V = CreateEntryBlockAlloca(Builder->GetInsertBlock()->getParent(), LHSE->getName());
             SymbolTable[LHSE->getName()] = V;
         }
         
@@ -148,6 +150,7 @@ llvm::Value* CallExpressionAST::codegen() {
 
     return Builder->CreateCall(CalleeFunc, ArgsValue, "calltmp");
 }
+
 llvm::Value* PenCallExprAST::codegen() {
     return nullptr;
 }
@@ -159,6 +162,86 @@ llvm::Value* GotoCallExprAST::codegen() {
 llvm::Value* MoveCallExprAST::codegen() {
     return nullptr;
 }
+
+llvm::Value* IfExpressionAST::codegen() {
+    llvm::Value *CondV = condition->codegen();
+    if (!CondV) {
+        return nullptr;
+    }
+
+    CondV = Builder->CreateICmpNE(CondV, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), 0), "ifcond");
+
+    llvm::Function *TheFunction = Builder->GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(*CodeGenContext, "then", TheFunction);
+    llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(*CodeGenContext, "else");
+    llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*CodeGenContext, "ifcont");
+
+    Builder->CreateCondBr(CondV, ThenBB, ElseBB);
+    Builder->SetInsertPoint(ThenBB);
+    for(int i = 0; i < thenBlock.size(); i++){
+        llvm::Value* val = thenBlock[i]->codegen();
+        if(!val){
+            return nullptr;
+        }
+    }
+
+    Builder->CreateBr(MergeBB);
+    ThenBB = Builder->GetInsertBlock();
+
+    TheFunction->insert(TheFunction->end(), ElseBB);
+    Builder->SetInsertPoint(ElseBB);
+    for(int i = 0; i < elseBlock.size(); i++){
+        llvm::Value* val = elseBlock[i]->codegen();
+        if(!val){
+            return nullptr;
+        }
+    }
+
+    Builder->CreateBr(MergeBB);
+    ElseBB = Builder->GetInsertBlock();
+
+    TheFunction->insert(TheFunction->end(), MergeBB);
+    Builder->SetInsertPoint(MergeBB);
+
+    return CondV;
+}
+
+llvm::Value* LoopExpressionAST::codegen(){
+    llvm::AllocaInst *RC = SymbolTable[varname];
+    if(!RC){
+        RC = CreateEntryBlockAlloca(Builder->GetInsertBlock()->getParent(), varname);
+        SymbolTable[varname] = RC;
+    }
+    Builder->CreateStore(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), repCounter), RC);
+
+    llvm::Function *TheFunction = Builder->GetInsertBlock()->getParent();
+    llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(*CodeGenContext, "loop", TheFunction);
+    Builder->CreateBr(LoopBB);
+
+    Builder->SetInsertPoint(LoopBB);
+
+    for(int i = 0; i < body.size(); i++){
+        llvm::Value* val = body[i]->codegen();
+        if(!val){
+            return nullptr;
+        }
+    }
+
+    llvm::Value *Count = Builder->CreateLoad(RC->getAllocatedType(), RC, varname.c_str());
+    llvm::Value *NextVal = Builder->CreateSub(Count, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), 1), "nextvar");
+    Builder->CreateStore(NextVal, RC);
+
+    llvm::Value *EndCond = Builder->CreateICmpNE(NextVal, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), 0), "loopcond");
+
+    llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(*CodeGenContext, "afterloop", TheFunction);
+    Builder->CreateCondBr(EndCond, LoopBB, AfterBB);
+
+    Builder->SetInsertPoint(AfterBB);
+
+    return llvm::Constant::getNullValue(llvm::Type::getInt32Ty(*CodeGenContext));
+}
+
 void IntializeModule() {
     CodeGenContext = std::make_unique<llvm::LLVMContext>();
     CodeGenModule = std::make_unique<llvm::Module>("Chiron Module", *CodeGenContext);

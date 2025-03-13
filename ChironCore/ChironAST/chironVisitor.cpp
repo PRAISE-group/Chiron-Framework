@@ -12,12 +12,21 @@ using namespace std;
 static ExpressionAST* getSingleExpr(const any &result) {
     auto vec = any_cast<vector<InstrAST*>>(result);
     if (vec.size() != 1)
-        throw runtime_error("Expected a single expression");
+    throw runtime_error("Expected a single expression");
     ExpressionAST* expr = dynamic_cast<ExpressionAST*>(vec[0]);
     if (!expr)
         throw runtime_error("Expression is not of type ExpressionAST*");
     return expr;
 }
+
+// // Helper function to convert vector of raw pointers to vector of unique pointers
+// static vector<unique_ptr<InstrAST>> convertToUniquePtrVector(const vector<InstrAST*>& rawPtrVec) {
+//     vector<unique_ptr<InstrAST>> uniquePtrVec;
+//     for (auto* ptr : rawPtrVec) {
+//         uniquePtrVec.emplace_back(ptr);
+//     }
+//     return uniquePtrVec;
+// }
 
 class ChironVisitorImpl : public tlangVisitor {
     int repeatInstrCount = 0;
@@ -64,7 +73,11 @@ public:
         ExpressionAST* cond = getSingleExpr(visit(ctx->condition()));
         vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
         return vector<InstrAST*>{
-            make_unique<IfExpressionAST>(unique_ptr<ExpressionAST>(cond), move(thenBlock), vector<InstrAST*>{}).release()
+            make_unique<IfExpressionAST>(
+                unique_ptr<ExpressionAST>(cond),
+                vector<unique_ptr<InstrAST>>{thenBlock.begin(), thenBlock.end()},
+                vector<unique_ptr<InstrAST>>{}
+            ).release()
         };
     }
 
@@ -73,22 +86,30 @@ public:
         vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist(0)));
         vector<InstrAST*> elseBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist(1)));
         return vector<InstrAST*>{
-            make_unique<IfExpressionAST>(unique_ptr<ExpressionAST>(cond), move(thenBlock), move(elseBlock)).release()
+            make_unique<IfExpressionAST>(
+                unique_ptr<ExpressionAST>(cond),
+                vector<unique_ptr<InstrAST>>{thenBlock.begin(), thenBlock.end()},
+                vector<unique_ptr<InstrAST>>{elseBlock.begin(), elseBlock.end()}
+            ).release()
         };
     }
 
     any visitLoop(tlangParser::LoopContext *ctx) override {
         repeatInstrCount++;
         ExpressionAST* repeatNum = getSingleExpr(visit(ctx->value()));
-        VariableExpressionAST* counterVar = new VariableExpressionAST("__rep_counter_" + to_string(repeatInstrCount));
-        BinArithExpressionAST* counterInit = new BinArithExpressionAST('=', unique_ptr<ExpressionAST>(counterVar), unique_ptr<ExpressionAST>(repeatNum));
+        NumberExpressionAST* rep = dynamic_cast<NumberExpressionAST*>(repeatNum);
+        if (!rep)
+            throw runtime_error("Loop count must be a number");
         
+        string varname = "__rep_counter_" + to_string(repeatInstrCount);
         vector<InstrAST*> body = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
         
+        repeatInstrCount--;
         return vector<InstrAST*>{
             make_unique<LoopExpressionAST>(
-                unique_ptr<InstrAST>(counterInit),
-                move(body)
+                rep->getVal(),
+                varname,
+                vector<unique_ptr<InstrAST>>{body.begin(), body.end()}
             ).release()
         };
     }
