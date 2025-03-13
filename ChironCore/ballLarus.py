@@ -5,13 +5,15 @@ Ball-Larus path profiling implementation for the Chiron Framework.
 """
 
 from hmac import new
+from operator import ge
+from re import T
 import sys
 import networkx as nx
 from ChironAST import ChironAST
 from irhandler import IRHandler
 from interpreter import ConcreteInterpreter
 import turtle
-from cfgBuilder import dumpCFG2
+from networkx.drawing.nx_agraph import to_agraph
 
 class BallLarusProfiler:
     """
@@ -28,8 +30,6 @@ class BallLarusProfiler:
         self.irHandler = irHandler
         self.ir = irHandler.ir
         self.cfg = irHandler.cfg
-        self.edge_weights = {}  # Maps (source, target) to weight
-        self.path_counters = {}  # Maps path number to count
         self.original_ir = None  # To store the original IR before instrumentation
         self.back_edges = []  # List of back edges in the CFG
         self.args = args
@@ -70,7 +70,31 @@ class BallLarusProfiler:
         turtle.listen()
         turtle.onkeypress(self.stopTurtle, "Escape")
         turtle.mainloop()
+
+
+    # def efficient_event_counting(self):
+    #     pass
+    #     # Add a edge from the exit node to entry node
+    #     entry_node = None
+    #     for node in self.cfg.nodes():
+    #         if node.name == "START":
+    #             entry_node = node
+    #             break
+    #     exit_node = None
+    #     for node in self.cfg.nodes():
+    #         if node.name == "END":
+    #             exit_node = node
+    #             break
+    #     self.acyclic_cfg.add_edge(exit_node, entry_node)
         
+
+
+
+
+
+
+
+    #     self.acyclic_cfg.remove_edge(exit_node, entry_node)
     def compute_edge_weights(self):
         """
         Compute edge weights using the Ball-Larus algorithm.
@@ -81,32 +105,21 @@ class BallLarusProfiler:
         3. Assign weights to edges such that the sum of weights along any path gives a unique path number
         """
         # Create an acyclic version of the CFG
-        acyclic_cfg, back_edges = self.create_acyclic_cfg()
-        self.acyclic_cfg = acyclic_cfg
-        # Find the exit node (usually named "END")
-        exit_node = None
-        for node in self.cfg.nodes():
-            if node.name == "END":
-                exit_node = node
-                break
-        
-        if exit_node is None:
-            print("Warning: Could not find exit node in CFG")
-            return
+        self.acyclic_cfg = self.create_acyclic_cfg()
         
         # Compute NumPaths for each node using a topological sort
         # NumPaths(exit) = 1
         # NumPaths(v) = sum(NumPaths(w)) for all edges v->w
-        num_paths = {exit_node: 1}
+        num_paths = {self.exit_node: 1}
         
         # Get nodes in reverse topological order (from exit to entry)
         try:
-            for node in reversed(list(nx.topological_sort(acyclic_cfg))):
+            for node in reversed(list(nx.topological_sort(self.acyclic_cfg))):
                 if node not in num_paths:
                     num_paths[node] = 0
                 
-                # Sum the number of paths from all successors
-                for successor in acyclic_cfg.successors(node):
+                for edge in self.acyclic_cfg.out_edges(node):
+                    successor = edge[1]
                     if successor in num_paths:
                         num_paths[node] += num_paths[successor]
         except nx.NetworkXUnfeasible:
@@ -119,32 +132,30 @@ class BallLarusProfiler:
         #   For each edge v->w:
         #     weight(v->w) = val
         #     val += NumPaths(w)
-        for node in reversed(list(nx.topological_sort(acyclic_cfg))):
+        for node in reversed(list(nx.topological_sort(self.acyclic_cfg))):
             # print(f"NumPaths({node.name}) = {num_paths[node]}")
-            if node == exit_node:
+            if node == self.exit_node:
                 continue
             
             val = 0
-            for successor in acyclic_cfg.successors(node):
-                # Assign weight to this edge
-                self.edge_weights[(node, successor)] = val
-                # print(f"edge_weights[{node.name}, {successor.name}] = {val}")
-                # Update val for the next edge
+            for edge in self.acyclic_cfg.out_edges(node, data=True):
+                successor = edge[1]
+                edge[2]['weight'] = val
                 if successor in num_paths:
                     val += num_paths[successor]
+
             assert val == num_paths[node]
             print(f"NumPaths({node.name}) = {num_paths[node]}")
 
-        # Handle back edges (set their weight to 0)
-        for source, target in back_edges:
-            self.edge_weights[(source, target)] = 0
-        
+        # DEBUG: Print the acyclic CFG with edge weights
         print("Edge weights computed successfully")
-        
-        # Print the edge weights for debugging
-        print("Edge weights:")
-        for (source, target), weight in self.edge_weights.items():
-            print(f"  {source.name} -> {target.name}: {weight}")
+        for node in self.acyclic_cfg.nodes():
+            for edge in self.acyclic_cfg.out_edges(node, data=True):
+                print(f"{node.name} -> {edge[1].name}: {edge[2]['weight']}")
+
+        # TODO: Implement efficient event counting algorithm
+        # Now we will use the efficient event counting algorithm to compute the edge weights
+        # self.efficient_event_counting()
     
     def instrument_ir(self):
         """
@@ -222,18 +233,6 @@ class BallLarusProfiler:
         new_ir.insert(0, (init_path_register, 1))
         update_offsets(0)
 
-        entry_node = None
-        for node in self.cfg.nodes():
-            if node.name == "START":
-                entry_node = node
-                break
-        
-        exit_node = None
-        for node in self.cfg.nodes():
-            if node.name == "END":
-                exit_node = node
-                break
-
         # Iterate over CFG edges
         for source, target, attrs in self.cfg.nxgraph.edges(data=True):
 
@@ -251,9 +250,12 @@ class BallLarusProfiler:
 
 
             edge_label = attrs.get('label')
-            weight = self.edge_weights.get((source, target), 0)
-            # if weight == 0:
-            #     continue
+            weight = 0
+            for edge in self.acyclic_cfg.out_edges(source, data=True):
+                if edge[1] == target and edge[2].get('new_edge') is None:
+                    weight = edge[2]['weight']
+                    break
+            
             # Create the update instruction: path_register = path_register + weight
             update_instr = ChironAST.AssignmentCommand(
                 path_register_var,
@@ -282,7 +284,11 @@ class BallLarusProfiler:
             if (source, target) in self.back_edges:
 
                 # Part 1
-                weight = self.edge_weights.get((source, exit_node), 0)
+                weight = 0
+                for edge in self.acyclic_cfg.out_edges(source, data=True):
+                    if edge[1] == target and edge[2].get('new_edge') is True:
+                        weight = edge[2]['weight']
+                        break
                 update_instr = ChironAST.AssignmentCommand(
                     path_register_var,
                     ChironAST.Sum(path_register_var, ChironAST.Num(weight))
@@ -300,7 +306,10 @@ class BallLarusProfiler:
                 update_offsets(len(new_ir)-1)
 
                 # Part 2
-                weight = self.edge_weights.get((entry_node, target), 0)
+                for edge in self.acyclic_cfg.out_edges(self.entry_node, data=True):
+                    if edge[1] == target and edge[2].get('new_edge') is True:
+                        weight = edge[2]['weight']
+                        break
                 update_instr = ChironAST.AssignmentCommand(
                     path_register_var,
                     ChironAST.Num(weight)
@@ -326,7 +335,12 @@ class BallLarusProfiler:
             
             
             edge_label = attrs.get('label')
-            weight = self.edge_weights.get((source, target), 0)
+            weight = 0
+            for edge in self.acyclic_cfg.out_edges(source, data=True):
+                if edge[1] == target and edge[2].get('new_edge') is None:
+                    weight = edge[2]['weight']
+                    break
+
             # if weight == 0:
             #     continue
             # Create the update instruction: path_register = path_register + weight
@@ -380,25 +394,27 @@ class BallLarusProfiler:
         """
 
         path = []
-        current_node = None
-        for node in self.acyclic_cfg.nodes():
-            if node.name == "START":
-                current_node = node
-                break
-        
+        current_node = self.entry_node
         while current_node is not None and current_node.name != "END":
             path.append(current_node.name)
-            # Find the successor with the highest edge weight
             max_weight = -1
             next_node = None
-            for successor in self.acyclic_cfg.successors(current_node):
-                weight = self.edge_weights.get((current_node, successor), 0)
+            new_edge = False
+            for edge in self.acyclic_cfg.out_edges(current_node, data=True):
+                weight = edge[2].get('weight', 0)
                 if weight > max_weight and path_number >= weight:
                     max_weight = weight
-                    next_node = successor
+                    next_node = edge[1]
+                    new_edge = edge[2].get('new_edge', False)
+
+            if new_edge and path[-1] == "START":
+                path.pop()
             path_number -= max_weight
             current_node = next_node
-        path.append("END")
+        
+        if new_edge == False:
+            path.append("END")
+
         return path
     def report_results(self):
         """
@@ -478,7 +494,8 @@ class BallLarusProfiler:
         
         # Start DFS from the entry node
         dfs(entry_node)
-        
+        self.entry_node = entry_node
+
         print(f"Identified {len(back_edges)} back edges in the CFG")
         for source, target in back_edges:
             print(f"  {source.name} -> {target.name}")
@@ -492,16 +509,10 @@ class BallLarusProfiler:
             A new NetworkX DiGraph that is acyclic
         """
         # Get the original graph
-        G = self.cfg.nxgraph.copy()
-        
+        G = nx.MultiDiGraph(self.cfg.nxgraph)
+
         # Identify back edges
         self.back_edges = self.identify_back_edges()
-
-        entry_node = None
-        for node in self.cfg.nodes():
-            if node.name == "START":
-                entry_node = node
-                break
         
         exit_node = None
         for node in self.cfg.nodes():
@@ -509,12 +520,14 @@ class BallLarusProfiler:
                 exit_node = node
                 break
 
+        self.exit_node = exit_node
+
         # Remove back edges from the graph
         for source, target in self.back_edges:
             if G.has_edge(source, target):
                 G.remove_edge(source, target)
-                G.add_edge(entry_node, target)
-                G.add_edge(source, exit_node)
+                G.add_edge(self.entry_node, target, new_edge=True)
+                G.add_edge(source, self.exit_node, new_edge=True)
         
         # Verify that the graph is acyclic
         if nx.is_directed_acyclic_graph(G):
@@ -522,9 +535,14 @@ class BallLarusProfiler:
         else:
             print("Warning: CFG is still cyclic after removing back edges")
         
-        dumpCFG2(G, "acyclic_cfg.dot")
-        return G, self.back_edges
+        self.dumpCFG2(G, "acyclic_cfg.dot")
+        return G
     
+    def dumpCFG2(self,G,filename="out"):
+        A = to_agraph(G)
+        A.layout('dot')
+        A.draw(filename + ".png")
+
     def stopTurtle(self):
         turtle.bye()
 
