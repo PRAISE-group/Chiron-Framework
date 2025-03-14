@@ -10,14 +10,24 @@ using namespace std;
 
 // Helper function to extract a single ExpressionAST* from an any
 static ExpressionAST* getSingleExpr(const any &result) {
-    auto vec = any_cast<vector<InstrAST*>>(result);
-    if (vec.size() != 1)
-    throw runtime_error("Expected a single expression");
-    ExpressionAST* expr = dynamic_cast<ExpressionAST*>(vec[0]);
-    if (!expr)
-        throw runtime_error("Expression is not of type ExpressionAST*");
-    return expr;
-}
+//     auto vec = any_cast<vector<InstrAST*>>(result);
+//     // if (vec.size() != 1)
+//     if (vec.empty())
+//     throw runtime_error("Expected a single expression");
+//     ExpressionAST* expr = dynamic_cast<ExpressionAST*>(vec[0]);
+//     if (!expr)
+//         throw runtime_error("Expression is not of type ExpressionAST*");
+//     return expr;
+        auto vec = any_cast<vector<InstrAST*>>(result);
+        if (vec.empty())
+            throw runtime_error("Expected at least one expression, got an empty vector");
+        // Return the first element regardless of size
+        ExpressionAST* expr = dynamic_cast<ExpressionAST*>(vec[0]);
+        if (!expr)
+            throw runtime_error("First element is not of type ExpressionAST*");
+        return expr;
+
+ }
 
 // // Helper function to convert vector of raw pointers to vector of unique pointers
 // static vector<unique_ptr<InstrAST>> convertToUniquePtrVector(const vector<InstrAST*>& rawPtrVec) {
@@ -33,6 +43,9 @@ class ChironVisitorImpl : public tlangVisitor {
 
 public:
     any visitStart(tlangParser::StartContext *ctx) override {
+        if (!ctx) {
+            std::cerr << "Parser returned null context!" << std::endl;
+        }
         return visit(ctx->instruction_list());
     }
 
@@ -54,6 +67,7 @@ public:
         return instructions;
     }
 
+    
     any visitInstruction(tlangParser::InstructionContext *ctx) override {
         if (ctx->assignment())    return visit(ctx->assignment());
         if (ctx->conditional())   return visit(ctx->conditional());
@@ -66,18 +80,34 @@ public:
     }
 
     any visitConditional(tlangParser::ConditionalContext *ctx) override {
-        return visitChildren(ctx);
+        if (ctx->ifConditional()) {
+            std::cerr << "visit(ctx->ifConditional())\n";
+            return visit(ctx->ifConditional());
+        }
+        if (ctx->ifElseConditional()) {
+            return visit(ctx->ifElseConditional());
+        }
+        throw runtime_error("Unsupported conditional type");
+        //return visitChildren(ctx);
     }
 
     any visitIfConditional(tlangParser::IfConditionalContext *ctx) override {
-        ExpressionAST* cond = getSingleExpr(visit(ctx->condition()));
-        vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
+        auto condResult = visit(ctx->condition());
+       
+        std::cerr << "visit(ctx->condition()) type: " << condResult.type().name() << "\n";
+        ExpressionAST* cond = getSingleExpr(condResult);
+
+        // Visit the then block
+        auto thenResult = visit(ctx->strict_ilist());
+        vector<InstrAST*> thenBlock = any_cast<vector<InstrAST*>>(thenResult);
+
+        // Create the IfExpressionAST node
         return vector<InstrAST*>{
-            make_unique<IfExpressionAST>(
+            new IfExpressionAST(
                 unique_ptr<ExpressionAST>(cond),
-                vector<unique_ptr<InstrAST>>{thenBlock.begin(), thenBlock.end()},
-                vector<unique_ptr<InstrAST>>{}
-            ).release()
+                vector<unique_ptr<InstrAST>>(thenBlock.begin(), thenBlock.end()),
+                vector<unique_ptr<InstrAST>>() // Empty else block
+            )
         };
     }
 
@@ -202,22 +232,27 @@ public:
             return vector<InstrAST*>{ new PenCallExprAST(false) };
         }
         if (ctx->NOT()) {
-            ExpressionAST* cond = getSingleExpr(visit(ctx->condition(0)));
+            auto condResult = visit(ctx->condition(0));
+            ExpressionAST* cond = getSingleExpr(condResult);
             return vector<InstrAST*>{
-                make_unique<UnaryArithExpressionAST>('!', unique_ptr<ExpressionAST>(cond)).release()
+                new UnaryArithExpressionAST('!', unique_ptr<ExpressionAST>(cond))
             };
         }
         if (ctx->logicOp()) {
-            ExpressionAST* lhs = getSingleExpr(visit(ctx->condition(0)));
-            ExpressionAST* rhs = getSingleExpr(visit(ctx->condition(1)));
+            auto lhsResult = visit(ctx->condition(0));
+            auto rhsResult = visit(ctx->condition(1));
+            ExpressionAST* lhs = getSingleExpr(lhsResult);
+            ExpressionAST* rhs = getSingleExpr(rhsResult);
             string op = ctx->logicOp()->AND() ? "&&" : "||";
             return vector<InstrAST*>{
-                make_unique<BinCondExpressionAST>(op, unique_ptr<ExpressionAST>(lhs), unique_ptr<ExpressionAST>(rhs)).release()
+                new BinCondExpressionAST(op, unique_ptr<ExpressionAST>(lhs), unique_ptr<ExpressionAST>(rhs))
             };
         }
         if (ctx->binCondOp()) {
-            ExpressionAST* lhs = getSingleExpr(visit(ctx->expression(0)));
-            ExpressionAST* rhs = getSingleExpr(visit(ctx->expression(1)));
+            auto lhsResult = visit(ctx->expression(0));
+            auto rhsResult = visit(ctx->expression(1));
+            ExpressionAST* lhs = getSingleExpr(lhsResult);
+            ExpressionAST* rhs = getSingleExpr(rhsResult);
             string op;
             if (ctx->binCondOp()->LT())      op = "<";
             else if (ctx->binCondOp()->GT()) op = ">";
@@ -226,10 +261,29 @@ public:
             else if (ctx->binCondOp()->LTE()) op = "<=";
             else if (ctx->binCondOp()->GTE()) op = ">=";
             return vector<InstrAST*>{
-                make_unique<BinCondExpressionAST>(op, unique_ptr<ExpressionAST>(lhs), unique_ptr<ExpressionAST>(rhs)).release()
+                new BinCondExpressionAST(op, unique_ptr<ExpressionAST>(lhs), unique_ptr<ExpressionAST>(rhs))
             };
         }
-        return visitChildren(ctx);
+        
+        // may be one of the case - If the condition is parenthesized or otherwise has child conditions,
+        // try returning the result of the first child condition.
+        if (!ctx->condition().empty()) {
+            auto childResult = visit(ctx->condition(0));
+            // If that returns a nonempty vector, use it.
+            auto vec = any_cast<vector<InstrAST*>>(childResult);
+            if (!vec.empty())
+                return childResult;
+        }
+        // other case - if there is a child expression, return that.
+        if (!ctx->expression().empty()) {
+            auto childResult = visit(ctx->expression(0));
+            auto vec = any_cast<vector<InstrAST*>>(childResult);
+            if (!vec.empty())
+                return childResult;
+        }
+        // Fallback: do not call visitChildren, just return an empty vector - this is just added to check whether if we assume cond default result to be 1, then it is running or not.
+        // return vector<InstrAST*>{ new NumberExpressionAST(1) };
+        return vector<InstrAST*>{};
     }
 
     any visitValue(tlangParser::ValueContext *ctx) override {

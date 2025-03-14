@@ -165,11 +165,16 @@ llvm::Value* MoveCallExprAST::codegen() {
 
 llvm::Value* IfExpressionAST::codegen() {
     llvm::Value *CondV = condition->codegen();
-    if (!CondV) {
+    if (!CondV)
         return nullptr;
-    }
 
-    CondV = Builder->CreateICmpNE(CondV, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), 0), "ifcond");
+    // Only convert CondV to an i1 boolean if it is not already i1.
+    if (!CondV->getType()->isIntegerTy(1)) {
+        CondV = Builder->CreateICmpNE(
+                    CondV, 
+                    llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), 0),
+                    "ifcond");
+    }
 
     llvm::Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
@@ -178,32 +183,29 @@ llvm::Value* IfExpressionAST::codegen() {
     llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*CodeGenContext, "ifcont");
 
     Builder->CreateCondBr(CondV, ThenBB, ElseBB);
-    Builder->SetInsertPoint(ThenBB);
-    for(int i = 0; i < thenBlock.size(); i++){
-        llvm::Value* val = thenBlock[i]->codegen();
-        if(!val){
-            return nullptr;
-        }
-    }
 
+    Builder->SetInsertPoint(ThenBB);
+    for (size_t i = 0; i < thenBlock.size(); ++i) {
+        llvm::Value* val = thenBlock[i]->codegen();
+        if (!val) return nullptr;
+    }
     Builder->CreateBr(MergeBB);
     ThenBB = Builder->GetInsertBlock();
 
     TheFunction->insert(TheFunction->end(), ElseBB);
     Builder->SetInsertPoint(ElseBB);
-    for(int i = 0; i < elseBlock.size(); i++){
+    for (size_t i = 0; i < elseBlock.size(); ++i) {
         llvm::Value* val = elseBlock[i]->codegen();
-        if(!val){
-            return nullptr;
-        }
+        if (!val) return nullptr;
     }
-
     Builder->CreateBr(MergeBB);
     ElseBB = Builder->GetInsertBlock();
 
+    
     TheFunction->insert(TheFunction->end(), MergeBB);
     Builder->SetInsertPoint(MergeBB);
 
+    Builder->CreateRet(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), 0));
     return CondV;
 }
 
@@ -258,4 +260,19 @@ void TempFunction() {
 void tempPrint(){
     llvm::Function *TheFunction = CodeGenModule->getFunction("main");
     TheFunction->print(llvm::errs());
+    // std::error_code EC;
+    // 
+    // llvm::raw_fd_ostream outFile("output.ll", EC);
+    // if (EC) {
+    //     llvm::errs() << "Error opening file: " << EC.message() << "\n";
+    //     return;
+    // }
+    
+    // llvm::Function *TheFunction = CodeGenModule->getFunction("main");
+    // if (TheFunction) {
+    //     TheFunction->print(outFile);
+    // } else {
+    //     llvm::errs() << "No function 'main' found in the module.\n";
+    // }
+    // outFile.close();
 }
