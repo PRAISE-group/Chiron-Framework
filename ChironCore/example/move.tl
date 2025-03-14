@@ -1,14 +1,38 @@
-if (:a > 1) [
-    :y = 1
-] else [
-    :y = 0
-    if (:b < 1) [
-        :x = 1
+if (:a > :b + :c) [
+    :result = :a - :b
+    if (:c > :a - :b) [
+        :result = :result + :c - :a
+        if (:result < :b - :c) [
+            :result = :result + :b + :b
+        ] else [
+            :result = :result - :c - :c
+        ]
     ] else [
-        :x = 2
+        :result = :a + :c
+        if (:a + :c - :b > :result) [
+            :result = :result + :a - :b - :b
+        ] else [
+            :result = :result - :a + :b + :b
+        ]
+    ]
+] else [
+    :result = :b + :c
+    if (:b + :c - :a < :a + :a) [
+        :result = :result - :a - :a
+        if (:result + :b > 0) [
+            :result = :result + :b + :b - :c
+        ] else [
+            :result = :result + :c + :c - :b
+        ]
+    ] else [
+        :result = :a + :a + :a
+        if (:result - :c < :b + :b) [
+            :result = :result + :b + :b + :b
+        ] else [
+            :result = :result - :c - :c - :c
+        ]
     ]
 ]
 
-if (:c == 1) [
-    :x = 2
-]
+goto (:result, 0)
+

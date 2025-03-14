@@ -2,6 +2,7 @@
 
 import networkx as nx
 import z3
+import collections 
 
 class BasicBlock:
     def __init__(self, bbname):
@@ -48,6 +49,7 @@ class ChironCFG:
         self.exit = "END"
         self.df = None
         self.idom = None
+        self.dominator_tree = collections.defaultdict(list)
 
     def __iter__(self):
         return self.nxgraph.__iter__()
@@ -108,6 +110,11 @@ class ChironCFG:
 
         self.idom = nx.immediate_dominators(self.nxgraph, entry)
         self.df = nx.dominance_frontiers(self.nxgraph, entry)
+        for i in self.nodes():
+            for j in self.nodes():
+                if i != j and self.idom[j] == i:
+                    self.dominator_tree[i].append(j)
+
 
     def get_topological_order(self):
         return list(nx.topological_sort(self.nxgraph))

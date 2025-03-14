@@ -413,17 +413,14 @@ if __name__ == "__main__":
         cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
         cfgB.dumpCFG(cfg, 'tac_cfg')
 
-        amoghssa = SSABuilder(cfg)
-        amoghssa.build()
+        amoghssa = SSABuilder(tacGen.tac)
+        ssaCfg = amoghssa.build()
 
-        #ssa = buildSSA(tacGen.tac, cfg, line2BlockMap) # Building SSA
-        #printSSA(ssa) # Printing SSA
-
-        #ssa_cfg, ssa_line2BlockMap = cfgB.buildCFG(ssa, "ssa_cfg", False) # Building CFG for SSA
-        #cfgB.dumpCFG(ssa_cfg, 'ssa_cfg')
+        print("\nSaving SSA Form of the program to file ssa_cfg.png\n")
+        cfgB.dumpCFG(ssaCfg, 'ssa_cfg')
 
         #print("\nConverting program to SMT-LIB format..\n")
-        #smt = bmc.BMC(ssa)
-        #smt.convertSSAtoSMT()
-        #smt.solve(tacGen.getFreeVariables())
+        smt = bmc.BMC(ssaCfg)
+        smt.convertSSAtoSMT()
+        smt.solve(tacGen.getFreeVariables())
         print("DONE..")
