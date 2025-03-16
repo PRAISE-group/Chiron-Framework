@@ -1,7 +1,7 @@
 import re
 import networkx as nx
 
-from PrefixConvertor import Infix_To_Prefix
+from Infix_To_Prefix import Infix_To_Prefix
 
 def validate_cfg_format(cfg):
     """
@@ -171,7 +171,6 @@ def CFGtoSmtlib(cfg):
             print("Invalid Statement: Only assignment and if-else blocks are allowed")
             return
         
-    # # Print the generated SMT-LIB code
     # for line in smtlib_code:
     #     print(line)
     return smtlib_code

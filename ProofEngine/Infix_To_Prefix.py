@@ -58,11 +58,7 @@ def preprocess_expression(expr: str, replace_eq):
     return expr
 
 def Construct_AST(expr: str, replace_eq):
-    # print(expr)
     expr= preprocess_expression(expr, replace_eq)
-    # print(expr)
-    # print(type(expr))
-    # print()
     try:
         tree = ast.parse(expr, mode='eval')
         return tree

@@ -1,0 +1,8 @@
+(assert (and (= (- (+ x (* 2 y)) z) 4) (and (= (+ (- (* 2 x) y) (* 3 z)) 7) (= (+ (+ (* 3 x) y) (* 2 z)) 5))))
+
+(assert (= z 3))
+(assert (= w 5))
+(assert (= z1 (ite (and (> x y) (< x 5)) 10 (- w 5))))
+(assert (= w1 (ite (and (= x 2) (< y 5)) x (- w 5))))
+(assert (= z2 3))
+(assert (= w2 7))
