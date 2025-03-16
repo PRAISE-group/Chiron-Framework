@@ -50,15 +50,16 @@ class PrefixNotationConverter(ast.NodeVisitor):
         }
         return operators[type(op)]
 
-def preprocess_expression(expr: str):
+def preprocess_expression(expr: str, replace_eq):
     expr = re.sub(r":(\w+)", r"\1", expr) 
     expr = expr.replace(" ", "")
-    # expr = expr.replace("=", "==")
+    if(replace_eq):
+        expr = expr.replace("=", "==")
     return expr
 
-def Construct_AST(expr: str):
+def Construct_AST(expr: str, replace_eq):
     # print(expr)
-    expr= preprocess_expression(expr)
+    expr= preprocess_expression(expr, replace_eq)
     # print(expr)
     # print(type(expr))
     # print()
@@ -69,9 +70,9 @@ def Construct_AST(expr: str):
         print(f"Syntax Error: {e}")
         return None
 
-def Infix_To_Prefix(expr: str):
+def Infix_To_Prefix(expr: str, replace_eq = False):
     if expr:
-        tree = Construct_AST(expr)
+        tree = Construct_AST(expr, replace_eq)
         if tree:
             converter = PrefixNotationConverter()
             expr = converter.visit(tree.body)

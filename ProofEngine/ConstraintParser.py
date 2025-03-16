@@ -1,9 +1,21 @@
 import re
+import sys
 
 def Constraint_Parser(filepath: str):
     data = ""
-    with open(filepath, 'r') as file:
-        data = file.read()
+    try:
+        with open(filepath, "r") as file:
+            data = file.read()
+
+        # print("Constraints File Content:")
+        # print(data)
+    
+    except FileNotFoundError:
+        print(f"Error: The file '{filepath}' was not found.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: Failed to read the file - {e}")
+        sys.exit(1)
     
     expr_dict = {}
     literal_groups = []

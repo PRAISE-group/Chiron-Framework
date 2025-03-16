@@ -25,8 +25,9 @@ import cfg.cfgBuilder as cfgB
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
-from IrToSmtlib import IrToSmtlib
+# from IrToSmtlib import IrToSmtlib
 from CFGtoSmtlib import CFGtoSmtlib
+from ConstraintToSmtlib import ConstraintToSmtlib
 import csv
 
 def cleanup():
@@ -200,8 +201,11 @@ if __name__ == "__main__":
     cmdparser.add_argument(
         "-smt",
         "--smtlib",
-        help="To print smtlib code",
-        action="store_true",
+        help="Path to the constraints file for SMT-LIB generation",
+        type=str,
+        nargs=2,  
+        metavar=("FILE1", "FILE2"),
+        required=False
     )
 
 
@@ -402,6 +406,16 @@ if __name__ == "__main__":
             writer.writerows(spectrum)
         print("DONE..")
     if args.smtlib:
-        it_to_smt = IrToSmtlib(irHandler.ir)
+        constraint_filepath, output_filepath = args.smtlib
+        constraint_statement = ConstraintToSmtlib(constraint_filepath)
         cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
-        cfg_to_smtlib = CFGtoSmtlib(cfg)
+        smtlib_code = CFGtoSmtlib(cfg)
+        print(constraint_statement)
+        print(smtlib_code)
+        with open(output_filepath, "w") as output_file:
+            output_file.write(str(constraint_statement) + "\n\n") 
+            for smt_code in smtlib_code:
+                output_file.write(str(smt_code) + "\n")
+        print(f"SMT-LIB code written to: {output_filepath}")
+
+        
