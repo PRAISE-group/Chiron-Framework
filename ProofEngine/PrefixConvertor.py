@@ -46,14 +46,14 @@ class PrefixNotationConverter(ast.NodeVisitor):
             ast.And: 'and',
             ast.Or: 'or',
             ast.Not: '~',
+            ast.Assign: '=',
         }
         return operators[type(op)]
 
 def preprocess_expression(expr: str):
-    """Remove ':' from variable names while keeping the exact input formatting."""
     expr = re.sub(r":(\w+)", r"\1", expr) 
     expr = expr.replace(" ", "")
-    expr = expr.replace("=", "==")
+    # expr = expr.replace("=", "==")
     return expr
 
 def Construct_AST(expr: str):
