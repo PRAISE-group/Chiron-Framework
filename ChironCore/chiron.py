@@ -26,6 +26,7 @@ import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
 from IrToSmtlib import IrToSmtlib
+from CFGtoSmtlib import CFGtoSmtlib
 import csv
 
 def cleanup():
@@ -402,3 +403,5 @@ if __name__ == "__main__":
         print("DONE..")
     if args.smtlib:
         it_to_smt = IrToSmtlib(irHandler.ir)
+        cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+        cfg_to_smtlib = CFGtoSmtlib(cfg)
