@@ -1,42 +1,26 @@
-#include "tlangVisitor.h"
-#include "chironAST.hpp"
 #include <any>
 #include <vector>
 #include <stdexcept>
 #include <string>
 #include <utility>
 
+#include "chironAST.hpp"
+
+#include "tlangVisitor.h"
+
 using namespace std;
 
-// Helper function to extract a single ExpressionAST* from an any
 static ExpressionAST* getSingleExpr(const any &result) {
-//     auto vec = any_cast<vector<InstrAST*>>(result);
-//     // if (vec.size() != 1)
-//     if (vec.empty())
-//     throw runtime_error("Expected a single expression");
-//     ExpressionAST* expr = dynamic_cast<ExpressionAST*>(vec[0]);
-//     if (!expr)
-//         throw runtime_error("Expression is not of type ExpressionAST*");
-//     return expr;
         auto vec = any_cast<vector<InstrAST*>>(result);
         if (vec.empty())
             throw runtime_error("Expected at least one expression, got an empty vector");
-        // Return the first element regardless of size
+
         ExpressionAST* expr = dynamic_cast<ExpressionAST*>(vec[0]);
         if (!expr)
             throw runtime_error("First element is not of type ExpressionAST*");
         return expr;
 
  }
-
-// // Helper function to convert vector of raw pointers to vector of unique pointers
-// static vector<unique_ptr<InstrAST>> convertToUniquePtrVector(const vector<InstrAST*>& rawPtrVec) {
-//     vector<unique_ptr<InstrAST>> uniquePtrVec;
-//     for (auto* ptr : rawPtrVec) {
-//         uniquePtrVec.emplace_back(ptr);
-//     }
-//     return uniquePtrVec;
-// }
 
 class ChironVisitorImpl : public tlangVisitor {
     int repeatInstrCount = 0;
@@ -155,13 +139,9 @@ public:
     any visitGotoCommand(tlangParser::GotoCommandContext *ctx) override {
         ExpressionAST* x = getSingleExpr(visit(ctx->expression(0)));
         ExpressionAST* y = getSingleExpr(visit(ctx->expression(1)));
-        auto xNum = dynamic_cast<NumberExpressionAST*>(x);
-        auto yNum = dynamic_cast<NumberExpressionAST*>(y);
-        if (!xNum || !yNum)
-            throw runtime_error("Goto requires numeric arguments");
         vector<InstrAST*> result;
         result.push_back(
-            make_unique<GotoCallExprAST>(xNum->getVal(), yNum->getVal()).release()
+            make_unique<GotoCallExprAST>(unique_ptr<ExpressionAST>(x), unique_ptr<ExpressionAST>(y)).release()
         );
         return result;
     }

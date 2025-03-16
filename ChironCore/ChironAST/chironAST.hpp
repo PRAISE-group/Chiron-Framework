@@ -1,11 +1,12 @@
 #pragma once
 
-#include "llvm/IR/Value.h"
-#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "llvm/IR/Value.h"
+#include "llvm/Support/raw_ostream.h"
 
 class InstrAST {
 public:
@@ -105,22 +106,22 @@ public:
 };
 
 class GotoCallExprAST : public ExpressionAST {
-    int x, y;
+    std::unique_ptr<ExpressionAST> x, y;
 
 public:
-    GotoCallExprAST(int x, int y) :
-        x(x), y(y) {}
+    GotoCallExprAST(std::unique_ptr<ExpressionAST> x, std::unique_ptr<ExpressionAST> y) :
+        x(std::move(x)), y(std::move(y)) {}
 
     llvm::Value* codegen() override;
 };
 
 class MoveCallExprAST : public ExpressionAST {
     std::string direction;
-    std::unique_ptr<ExpressionAST> expr;
+    std::unique_ptr<ExpressionAST> val;
 
 public:
-    MoveCallExprAST(const std::string& direction, std::unique_ptr<ExpressionAST> expr) :
-        direction(direction), expr(std::move(expr)) {}
+    MoveCallExprAST(const std::string& direction, std::unique_ptr<ExpressionAST> val) :
+        direction(direction), val(std::move(val)) {}
 
     llvm::Value* codegen() override;
 };

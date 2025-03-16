@@ -1,8 +1,8 @@
-#include <chironAST.hpp>
-
 #include <map>
 #include <iostream>
 #include <vector>
+
+#include "chironAST.hpp"
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Function.h>
@@ -11,6 +11,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Verifier.h>
 
 const char MINUS = '-';
 const char PLUS = '+';
@@ -33,6 +34,18 @@ static std::unique_ptr<llvm::LLVMContext> CodeGenContext;
 static std::unique_ptr<llvm::Module> CodeGenModule;
 static std::unique_ptr<llvm::IRBuilder<>> Builder;
 static std::map<std::string, llvm::AllocaInst*> SymbolTable;
+
+static llvm::Function* printfFunc;
+
+static llvm::Function* InitFunc;
+static llvm::Function* HandleGoToFunc;
+static llvm::Function* HandleForwardFunc;
+static llvm::Function* HandleBackwardFunc;
+static llvm::Function* HandleRightFunc;
+static llvm::Function* HandleLeftFunc;
+static llvm::Function* HandlePenUpFunc;
+static llvm::Function* HandlePenDownFunc;
+static llvm::Function* FinishFunc;
 
 static llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction, llvm::StringRef VarName) {
     llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
@@ -66,6 +79,8 @@ llvm::Value* BinArithExpressionAST::codegen() {
             return nullptr;
         }
 
+        llvm::Value* formatStr = Builder->CreateGlobalStringPtr("%d\n", "fmt");
+        Builder->CreateCall(printfFunc, {formatStr, R}, "prnt");
         
         return Builder->CreateStore(R, V);
     }
@@ -127,6 +142,8 @@ llvm::Value* BinCondExpressionAST::codegen() {
     } else if (op == OR) {
         return Builder->CreateOr(L, R, "ortmp");
     }
+
+    return nullptr;
 }
 
 llvm::Value* CallExpressionAST::codegen() {
@@ -152,14 +169,39 @@ llvm::Value* CallExpressionAST::codegen() {
 }
 
 llvm::Value* PenCallExprAST::codegen() {
-    return nullptr;
+    if (status) {
+        return Builder->CreateCall(HandlePenUpFunc);
+    } else {
+        return Builder->CreateCall(HandlePenDownFunc);
+    }
 }
 
 llvm::Value* GotoCallExprAST::codegen() {
-    return nullptr;
+    llvm::Value *X = x->codegen();
+    llvm::Value *Y = y->codegen();
+    if (!X || !Y) {
+        return nullptr;
+    }
+
+    return Builder->CreateCall(HandleGoToFunc, {X, Y});
 }
 
 llvm::Value* MoveCallExprAST::codegen() {
+    llvm::Value *V = val->codegen();
+    if (!V) {
+        return nullptr;
+    }
+
+    if(direction == "forward"){
+        return Builder->CreateCall(HandleForwardFunc, V);
+    } else if(direction == "backward"){
+        return Builder->CreateCall(HandleBackwardFunc, V);
+    } else if(direction == "right"){
+        return Builder->CreateCall(HandleRightFunc, V);
+    } else if(direction == "left"){
+        return Builder->CreateCall(HandleLeftFunc, V);
+    }
+
     return nullptr;
 }
 
@@ -205,7 +247,6 @@ llvm::Value* IfExpressionAST::codegen() {
     TheFunction->insert(TheFunction->end(), MergeBB);
     Builder->SetInsertPoint(MergeBB);
 
-    Builder->CreateRet(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), 0));
     return CondV;
 }
 
@@ -248,31 +289,134 @@ void IntializeModule() {
     CodeGenContext = std::make_unique<llvm::LLVMContext>();
     CodeGenModule = std::make_unique<llvm::Module>("Chiron Module", *CodeGenContext);
     Builder = std::make_unique<llvm::IRBuilder<>>(*CodeGenContext);
+    
+    printfFunc = llvm::Function::Create(
+        llvm::FunctionType::get(
+            Builder->getInt32Ty(),
+            {Builder->getInt8Ty()->getPointerTo()},
+            true
+        ),
+        llvm::Function::ExternalLinkage,
+        "printf",
+        CodeGenModule.get()
+    );
+
+    InitFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), false),
+        llvm::Function::ExternalLinkage,
+        "init",
+        CodeGenModule.get()
+    );
+
+    HandleGoToFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), {Builder->getInt32Ty(), Builder->getInt32Ty()}, false),
+        llvm::Function::ExternalLinkage,
+        "handleGoTo",
+        CodeGenModule.get()
+    );
+
+    HandleForwardFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), {Builder->getInt32Ty()}, false),
+        llvm::Function::ExternalLinkage,
+        "handleForward",
+        CodeGenModule.get()
+    );
+
+    HandleBackwardFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), {Builder->getInt32Ty()}, false),
+        llvm::Function::ExternalLinkage,
+        "handleBackward",
+        CodeGenModule.get()
+    );
+
+    HandleRightFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), {Builder->getInt32Ty()}, false),
+        llvm::Function::ExternalLinkage,
+        "handleRight",
+        CodeGenModule.get()
+    );
+
+    HandleLeftFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), {Builder->getInt32Ty()}, false),
+        llvm::Function::ExternalLinkage,
+        "handleLeft",
+        CodeGenModule.get()
+    );
+
+    HandlePenUpFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), false),
+        llvm::Function::ExternalLinkage,
+        "handlePenUp",
+        CodeGenModule.get()
+    );
+
+    HandlePenDownFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), false),
+        llvm::Function::ExternalLinkage,
+        "handlePenDown",
+        CodeGenModule.get()
+    );
+
+    FinishFunc = llvm::Function::Create(
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*CodeGenContext), false),
+        llvm::Function::ExternalLinkage,
+        "finish",
+        CodeGenModule.get()
+    );
 }
 
-void TempFunction() {
+void InitializeMainFunction() {
     llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getInt32Ty(*CodeGenContext), false);
     llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, "main", CodeGenModule.get());
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*CodeGenContext, "entry", F);
     Builder->SetInsertPoint(BB);
+
+    Builder->CreateCall(InitFunc);
 }
 
-void tempPrint(){
-    llvm::Function *TheFunction = CodeGenModule->getFunction("main");
-    TheFunction->print(llvm::errs());
-    // std::error_code EC;
-    // 
-    // llvm::raw_fd_ostream outFile("output.ll", EC);
-    // if (EC) {
-    //     llvm::errs() << "Error opening file: " << EC.message() << "\n";
-    //     return;
-    // }
+void ConverIRtoObjectFile(){
+    Builder->CreateCall(FinishFunc);
+    Builder->CreateRet(Builder->getInt32(0));
+    llvm::verifyModule(*CodeGenModule, &llvm::errs());
+
+    CodeGenModule->print(llvm::errs(), nullptr);
+    std::error_code EC;
     
-    // llvm::Function *TheFunction = CodeGenModule->getFunction("main");
-    // if (TheFunction) {
-    //     TheFunction->print(outFile);
-    // } else {
-    //     llvm::errs() << "No function 'main' found in the module.\n";
-    // }
-    // outFile.close();
+    llvm::raw_fd_ostream outFile("output.ll", EC);
+    if (EC) {
+        llvm::errs() << "Error opening file: " << EC.message() << "\n";
+        return;
+    }
+    
+    llvm::Function *TheFunction = CodeGenModule->getFunction("main");
+    if (TheFunction) {
+        CodeGenModule->print(outFile, nullptr);
+    } else {
+        llvm::errs() << "No function 'main' found in the module.\n";
+    }
+    outFile.close();
+
+    std::string llvmLinkCommand = "llvm-link output.ll ./CTurtle/CustomCTurtle.ll -S -o combined.ll";
+    int result = system(llvmLinkCommand.c_str());
+    if (result != 0) {
+        llvm::errs() << "Error running llvm-link\n";
+        return;
+    }
+
+    std::string llcCommand = "llc -filetype=obj -o combined.o combined.ll";
+    result = system(llcCommand.c_str());
+    if (result != 0) {
+        llvm::errs() << "Error running llc\n";
+        return;
+    }
+    
+    std::string gccCommand = "g++ combined.o -o output -lX11";
+    result = system(gccCommand.c_str());
+    if (result != 0) {
+        llvm::errs() << "Error running gcc\n";
+        return;
+    }
+    
+    system("rm combined.ll combined.o");
+    system("./output");
 }

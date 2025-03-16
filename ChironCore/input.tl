@@ -1,8 +1,43 @@
-:x = 5
-:y = 5
-if :x < :y [
-  :x = :x + 1
+:x = 20
+:y = 30
+:z = 20
+:p = 40
+
+pendown
+
+repeat 3 [
+
+	if (:x > :y) [
+		penup
+		goto (:x, :y)
+		pendown
+		repeat 4 [
+			forward :x
+			left 90
+		]
+	] else [
+		penup
+		goto (:y, :x)
+		pendown
+		repeat 5 [
+			forward :p
+			left 72
+		]
+	]
+
+	if (:z >= :p) [
+		penup
+		goto (:p, :x + :z)
+		pendown
+		repeat 6 [
+			backward :x
+			left 60
+		]
+	]
+
+	:x = :x + 10
+	:y = :y + 10
+	:z = :z + 10
 ]
-else [
-    :x = :x + 2
-]
+
+penup
