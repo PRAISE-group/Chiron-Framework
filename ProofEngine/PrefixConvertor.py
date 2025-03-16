@@ -54,7 +54,7 @@ def preprocess_expression(expr: str, replace_eq):
     expr = re.sub(r":(\w+)", r"\1", expr) 
     expr = expr.replace(" ", "")
     if(replace_eq):
-        expr = expr.replace("=", "==")
+        expr = re.sub(r"(?<![<>=])=(?!=)", "==", expr)
     return expr
 
 def Construct_AST(expr: str, replace_eq):

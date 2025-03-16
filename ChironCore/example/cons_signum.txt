@@ -1,0 +1,15 @@
+p:x<0
+q:x>0
+r:x=0
+a:sign1=0
+b:sign1=0-1
+c:sign1=1
+
+p,q,r
+p,q,~a
+p,~c,r
+p,~c,~a
+~b,q,r
+~b,q,~a
+~b,~c,r
+~b,~c,~a

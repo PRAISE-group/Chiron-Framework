@@ -10,7 +10,7 @@ def IrToSmtlib(irList):
             return
         else:
             # print(type(item[0].__str__()))
-            print(f"assert{Infix_To_Prefix(item[0].__str__())}")
+            print(f"assert {Infix_To_Prefix(item[0].__str__())}")
 
 # def IfElseToSmtlib(cond, if_stat, else_stat):
 #     cond = Infix_To_Prefix(cond)
