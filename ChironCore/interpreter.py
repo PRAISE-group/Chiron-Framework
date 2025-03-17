@@ -3,11 +3,12 @@ from ChironAST import ChironAST
 from ChironHooks import Chironhooks
 import turtle
 import re
-Release="Chiron v5.3"
+Release = "Chiron v5.3"
+
 
 def addContext(s):
-    s= re.sub(r'(?<!\.):', 'self.prg.', str(s).strip())
-    s= str(s).strip().replace(":", "")
+    s = re.sub(r'(?<!\.):', 'self.prg.', str(s).strip())
+    s = str(s).strip().replace(":", "")
 
     return s
 
@@ -30,7 +31,7 @@ class Interpreter:
         self.trtl.fillcolor("green")
         self.trtl.begin_fill()
         self.trtl.pensize(4)
-        self.trtl.speed(1) # TODO: Make it user friendly
+        self.trtl.speed(1)  # TODO: Make it user friendly
 
         if params is not None:
             self.args = params
@@ -41,7 +42,7 @@ class Interpreter:
         turtle.bgcolor("white")
         turtle.hideturtle()
 
-    def handleAssignment(self, stmt,tgt):
+    def handleAssignment(self, stmt, tgt):
         raise NotImplementedError('Assignments are not handled!')
 
     def handleCondition(self, stmt, tgt):
@@ -67,24 +68,29 @@ class Interpreter:
         # if not a condition command, rel. jump can't be anything but 1
         if not isinstance(stmt, ChironAST.ConditionCommand) and not isinstance(stmt, ChironAST.FunctionDeclarationCommand):
             if tgt != 1:
-                raise ValueError("Improper relative jump for non-conditional instruction", str(stmt), tgt)
-    
+                raise ValueError(
+                    "Improper relative jump for non-conditional instruction", str(stmt), tgt)
+
     def interpret(self):
         pass
 
     def initProgramContext(self, params):
         pass
 
+
 class ProgramContext:
     pass
+
 
 class ClassList:
     pass
 
 # TODO: move to a different file
+
+
 class ConcreteInterpreter(Interpreter):
     # Ref: https://realpython.com/beginners-guide-python-turtle
-    cond_eval = None # used as a temporary variable within the embedded program interpreter
+    cond_eval = None  # used as a temporary variable within the embedded program interpreter
     prg = None
     argument = None
     return_value = None
@@ -92,7 +98,7 @@ class ConcreteInterpreter(Interpreter):
 
     # map of function name to their pc in the IR
     function_addresses = {}
-    #stack for handling function calls
+    # stack for handling function calls
     call_stack = []
 
     def __init__(self, irHandler, params):
@@ -143,9 +149,10 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleParametersPassing(stmt, tgt)
         elif isinstance(stmt, ChironAST.ReadReturnCommand):
             ntgt = self.handleReturnRead(stmt, tgt)
-             
+
         else:
-            raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
+            raise NotImplementedError(
+                "Unknown instruction: %s, %s." % (type(stmt), stmt))
 
         # TODO: handle statement
         self.pc += ntgt
@@ -158,21 +165,21 @@ class ConcreteInterpreter(Interpreter):
             return True
         else:
             return False
-    
+
     def initProgramContext(self, params):
         # This is the starting of the interpreter at setup stage.
         if self.args is not None and self.args.hooks:
             self.chironhook.ChironStartHook(self)
         self.trtl.write("Start", font=("Arial", 15, "bold"))
-        for key,val in params.items():
-            var = key.replace(":","")
+        for key, val in params.items():
+            var = key.replace(":", "")
             exec("setattr(self.prg,\"%s\",%s)" % (var, val))
-    
+
     def handleFunctionDeclaration(self, stmt, tgt):
         print(f"Function Declaration: {stmt.name}")
         self.function_addresses[stmt.name] = self.pc + 1
         return tgt
-    
+
     def handleFunctionCall(self, stmt, tgt):
         print("[1]", stmt, "printing stmt")
         if stmt.caller:
@@ -180,7 +187,7 @@ class ConcreteInterpreter(Interpreter):
             print("Caller: ", stmt.caller)
             caller_class = eval(addContext(stmt.caller)).__class__.__name__
             print(caller_class)
-            stmt.name = ":" + str(caller_class)+ "@" + str(stmt.name)
+            stmt.name = ":" + str(caller_class) + "@" + str(stmt.name)
         self.call_stack.append(self.pc + 1)
         # Save the current program context
         self.call_stack.append(self.prg)
@@ -192,7 +199,7 @@ class ConcreteInterpreter(Interpreter):
         self.prg = ProgramContext()
         self.pc = self.function_addresses[stmt.name]
         return 0
-    
+
     def handleReturnRead(self, stmt, tgt):
         print(f"Read Return: {stmt.returnValues}")
         for rval in reversed(stmt.returnValues):
@@ -212,7 +219,6 @@ class ConcreteInterpreter(Interpreter):
         self.pc = self.call_stack.pop()
         self.call_stack.extend(rval_list)
         return 0
-    
 
     def handleParametersPassing(self, stmt, tgt):
         print(f"Parameters Passing: {stmt.params}")
@@ -221,7 +227,8 @@ class ConcreteInterpreter(Interpreter):
             param_value = self.call_stack.pop()
             print("PRINTING PARAM VALUE###############", param_value, param)
             setattr(self.prg, param, param_value)
-            print("PRINTING PARAM VALUE###############", getattr(self.prg, param))
+            print("PRINTING PARAM VALUE###############",
+                  getattr(self.prg, param))
         return 1
 
     def handleClassDeclaration(self, stmt, tgt):
@@ -234,7 +241,8 @@ class ConcreteInterpreter(Interpreter):
         if hasattr(stmt, "baseClasses") and stmt.baseClasses:
             # Build a comma-separated list of base classes.
             # We assume the base classes are already stored in self.class_list.
-            base_classes = [getattr(self.class_list, str(b).replace(":","")) for b in stmt.baseClasses]
+            base_classes = [getattr(self.class_list, str(
+                b).replace(":", "")) for b in stmt.baseClasses]
             base_str = ", ".join([b.__name__ for b in base_classes])
             class_header = f"class {className}({base_str}):\n"
 
@@ -265,17 +273,38 @@ class ConcreteInterpreter(Interpreter):
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
-            rhs = addContext(objectAttr.class_name).replace("self.prg.", "self.class_list.")
+            rhs = addContext(objectAttr.class_name).replace(
+                "self.prg.", "self.class_list.")
             exec(f"self.class_list.{className}.{lhs} = {rhs}()")
 
-        return 1
+        # go through the function addresses dict and inherit the methods of base classes from right to left (order of inheritance)
+        # this is done by copying the function addresses of the base classes to the current class
+        # the name of the method should be the `className`+ @ + `methodName`. This can be achieved by first finding all the methods whose name
+        # starts with each of the base classes and only removing the classname part and updating it to the current class and creating one extra
+        # entry with the current class name and the method name
+        temp_function_addresses = {}
+        if stmt.baseClasses:
+            for key, value in self.function_addresses.items():
+                key_parts = key.split("@")
+                print("Printing key parts: ", key_parts)
+                print("printing class name and base classes: ",
+                        stmt.className, stmt.baseClasses)
+                if key_parts[0] in reversed(stmt.baseClasses):
+                    new_key = stmt.className + "@" + key_parts[1]
+                    print("Printing new key############################: ", new_key)
+                    temp_function_addresses[new_key] = value
+            self.function_addresses.update(temp_function_addresses)
 
+        # print(f"Instance created: {lhs} -> {getattr(self.prg, lhs)}")
+        print("Printing function addresses:[][][] ", self.function_addresses)
+        return 1
 
     def handleObjectInstantiation(self, stmt, tgt):
         print(f"Creating new instance of {stmt.class_name} for {stmt.target}")
 
-        lhs = str(stmt.target).replace(":","")
-        rhs = addContext(stmt.class_name).replace("self.prg.", "self.class_list.")
+        lhs = str(stmt.target).replace(":", "")
+        rhs = addContext(stmt.class_name).replace(
+            "self.prg.", "self.class_list.")
 
         # exec(instance_code, globals(), self.prg.__dict__)  # Store in self.prg
         exec(f"self.prg.{lhs} = {rhs}()")
@@ -283,19 +312,17 @@ class ConcreteInterpreter(Interpreter):
 
         return 1
 
-    
-    
     def handleAssignment(self, stmt, tgt):
         print("  Assignment Statement")
-        lhs = str(stmt.lvar).replace(":","")
+        lhs = str(stmt.lvar).replace(":", "")
         rhs = addContext(stmt.rexpr)
-        print(lhs,rhs,"Assignment")
+        print(lhs, rhs, "Assignment")
         # exec("setattr(self.prg,\"%s\",%s)" % (lhs,rhs))
         exec(f"self.prg.{lhs} = {rhs}")
         return 1
-    
-    def handlePrint(self,stmt,tgt):
-        print( " PrintCommand")
+
+    def handlePrint(self, stmt, tgt):
+        print(" PrintCommand")
         expr = addContext(stmt.expr)
         print("Executing print with expression:", expr)
         exec("print(%s)" % expr)
@@ -309,10 +336,8 @@ class ConcreteInterpreter(Interpreter):
 
     def handleMove(self, stmt, tgt):
         print("  MoveCommand")
-        exec("self.trtl.%s(%s)" % (stmt.direction,addContext(stmt.expr)))
+        exec("self.trtl.%s(%s)" % (stmt.direction, addContext(stmt.expr)))
         return 1
-    
-
 
     def handleNoOpCommand(self, stmt, tgt):
         print("  No-Op Command")
@@ -320,7 +345,7 @@ class ConcreteInterpreter(Interpreter):
 
     def handlePen(self, stmt, tgt):
         print("  PenCommand")
-        exec("self.trtl.%s()"%(stmt.status))
+        exec("self.trtl.%s()" % (stmt.status))
         return 1
 
     def handleGotoCommand(self, stmt, tgt):
