@@ -418,7 +418,7 @@ if __name__ == "__main__":
 
         cfgB.dumpCFG(ssaCfg, 'ssa_cfg') # Saving SSA Form of the program to file ssa_cfg.png
 
-        #print("\nConverting program to SMT-LIB format..\n")
+        print("\nConverting program to SMT-LIB format..\n")
         smt = bmc.BMC(ssaCfg)
         smt.convertSSAtoSMT()
         smt.solve(tacGen.getFreeVariables())

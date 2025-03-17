@@ -148,12 +148,12 @@ class BMC:
 
                 elif isinstance(stmt, ChironSSA.DegToRadCommand):
                     rvar = None
-                    if isinstance(stmt.rvar1, ChironSSA.Var):
-                        rvar = z3.Real(stmt.rvar1.name)
-                    elif isinstance(stmt.rvar1, ChironSSA.Num):
-                        rvar = z3.RealVal(stmt.rvar1.value)
+                    if isinstance(stmt.rvar, ChironSSA.Var):
+                        rvar = z3.Real(stmt.rvar.name)
+                    elif isinstance(stmt.rvar, ChironSSA.Num):
+                        rvar = z3.RealVal(stmt.rvar.value)
                     lvar = z3.Real(stmt.lvar.name)
-                    self.solver.add(lvar == (rvar * 3.141592653589793 / 180))
+                    self.solver.add(lvar == (rvar * 3.14 / 180))
 
                 # elif isinstance(stmt, ChironSSA.CosCommand):         # Problem: z3.Cos, z3.Sin is not supported
                 #     self.solver.add(z3.Real(stmt.lvar.name) == z3.Cos(z3.Real(stmt.rvar1.name)))
@@ -173,6 +173,9 @@ class BMC:
                 # raise Exception("Unknown SSA instruction")
 
     def solve(self, inputVars):
+        print("The clauses are:")
+        print(self.solver, end="\n\n")
+        
         sat = self.solver.check()
         if sat == z3.sat:
             print("Condition not satisfied! Bug found for the following input:")
