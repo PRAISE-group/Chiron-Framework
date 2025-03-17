@@ -64,7 +64,7 @@ class BMC:
                     lvar = None
                     rvar1 = ChironSSA.Unused()
                     rvar2 = ChironSSA.Unused()
-                    if stmt.op in ["+", "-", "*", "/"]:
+                    if stmt.op in ["+", "-", "*", "/", "%"]:
                         lvar = z3.Int(stmt.lvar.name)
                         if isinstance(stmt.rvar1, ChironSSA.Var):
                             rvar1 = z3.Int(stmt.rvar1.name)
@@ -115,6 +115,8 @@ class BMC:
                         self.solver.add(lvar == (rvar1 * rvar2))
                     elif stmt.op == "/":
                         self.solver.add(lvar == (rvar1 / rvar2))
+                    elif stmt.op == "%":
+                        self.solver.add(lvar == (rvar1 % rvar2))
                     elif stmt.op == "<":
                         self.solver.add(lvar == (rvar1 < rvar2))
                     elif stmt.op == ">":
@@ -143,7 +145,16 @@ class BMC:
                     elif isinstance(stmt.cond, ChironSSA.Var):
                         cond = z3.Bool(stmt.cond.name)
                     self.solver.add(z3.Not(cond))
-    
+
+                elif isinstance(stmt, ChironSSA.DegToRadCommand):
+                    rvar = None
+                    if isinstance(stmt.rvar1, ChironSSA.Var):
+                        rvar = z3.Real(stmt.rvar1.name)
+                    elif isinstance(stmt.rvar1, ChironSSA.Num):
+                        rvar = z3.RealVal(stmt.rvar1.value)
+                    lvar = z3.Real(stmt.lvar.name)
+                    self.solver.add(lvar == (rvar * 3.141592653589793 / 180))
+
                 # elif isinstance(stmt, ChironSSA.CosCommand):         # Problem: z3.Cos, z3.Sin is not supported
                 #     self.solver.add(z3.Real(stmt.lvar.name) == z3.Cos(z3.Real(stmt.rvar1.name)))
                 # elif isinstance(stmt, ChironSSA.SinCommand):

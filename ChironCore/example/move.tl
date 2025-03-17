@@ -34,5 +34,5 @@ if (:a > :b + :c) [
     ]
 ]
 
-goto (:result, 0)
+// goto (:result, 0)
 

@@ -21,8 +21,15 @@ class SSABuilder:
         self.cfg.compute_dominance()
         self.insert_phi_nodes()
         self.rename_variables()
+        self.remove_empty_phi()
 
         return self.cfg
+    
+    def remove_empty_phi(self):
+        for block in self.cfg.nodes():
+            for instr, _ in block.instrlist:
+                if isinstance(instr, ChironSSA.PhiCommand) and len(instr.rvars) == 0:
+                    block.instrlist.remove((instr, None))
 
     def rename_variables(self):
         for var in self.globals:
@@ -37,7 +44,7 @@ class SSABuilder:
 
         self.rename(entry)
 
-    def rename(self, block): # TODO
+    def rename(self, block):
         temp = set()
         for instr, _ in block.instrlist:
             if isinstance(instr, ChironSSA.PhiCommand):
@@ -69,6 +76,24 @@ class SSABuilder:
                     instr.xcor = ChironSSA.Var(instr.xcor.name + "$" + str(self.stack[instr.xcor.name][-1]))
                 if isinstance(instr.ycor, ChironSSA.Var):
                     instr.ycor = ChironSSA.Var(instr.ycor.name + "$" + str(self.stack[instr.ycor.name][-1]))
+
+            elif isinstance(instr, ChironSSA.SinCommand):
+                temp.add(instr.lvar.name)
+                instr.lvar = self.new_name(instr.lvar.name)
+                if isinstance(instr.rvar, ChironSSA.Var):
+                    instr.rvar = ChironSSA.Var(instr.rvar.name + "$" + str(self.stack[instr.rvar.name][-1]))
+
+            elif isinstance(instr, ChironSSA.CosCommand):
+                temp.add(instr.lvar.name)
+                instr.lvar = self.new_name(instr.lvar.name)
+                if isinstance(instr.rvar, ChironSSA.Var):
+                    instr.rvar = ChironSSA.Var(instr.rvar.name + "$" + str(self.stack[instr.rvar.name][-1]))
+            
+            elif isinstance(instr, ChironSSA.DegToRadCommand):
+                temp.add(instr.lvar.name)
+                instr.lvar = self.new_name(instr.lvar.name)
+                if isinstance(instr.rvar, ChironSSA.Var):
+                    instr.rvar = ChironSSA.Var(instr.rvar.name + "$" + str(self.stack[instr.rvar.name][-1]))
 
         visited = set()
         def phi_dfs(curr, var):
@@ -193,6 +218,11 @@ class SSABuilder:
                 lvar = ChironSSA.Var(instr.lvar.name)
                 rvar = ChironSSA.Var(instr.rvar.name) if isinstance(instr.rvar, ChironTAC.Var) else ChironSSA.Num(instr.rvar.value)
                 ir[ir.index((instr, tgt))] = (ChironSSA.CosCommand(lvar, rvar), tgt)
+
+            elif isinstance(instr, ChironTAC.DegToRadCommand):
+                lvar = ChironSSA.Var(instr.lvar.name)
+                rvar = ChironSSA.Var(instr.rvar.name) if isinstance(instr.rvar, ChironTAC.Var) else ChironSSA.Num(instr.rvar.value)
+                ir[ir.index((instr, tgt))] = (ChironSSA.DegToRadCommand(lvar, rvar), tgt)
 
             elif isinstance(instr, ChironTAC.PenCommand):
                 ir[ir.index((instr, tgt))] = (ChironSSA.PenCommand(instr.status), tgt)

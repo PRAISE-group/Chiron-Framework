@@ -88,6 +88,14 @@ class astGenPass(tlangVisitor):
             return ChironAST.Mult(left, right)
         elif ctx.multiplicative().DIV():
             return ChironAST.Div(left, right)
+    
+
+    # Visit a parse tree produced by tlangParser#valueExpr.
+    def visitModExpr(self, ctx:tlangParser.ModExprContext):
+        left = self.visit(ctx.expression(0))
+        right = self.visit(ctx.expression(1))
+        if ctx.modulo().MOD():
+            return ChironAST.Mod(left, right)
 
 
     # Visit a parse tree produced by tlangParser#parenExpr.

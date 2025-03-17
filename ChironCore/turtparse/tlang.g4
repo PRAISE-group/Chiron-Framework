@@ -46,12 +46,14 @@ expression :
              unaryArithOp expression               #unaryExpr
            | expression multiplicative expression  #mulExpr
 		   | expression additive expression        #addExpr
+		   | expression modulo expression          #modExpr
 		   | value                                 #valueExpr
 		   | '(' expression ')'                    #parenExpr
  	   ;
 
 multiplicative : MUL | DIV;
 additive : PLUS | MINUS;
+modulo : MOD;
 
 unaryArithOp : MINUS ;
 
@@ -59,6 +61,7 @@ PLUS     : '+' ;
 MINUS    : '-' ;
 MUL  	 : '*' ;
 DIV      : '/' ;
+MOD      : '%' ;
 
 
 // TODO :

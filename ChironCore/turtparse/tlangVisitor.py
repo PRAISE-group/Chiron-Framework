@@ -94,6 +94,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#modExpr.
+    def visitModExpr(self, ctx:tlangParser.ModExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#addExpr.
     def visitAddExpr(self, ctx:tlangParser.AddExprContext):
         return self.visitChildren(ctx)
@@ -116,6 +121,11 @@ class tlangVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by tlangParser#additive.
     def visitAdditive(self, ctx:tlangParser.AdditiveContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#modulo.
+    def visitModulo(self, ctx:tlangParser.ModuloContext):
         return self.visitChildren(ctx)
 
 
