@@ -22,6 +22,7 @@ from fuzzer import *
 import sExecution as se
 import cfg.cfgBuilder as cfgB
 import bmc as bmc
+import unroll as unroll
 from ChironTAC.builder import *
 from ChironSSA.builder import *
 import submissionDFA as DFASub
@@ -211,6 +212,7 @@ if __name__ == "__main__":
 
     if not (type(args.params) is dict):
         raise ValueError("Wrong type for command line arguement '-d' or '--params'.")
+
 
     # Instantiate the irHandler
     # this object is passed around everywhere.
@@ -405,6 +407,15 @@ if __name__ == "__main__":
 
     if args.bmc:
         print("\nBounded Model Checking..")
+        print("Unrolling the program with bound ", 5)
+        unrolled_code = unroll.UnrollLoops(5).visitStart(getParseTree(args.progfl))
+        # write to file
+        with open("unrolled_code.tl", "w") as f:
+            f.write(unrolled_code)
+
+        parseTree = getParseTree("unrolled_code.tl")
+        astgen = astGenPass()
+        ir = astgen.visitStart(parseTree)
 
         tacGen = TACGenerator(ir) # Converting IR to TAC
         tacGen.generateTAC()

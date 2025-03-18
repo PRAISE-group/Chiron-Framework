@@ -181,9 +181,10 @@ class BMC:
             print("Condition not satisfied! Bug found for the following input:")
             model = self.solver.model()
             for var in model:
-                varname = str(var).split("$")[0]
-                if varname in inputVars:
+                varname, index = str(var).split("$")
+                if varname in inputVars and index == "0":
                     print(varname + " = " + str(model[var]))
+
         elif sat == z3.unsat:
             print("Condition satisfied for all inputs!")
         else:
