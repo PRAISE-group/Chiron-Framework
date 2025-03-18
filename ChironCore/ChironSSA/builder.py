@@ -52,12 +52,12 @@ class SSABuilder:
                 instr.lvar = self.new_name(instr.lvar.name)
 
             elif isinstance(instr, ChironSSA.AssignmentCommand):
-                temp.add(instr.lvar.name)
-                instr.lvar = self.new_name(instr.lvar.name)
                 if isinstance(instr.rvar1, ChironSSA.Var):
                     instr.rvar1 = ChironSSA.Var(instr.rvar1.name + "$" + str(self.stack[instr.rvar1.name][-1]))
                 if isinstance(instr.rvar2, ChironSSA.Var):
                     instr.rvar2 = ChironSSA.Var(instr.rvar2.name + "$" + str(self.stack[instr.rvar2.name][-1]))
+                temp.add(instr.lvar.name)
+                instr.lvar = self.new_name(instr.lvar.name)
 
             elif isinstance(instr, ChironSSA.AssertCommand):
                 if isinstance(instr.cond, ChironSSA.Var):
