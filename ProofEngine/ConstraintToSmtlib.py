@@ -1,7 +1,7 @@
 import sys
 from ConstraintParser import Constraint_Parser
 from Infix_To_Prefix import Infix_To_Prefix
-from SMTLIBConvertor import CNF_To_SMTLIB
+from CNF_To_SMTLIB import CNF_To_SMTLIB
 
 def ConstraintToSmtlib(filepath):
     expr_dict, literal_groups = Constraint_Parser(filepath)
