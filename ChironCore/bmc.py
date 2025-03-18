@@ -184,7 +184,8 @@ class BMC:
                 varname = str(var).split("$")[0]
                 if varname in inputVars:
                     print(varname + " = " + str(model[var]))
-
+        elif sat == z3.unsat:
+            print("Condition satisfied for all inputs!")
         else:
-            print("Condition always holds true!")
+            print("Unknown")
 
