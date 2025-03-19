@@ -70,12 +70,12 @@ expression :
              unaryArithOp expression               #unaryExpr
            | expression multiplicative expression  #mulExpr
 		   | expression additive expression        #addExpr
+		   | lvalue  '=' expression   #assignExpr
+		   | functionCall 							#functionCallExpr
 		   | '(' expression ')'                    #parenExpr
 		   | value                                 #valueExpr
-	       | ( VAR | objectOrArrayAccess)  '=' expression   #assignExpr
-		   | functionCall 							#functionCallExpr
-
  	   ;
+
 
 
 classDeclaration : 'class' VAR ('(' (VAR)* ')')? '{' classBody '}' ;
@@ -84,11 +84,16 @@ classBody : (classAttributeDeclaration)* (functionDeclaration)*;
 
 classAttributeDeclaration : assignment | objectInstantiation ;
 
-objectInstantiation : ( VAR | objectOrArrayAccess) '=' 'new' VAR '(' ')' ;
+objectInstantiation : lvalue '=' 'new' VAR '(' ')' ;
 
 objectOrArrayAccess : baseAccess ('.' VAR | '[' expression ']')+ ;
 
 baseAccess : VAR ;
+
+lvalue
+    : VAR
+    | objectOrArrayAccess
+    ;
 
 // function call
 functionCall : methodCaller NAME '(' arguments ')' ;

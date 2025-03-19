@@ -19,7 +19,7 @@ class astGenPass(tlangVisitor):
         self.subStmtList = []
         self.virtualRegCount = 0
 
-    def getLval(self, ctx):
+    def getLval(self, ctx:tlangParser.LvalueContext):
 
         if ctx.VAR():
             if isinstance(ctx.VAR(), list):
@@ -154,10 +154,10 @@ class astGenPass(tlangVisitor):
 
     def visitObjectInstantiation(self, ctx: tlangParser.ObjectInstantiationContext):
         # Extract the left-hand side (target variable or object access)
-        lval = self.getLval(ctx)
+        lval = self.getLval(ctx.lvalue())
         # Extract the class name
         # The last VAR is the class being instantiated
-        class_name = ctx.VAR()[-1].getText()
+        class_name = ctx.VAR().getText()
 
         return [(ChironAST.ObjectInstantiationCommand(lval, class_name), 1)]
 
@@ -214,10 +214,11 @@ class astGenPass(tlangVisitor):
         self.subStmtList.extend(currStmtList)
         return returnLocation
 
+        
     def visitAssignExpr(self, ctx: tlangParser.AssignExprContext):
 
         print("Assignment Expr")
-        lval = self.getLval(ctx)
+        lval = self.getLval(ctx.lvalue())
         rval = self.visit(ctx.expression())
         currentStmtList = [(ChironAST.AssignmentCommand(lval, rval), 1)]
         self.subStmtList.extend(currentStmtList)
