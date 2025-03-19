@@ -46,7 +46,7 @@ class PrefixNotationConverter(ast.NodeVisitor):
             ast.LtE: '<=',
             ast.Eq: '=',
             ast.NotEq: '!=',
-            ast.Mod: 'mod',
+            # ast.Mod: 'mod',
             ast.And: 'and',
             ast.Or: 'or',
             ast.Not: '~',

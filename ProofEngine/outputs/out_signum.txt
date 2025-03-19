@@ -1,8 +1,0 @@
-(declare-fun sign1 () Int)
-(declare-fun sign () Int)
-(declare-fun x () Int)
-(assert (= sign (ite (> x 0) 1 0)))
-(assert (= sign1 (ite (< x 0) (- 1) sign)))
-(assert (and (or (< x 0) (or (> x 0) (= x 0))) (and (or (< x 0) (or (> x 0) (not (= sign1 0)))) (and (or (< x 0) (or (not (= sign1 1)) (= x 0))) (and (or (< x 0) (or (not (= sign1 1)) (not (= sign1 0)))) (and (or (not (= sign1 (- 1))) (or (> x 0) (= x 0))) (and (or (not (= sign1 (- 1))) (or (> x 0) (not (= sign1 0)))) (and (or (not (= sign1 (- 1))) (or (not (= sign1 1)) (= x 0))) (or (not (= sign1 (- 1))) (or (not (= sign1 1)) (not (= sign1 0))))))))))))
-(check-sat)
-(get-model)
