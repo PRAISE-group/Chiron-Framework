@@ -1,5 +1,0 @@
-p:isLeap1!=isLeap2
-q:year>0
-
-p
-q
