@@ -185,9 +185,10 @@ class ConcreteInterpreter(Interpreter):
         if stmt.caller:
             print("FINDING CLASS NAME!###################")
             print("Caller: ", stmt.caller)
+            print(stmt.name)
             caller_class = eval(addContext(stmt.caller)).__class__.__name__
             print(caller_class)
-            stmt.name = ":" + str(caller_class) + "@" + str(stmt.name)
+            method_name = ":" + str(caller_class) + "@" + str(stmt.name)
         self.call_stack.append(self.pc + 1)
         # Save the current program context
         self.call_stack.append(self.prg)
@@ -197,7 +198,10 @@ class ConcreteInterpreter(Interpreter):
             exec(f"self.argument = {arg_value}")
             self.call_stack.append(self.argument)
         self.prg = ProgramContext()
-        self.pc = self.function_addresses[stmt.name]
+        if stmt.caller:
+            self.pc = self.function_addresses[method_name]
+        else:
+            self.pc = self.function_addresses[stmt.name]
         return 0
 
     def handleReturnRead(self, stmt, tgt):

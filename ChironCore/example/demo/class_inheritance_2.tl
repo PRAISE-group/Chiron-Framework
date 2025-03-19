@@ -1,12 +1,16 @@
 class :Shape {
     :length = 250
+    def moveForward(:self) {
+        forward :self.:length
+        return
+    }
 }
 
 class :Hexagon(:Shape) {
     :sides = 6
     def drawHex(:self) {
         repeat :self.:sides [
-            forward :self.:length
+            :self.moveForward()
             right 60
         ]
         return
