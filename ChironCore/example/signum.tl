@@ -4,7 +4,7 @@ if (:x > 0)[
     :sign = 0
 ]
 if (:x < 0)[
-    :sign1 = 0 - 1
+    :sign1 = -1
 ] else [
     :sign1 = :sign
 ]

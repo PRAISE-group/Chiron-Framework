@@ -47,6 +47,7 @@ class PrefixNotationConverter(ast.NodeVisitor):
             ast.Or: 'or',
             ast.Not: '~',
             ast.Assign: '=',
+            ast.USub: '-',
         }
         return operators[type(op)]
 
