@@ -1,6 +1,0 @@
-self.prg.counter = 2
-self.prg.blPathRegister = 0
-self.prg.blPathRegister = 15
-self.prg.blPathRegister = 15
-self.prg.blPathRegister = 28
-self.prg.blPathRegister = 8

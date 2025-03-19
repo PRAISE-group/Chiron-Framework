@@ -4,9 +4,6 @@
 Ball-Larus path profiling implementation for the Chiron Framework.
 """
 
-from hmac import new
-from operator import ge
-from re import T
 import sys
 import networkx as nx
 from ChironAST import ChironAST
@@ -23,9 +20,6 @@ class BallLarusProfiler:
     def __init__(self, irHandler, args):
         """
         Initialize the Ball-Larus profiler.
-        
-        Args:
-            irHandler: The IR handler containing the program IR and CFG
         """
         self.irHandler = irHandler
         self.ir = irHandler.ir
@@ -54,7 +48,7 @@ class BallLarusProfiler:
         
         # Instrument the IR
         self.instrument_ir()
-        # return
+
         # The instrumented program will be run by the ConcreteInterpreter
         inptr = ConcreteInterpreter(self.irHandler, self.args)
         terminated = False
@@ -71,30 +65,6 @@ class BallLarusProfiler:
         turtle.onkeypress(self.stopTurtle, "Escape")
         turtle.mainloop()
 
-
-    # def efficient_event_counting(self):
-    #     pass
-    #     # Add a edge from the exit node to entry node
-    #     entry_node = None
-    #     for node in self.cfg.nodes():
-    #         if node.name == "START":
-    #             entry_node = node
-    #             break
-    #     exit_node = None
-    #     for node in self.cfg.nodes():
-    #         if node.name == "END":
-    #             exit_node = node
-    #             break
-    #     self.acyclic_cfg.add_edge(exit_node, entry_node)
-        
-
-
-
-
-
-
-
-    #     self.acyclic_cfg.remove_edge(exit_node, entry_node)
     def compute_edge_weights(self):
         """
         Compute edge weights using the Ball-Larus algorithm.
@@ -133,7 +103,6 @@ class BallLarusProfiler:
         #     weight(v->w) = val
         #     val += NumPaths(w)
         for node in reversed(list(nx.topological_sort(self.acyclic_cfg))):
-            # print(f"NumPaths({node.name}) = {num_paths[node]}")
             if node == self.exit_node:
                 continue
             
@@ -145,7 +114,6 @@ class BallLarusProfiler:
                     val += num_paths[successor]
 
             assert val == num_paths[node]
-            print(f"NumPaths({node.name}) = {num_paths[node]}")
 
         # DEBUG: Print the acyclic CFG with edge weights
         print("Edge weights computed successfully")
@@ -170,15 +138,15 @@ class BallLarusProfiler:
              - Append at the end of the IR two instructions:
                  a) an update to the path register,
                  b) a goto command that jumps to the target basic block's first instruction.
-        4. Skip instrumentation for back edges (TODO: handle separately).
-        5. Finally, adjust all IR jump offsets to account for the inserted instructions.
+        4. The instrumentation for the back edges were handled separately.
+        5. After adding instructions, the offsets were updated simultaneously.
         """
-
+        
         # DEBUG: Print the original IR
-        print("Original IR:")
-        for instr, idx in self.ir:
-            print(f"instr: {instr}, target: {idx}")
-        print("--------------------------------")
+        # print("Original IR:")
+        # for instr, idx in self.ir:
+        #     print(f"instr: {instr}, target: {idx}")
+        # print("--------------------------------")
 
         # Save original IR copy
         if self.original_ir is None:
@@ -239,16 +207,6 @@ class BallLarusProfiler:
             if (source, target) in self.back_edges:
                 continue
 
-
-            # DEBUG: print the complete IR
-            print("--------------------------------")
-            print(f"source: {source.name}, target: {target.name}")
-            print("Complete IR:")
-            for instr, idx in new_ir:
-                print(f"instr: {instr}, target: {idx}")
-            print("--------------------------------")
-
-
             edge_label = attrs.get('label')
             weight = 0
             for edge in self.acyclic_cfg.out_edges(source, data=True):
@@ -280,7 +238,6 @@ class BallLarusProfiler:
         
         # Iterate over CFG edges 2nd time to handle Cond_False edges
         for source, target, attrs in self.cfg.nxgraph.edges(data=True):
-            # Skip back edges – TODO: handle back edge instrumentation separately
             if (source, target) in self.back_edges:
 
                 # Part 1
@@ -326,14 +283,6 @@ class BallLarusProfiler:
                 continue
             
             
-            print("--------------------------------")
-            print(f"source: {source.name}, target: {target.name}")
-            print("Complete IR:")
-            for instr, idx in new_ir:
-                print(f"instr: {instr}, target: {idx}")
-            print("--------------------------------")
-            
-            
             edge_label = attrs.get('label')
             weight = 0
             for edge in self.acyclic_cfg.out_edges(source, data=True):
@@ -341,9 +290,6 @@ class BallLarusProfiler:
                     weight = edge[2]['weight']
                     break
 
-            # if weight == 0:
-            #     continue
-            # Create the update instruction: path_register = path_register + weight
             update_instr = ChironAST.AssignmentCommand(
                 path_register_var,
                 ChironAST.Sum(path_register_var, ChironAST.Num(weight))
@@ -372,12 +318,12 @@ class BallLarusProfiler:
         # Replace IR with instrumented version
         self.irHandler.ir = new_ir
         
-        print("--------------------------------")
-        print("IR:")
-        for instr, idx in self.irHandler.ir:
-            print(f"instr: {instr}, target: {idx}")
-        print("--------------------------------")
-        print("IR instrumented successfully for Ball-Larus path profiling")
+        # print("--------------------------------")
+        # print("IR:")
+        # for instr, idx in self.irHandler.ir:
+        #     print(f"instr: {instr}, target: {idx}")
+        # print("--------------------------------")
+        # print("IR instrumented successfully for Ball-Larus path profiling")
 
     def regenerate_path(self, path_number):
         """
@@ -416,6 +362,7 @@ class BallLarusProfiler:
             path.append("END")
 
         return path
+    
     def report_results(self):
         """
         Report the results of path profiling.
@@ -439,13 +386,6 @@ class BallLarusProfiler:
         with open("hash_dump.txt", "w") as f:
             for path, value in list_of_paths:
                 f.write(f"{path}: {value}")
-    
-    def restore_original_ir(self):
-        """
-        Restore the original IR (disable profiling).
-        """
-        if self.original_ir is not None:
-            self.irHandler.ir = self.original_ir.copy()
     
     def identify_back_edges(self):
         """
