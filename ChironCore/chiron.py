@@ -203,7 +203,8 @@ if __name__ == "__main__":
     cmdparser.add_argument(
         "-bmc",
         "--bmc",
-        type=str,
+        # type=str,
+        action="store_true",
         help="Run Bounded Model Checking on a Chiron Program.",
     )
 
@@ -406,12 +407,39 @@ if __name__ == "__main__":
         print("DONE..")
 
     if args.bmc:
-        print("\nBounded Model Checking..")
-        print("Unrolling the program with bound ", 5)
-        unrolled_code = unroll.UnrollLoops(5).visitStart(getParseTree(args.progfl))
+        print("\nBounded Model Checking...")
+        unroll_bound = int(input("Enter the unroll bound for the program: "))
+        # unroll_bound = 5
+        if unroll_bound < 1:
+            print("Invalid unroll bound. Exiting..")
+            exit(1)
+        
+        unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
+
+        cond_count = int(input("Enter the number of conditions in the program: "))
+        # cond_count = 1
+        if cond_count < 1:
+            print("Invalid number of conditions. Exiting..")
+            exit(1)
+
+        # cond = [":turtlex == 1"]
+        cond = []
+        for i in range(cond_count):
+            cond.append(input(f"Enter condition {i+1}: "))
+
+        assert_stmt = "assert (" + cond[0] +")"
+        for i in range(1, cond_count):
+            assert_stmt = assert_stmt + " && (" + cond[i] + ")"
+        
+        print(unrolled_code)
+
+        unrolled_code_lines = unrolled_code.split('\n')
+        unrolled_code_lines = [line for line in unrolled_code_lines if line != ""]
+        unrolled_code_with_asserts = '\n'.join([line + '\n' + assert_stmt for line in unrolled_code_lines])
+        
         # write to file
         with open("unrolled_code.tl", "w") as f:
-            f.write(unrolled_code)
+            f.write(unrolled_code_with_asserts)
 
         parseTree = getParseTree("unrolled_code.tl")
         astgen = astGenPass()

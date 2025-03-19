@@ -10,7 +10,7 @@ from ChironAST import ChironAST
 
 def getParseTree(progfl):
     input_stream = antlr4.FileStream(progfl)
-    print(input_stream)
+    # print(input_stream)
     try:
         lexer = tlangLexer(input_stream)
         stream = antlr4.CommonTokenStream(lexer)

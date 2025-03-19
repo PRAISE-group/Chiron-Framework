@@ -173,8 +173,8 @@ class BMC:
                 # raise Exception("Unknown SSA instruction")
 
     def solve(self, inputVars):
-        print("The clauses are:")
-        print(self.solver, end="\n\n")
+        # print("The clauses are:")
+        # print(self.solver, end="\n\n")
         
         sat = self.solver.check()
         if sat == z3.sat:
