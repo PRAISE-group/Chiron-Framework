@@ -12,7 +12,11 @@ class PrefixNotationConverter(ast.NodeVisitor):
         op = self.get_operator(node.ops[0])
         left = self.visit(node.left)
         right = self.visit(node.comparators[0])
-        return f"({op} {left} {right})"
+        if op == '!=':  # Handle "!=" as (not (= expr1 expr2))
+            return f"(not (= {left} {right}))"
+        else:
+            op = self.get_operator(node.ops[0])
+            return f"({op} {left} {right})"
 
     def visit_BoolOp(self, node):
         op = self.get_operator(node.op)
@@ -35,13 +39,13 @@ class PrefixNotationConverter(ast.NodeVisitor):
             ast.Add: '+',
             ast.Sub: '-',
             ast.Mult: '*',
-            ast.Div: '/',
+            ast.Div: 'div',
             ast.Gt: '>',
             ast.Lt: '<',
             ast.GtE: '>=',
             ast.LtE: '<=',
             ast.Eq: '=',
-            # ast.NotEq: '!=',
+            ast.NotEq: '!=',
             ast.Mod: 'mod',
             ast.And: 'and',
             ast.Or: 'or',
@@ -55,7 +59,7 @@ def preprocess_expression(expr: str, replace_eq):
     expr = re.sub(r":(\w+)", r"\1", expr) 
     expr = expr.replace(" ", "")
     if(replace_eq):
-        expr = re.sub(r"(?<![<>=])=(?!=)", "==", expr)
+        expr = re.sub(r"(?<![<>=!])=(?!=)", "==", expr)
     return expr
 
 def Construct_AST(expr: str, replace_eq):

@@ -4,7 +4,7 @@ def extract_variables(expression: str):
     # Match variable-like words that are not numbers and are not part of function calls
     tokens = re.findall(r'[a-zA-Z_]\w*', expression)
     
-    keywords = {"ite", "and", "or", "not", "assert", "=", "<", }
+    keywords = {"ite", "and", "or", "not", "assert", "div", "mod"}
     variables = {token for token in tokens if token not in keywords and not token.isdigit()}
     
     return sorted(variables)  # Sorted for consistency
@@ -22,5 +22,5 @@ def CheckOutput(constraint_statement, smtlib_code):
     unknown_vars = set(constraint_vars) - code_vars  # Get all missing variables
     if unknown_vars:
         raise Exception(f"Syntax Error: Unknown variables in constraint file - {unknown_vars}")
-    return code_vars
+    return sorted(code_vars)
     
