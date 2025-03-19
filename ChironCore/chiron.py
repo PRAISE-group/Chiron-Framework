@@ -410,6 +410,7 @@ if __name__ == "__main__":
         print("\nBounded Model Checking...")
         unroll_bound = int(input("Enter the unroll bound for the program: "))
         # unroll_bound = 5
+
         if unroll_bound < 1:
             print("Invalid unroll bound. Exiting..")
             exit(1)
@@ -418,20 +419,20 @@ if __name__ == "__main__":
 
         cond_count = int(input("Enter the number of conditions in the program: "))
         # cond_count = 1
+        
         if cond_count < 1:
             print("Invalid number of conditions. Exiting..")
             exit(1)
 
-        # cond = [":turtlex == 1"]
+        # cond = [":turtleX == 0"]
         cond = []
         for i in range(cond_count):
             cond.append(input(f"Enter condition {i+1}: "))
 
-        assert_stmt = "assert (" + cond[0] +")"
+        cond_stmt = "(" + cond[0] +")"
         for i in range(1, cond_count):
-            assert_stmt = assert_stmt + " && (" + cond[i] + ")"
-        
-        print(unrolled_code)
+            cond_stmt = cond_stmt + " && (" + cond[i] + ")"
+        assert_stmt = "assert " + cond_stmt
 
         unrolled_code_lines = unrolled_code.split('\n')
         unrolled_code_lines = [line for line in unrolled_code_lines if line != ""]

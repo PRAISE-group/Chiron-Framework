@@ -48,6 +48,7 @@ class BMC:
             self.bbConditions[node] = node.get_condition()
 
     def convertSSAtoSMT(self):
+        assert_conditions = z3.BoolVal(True)
         for bb in self.cfg.nodes():
             for stmt, _ in bb.instrlist:
                 if isinstance(stmt, ChironSSA.PhiCommand):
@@ -144,7 +145,7 @@ class BMC:
                         cond = z3.BoolVal(False)
                     elif isinstance(stmt.cond, ChironSSA.Var):
                         cond = z3.Bool(stmt.cond.name)
-                    self.solver.add(z3.Not(cond))
+                    assert_conditions = z3.And(assert_conditions, cond)
 
                 elif isinstance(stmt, ChironSSA.DegToRadCommand):
                     rvar = None
@@ -160,9 +161,12 @@ class BMC:
                 # elif isinstance(stmt, ChironSSA.SinCommand):
                 #     self.solver.add(z3.Real(stmt.lvar.name) == z3.Sin(z3.Real(stmt.rvar1.name)))
     
-                # elif isinstance(stmt, ChironSSA.MoveCommand):
-                # elif isinstance(stmt, ChironSSA.PenCommand):
-                # elif isinstance(stmt, ChironSSA.GotoCommand):
+                elif isinstance(stmt, ChironSSA.MoveCommand):
+                    pass
+                elif isinstance(stmt, ChironSSA.PenCommand):
+                    pass
+                elif isinstance(stmt, ChironSSA.GotoCommand):
+                    pass
                 elif isinstance(stmt, ChironSSA.ConditionCommand):
                     pass
                 elif isinstance(stmt, ChironSSA.NoOpCommand):
@@ -171,10 +175,13 @@ class BMC:
                     pass
             # else:
                 # raise Exception("Unknown SSA instruction")
+        
+        assert_conditions = z3.Tactic('ctx-simplify').apply(assert_conditions).as_expr()
+        self.solver.add(z3.Not(assert_conditions))
 
     def solve(self, inputVars):
-        # print("The clauses are:")
-        # print(self.solver, end="\n\n")
+        print("The clauses are:")
+        print(self.solver, end="\n\n")
         
         sat = self.solver.check()
         if sat == z3.sat:
