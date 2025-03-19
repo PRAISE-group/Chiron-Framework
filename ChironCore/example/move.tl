@@ -1,2 +1,3 @@
-:d = 1
-assert :d == 2
+left 45
+forward 5
+assert :turtleX < 5

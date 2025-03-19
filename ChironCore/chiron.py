@@ -409,7 +409,6 @@ if __name__ == "__main__":
     if args.bmc:
         print("\nBounded Model Checking...")
         unroll_bound = int(input("Enter the unroll bound for the program: "))
-        # unroll_bound = 5
 
         if unroll_bound < 1:
             print("Invalid unroll bound. Exiting..")
@@ -418,29 +417,29 @@ if __name__ == "__main__":
         unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
 
         cond_count = int(input("Enter the number of conditions in the program: "))
-        # cond_count = 1
         
-        if cond_count < 1:
+        if cond_count < 0:
             print("Invalid number of conditions. Exiting..")
             exit(1)
 
-        # cond = [":turtleX == 0"]
-        cond = []
-        for i in range(cond_count):
-            cond.append(input(f"Enter condition {i+1}: "))
+        if cond_count != 0:
+            cond = []
+            for i in range(cond_count):
+                cond.append(input(f"Enter condition {i+1}: "))
 
-        cond_stmt = "(" + cond[0] +")"
-        for i in range(1, cond_count):
-            cond_stmt = cond_stmt + " && (" + cond[i] + ")"
-        assert_stmt = "assert " + cond_stmt
+            cond_stmt = "(" + cond[0] +")"
+            for i in range(1, cond_count):
+                cond_stmt = cond_stmt + " && (" + cond[i] + ")"
+            assert_stmt = "assert " + cond_stmt
 
-        unrolled_code_lines = unrolled_code.split('\n')
-        unrolled_code_lines = [line for line in unrolled_code_lines if line != ""]
-        unrolled_code_with_asserts = '\n'.join([line + '\n' + assert_stmt for line in unrolled_code_lines])
-        
-        # write to file
+            unrolled_code = unrolled_code + '\n' + assert_stmt # for adding asserts at the end
+
+            # unrolled_code_lines = unrolled_code.split('\n')                # for adding asserts after every line
+            # unrolled_code_lines = [line for line in unrolled_code_lines if line != ""]
+            # unrolled_code = '\n'.join([line + '\n' + assert_stmt for line in unrolled_code_lines])
+
         with open("unrolled_code.tl", "w") as f:
-            f.write(unrolled_code_with_asserts)
+            f.write(unrolled_code)
 
         parseTree = getParseTree("unrolled_code.tl")
         astgen = astGenPass()
@@ -449,6 +448,10 @@ if __name__ == "__main__":
         tacGen = TACGenerator(ir) # Converting IR to TAC
         tacGen.generateTAC()
         # tacGen.printTAC() # Printing TAC
+
+        if tacGen.assertCount == 0:
+            print("No conditions found in the program. Exiting..")
+            exit(1)
 
         cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
         cfgB.dumpCFG(cfg, 'tac_cfg')

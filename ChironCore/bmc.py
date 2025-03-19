@@ -65,6 +65,7 @@ class BMC:
                     lvar = None
                     rvar1 = ChironSSA.Unused()
                     rvar2 = ChironSSA.Unused()
+
                     if stmt.op in ["+", "-", "*", "/", "%"]:
                         lvar = z3.Int(stmt.lvar.name)
                         if isinstance(stmt.rvar1, ChironSSA.Var):
@@ -106,7 +107,23 @@ class BMC:
                     elif stmt.op == "":
                         continue
                     else:
-                        raise Exception("Unknown SSA instruction")                    
+                        raise Exception("Unknown SSA instruction")
+                    
+                    if stmt.lvar.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$")):
+                        lvar = z3.Real(stmt.lvar.name)
+                        if isinstance(stmt.rvar1, ChironSSA.Var):
+                            rvar1 = z3.Real(stmt.rvar1.name)
+                        elif isinstance(stmt.rvar1, ChironSSA.Num):
+                            rvar1 = z3.RealVal(stmt.rvar1.value)
+                        if isinstance(stmt.rvar2, ChironSSA.Var):
+                            rvar2 = z3.Real(stmt.rvar2.name)
+                        elif isinstance(stmt.rvar2, ChironSSA.Num):
+                            rvar2 = z3.RealVal(stmt.rvar2.value)
+
+                    if isinstance(stmt.rvar1, ChironSSA.Var) and stmt.rvar1.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$")):
+                        rvar1 = z3.Real(stmt.rvar1.name)
+                    if isinstance(stmt.rvar2, ChironSSA.Var) and stmt.rvar2.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$")):
+                        rvar2 = z3.Real(stmt.rvar2.name)
     
                     if stmt.op == "+":
                         self.solver.add(lvar == (rvar1 + rvar2))
@@ -156,11 +173,16 @@ class BMC:
                     lvar = z3.Real(stmt.lvar.name)
                     self.solver.add(lvar == (rvar * 3.14 / 180))
 
-                # elif isinstance(stmt, ChironSSA.CosCommand):         # Problem: z3.Cos, z3.Sin is not supported
-                #     self.solver.add(z3.Real(stmt.lvar.name) == z3.Cos(z3.Real(stmt.rvar1.name)))
-                # elif isinstance(stmt, ChironSSA.SinCommand):
-                #     self.solver.add(z3.Real(stmt.lvar.name) == z3.Sin(z3.Real(stmt.rvar1.name)))
-    
+                elif isinstance(stmt, ChironSSA.CosCommand):         # Using taylor series
+                    rvar = z3.Real(stmt.rvar.name)
+                    rhs_expr = 1 - (rvar ** 2) / 2 + (rvar ** 4) / 24 - (rvar ** 6) / 720 + (rvar ** 8) / 40320 - (rvar ** 10) / 3628800 + (rvar ** 12) / 479001600 - (rvar ** 14) / 87178291200 + (rvar ** 16) / 20922789888000 - (rvar ** 18) / 6402373705728000 + (rvar ** 20) / 2432902008176640000
+                    self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
+
+                elif isinstance(stmt, ChironSSA.SinCommand):
+                    rvar = z3.Real(stmt.rvar.name)
+                    rhs_expr = rvar - (rvar ** 3) / 6 + (rvar ** 5) / 120 - (rvar ** 7) / 5040 + (rvar ** 9) / 362880 - (rvar ** 11) / 39916800 + (rvar ** 13) / 6227020800 - (rvar ** 15) / 1307674368000 + (rvar ** 17) / 355687428096000 - (rvar ** 19) / 121645100408832000 + (rvar ** 21) / 51090942171709440000
+                    self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
+
                 elif isinstance(stmt, ChironSSA.MoveCommand):
                     pass
                 elif isinstance(stmt, ChironSSA.PenCommand):
@@ -173,8 +195,8 @@ class BMC:
                     pass
                 elif isinstance(stmt, ChironSSA.PauseCommand):
                     pass
-            # else:
-                # raise Exception("Unknown SSA instruction")
+                else:
+                    raise Exception("Unknown SSA instruction")
         
         assert_conditions = z3.Tactic('ctx-simplify').apply(assert_conditions).as_expr()
         self.solver.add(z3.Not(assert_conditions))
@@ -184,6 +206,7 @@ class BMC:
         print(self.solver, end="\n\n")
         
         sat = self.solver.check()
+
         if sat == z3.sat:
             print("Condition not satisfied! Bug found for the following input:")
             model = self.solver.model()
