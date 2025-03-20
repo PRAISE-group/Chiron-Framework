@@ -1,3 +1,3 @@
-left45
-forward5
-assert:turtleX<5
+:x=:y+1
+goto (:x, :y)
+assert:turtleX>0

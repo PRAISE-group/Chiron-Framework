@@ -408,7 +408,8 @@ if __name__ == "__main__":
 
     if args.bmc:
         print("\nBounded Model Checking...")
-        unroll_bound = int(input("Enter the unroll bound for the program: "))
+        # unroll_bound = int(input("Enter the unroll bound for the program: "))
+        unroll_bound = 1
 
         if unroll_bound < 1:
             print("Invalid unroll bound. Exiting..")
@@ -416,7 +417,8 @@ if __name__ == "__main__":
         
         unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
 
-        cond_count = int(input("Enter the number of conditions in the program: "))
+        # cond_count = int(input("Enter the number of conditions in the program: "))
+        cond_count = 0
         
         if cond_count < 0:
             print("Invalid number of conditions. Exiting..")
