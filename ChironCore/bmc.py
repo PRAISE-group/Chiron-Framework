@@ -109,17 +109,8 @@ class BMC:
                     else:
                         raise Exception("Unknown SSA instruction")
                     
-                    if stmt.lvar.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$")):
+                    if isinstance(stmt.lvar, ChironSSA.Var) and stmt.lvar.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$")):
                         lvar = z3.Real(stmt.lvar.name)
-                        if isinstance(stmt.rvar1, ChironSSA.Var):
-                            rvar1 = z3.Real(stmt.rvar1.name)
-                        elif isinstance(stmt.rvar1, ChironSSA.Num):
-                            rvar1 = z3.RealVal(stmt.rvar1.value)
-                        if isinstance(stmt.rvar2, ChironSSA.Var):
-                            rvar2 = z3.Real(stmt.rvar2.name)
-                        elif isinstance(stmt.rvar2, ChironSSA.Num):
-                            rvar2 = z3.RealVal(stmt.rvar2.value)
-
                     if isinstance(stmt.rvar1, ChironSSA.Var) and stmt.rvar1.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$")):
                         rvar1 = z3.Real(stmt.rvar1.name)
                     if isinstance(stmt.rvar2, ChironSSA.Var) and stmt.rvar2.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$")):
@@ -210,7 +201,6 @@ class BMC:
         if sat == z3.sat:
             print("Condition not satisfied! Bug found for the following input:")
             model = self.solver.model()
-            print(model)
             solution = {}
             for var in model:
                 varname, index = str(var).split("$")
