@@ -197,15 +197,15 @@ class astGenPass(tlangVisitor):
         elif ctx.array():
             return ChironAST.Array(ctx.array().getText())
         elif ctx.objectOrArrayAccess():
-            print("entering heaven")
             return self.visitObjectOrArrayAccess(ctx.objectOrArrayAccess())
+        elif ctx.functionCall():
+            return self.visitFunctionCallExpr(ctx.functionCall())
 
-    def visitFunctionCallExpr(self, ctx: tlangParser.FunctionCallExprContext):
-        functionCallCtx = ctx.functionCall()
-        functionName = functionCallCtx.NAME().getText()
-        callerClass = self.visitMethodCaller(functionCallCtx.methodCaller()) if functionCallCtx.methodCaller().children is not None else None
-        functionArgs = [self.visit(arg) for arg in functionCallCtx.arguments(
-        ).expression()] if functionCallCtx.arguments() is not None else []
+    def visitFunctionCallExpr(self, ctx: tlangParser.FunctionCallContext):
+        functionName = ctx.NAME().getText()
+        callerClass = self.visitMethodCaller(ctx.methodCaller()) if ctx.methodCaller().children is not None else None
+        functionArgs = [self.visit(arg) for arg in ctx.arguments(
+        ).expression()] if ctx.arguments() is not None else []
         if callerClass:
             functionArgs.insert(0, callerClass)
         returnLocation = ChironAST.Var(":__reg_" + str(self.virtualRegCount))

@@ -2,11 +2,15 @@ def add(:a, :b)
 {
     return :a + :b
 }
-def increment(:val)
+class :Test
 {
-    return add(:val, 1)
+def increment(:self, :val)
+{
+    return add(2, 3)
+}
 }
 
+:test = new :Test()
 :val = 1
-:val = increment(:val)
+:val = :test.increment(:val) * 2
 print(:val)

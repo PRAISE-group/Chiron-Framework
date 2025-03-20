@@ -71,7 +71,6 @@ expression :
            | expression multiplicative expression  #mulExpr
 		   | expression additive expression        #addExpr
 		   | lvalue  '=' expression   #assignExpr
-		   | functionCall 							#functionCallExpr
 		   | '(' expression ')'                    #parenExpr
 		   | value                                 #valueExpr
  	   ;
@@ -138,6 +137,7 @@ value : NUM
       | VAR
 	  | array
 	  | objectOrArrayAccess
+	  | functionCall 							
 	  | REAL
       ;
 

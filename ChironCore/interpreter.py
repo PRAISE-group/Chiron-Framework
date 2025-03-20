@@ -253,7 +253,7 @@ class ConcreteInterpreter(Interpreter):
         else:
             class_header = f"class {className}:\n"
 
-        class_def = class_header
+        class_def = class_header + "    pass\n"  # Ensure class has a valid body if no attributes
 
         # Handle normal attributes
         for attr in attributes:

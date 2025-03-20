@@ -124,11 +124,6 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#functionCallExpr.
-    def visitFunctionCallExpr(self, ctx:tlangParser.FunctionCallExprContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by tlangParser#mulExpr.
     def visitMulExpr(self, ctx:tlangParser.MulExprContext):
         return self.visitChildren(ctx)
