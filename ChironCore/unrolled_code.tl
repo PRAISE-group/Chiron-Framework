@@ -1,13 +1,12 @@
-:y=0
 if (:a > 0) [
+if (:z > 0) [
 :x=:y+2
 
 ]
-if (:a > 1) [
-:x=:y+2
+
+:z=:x+1
 
 ]
 
 goto (:x, :y)
-assert:x>0
-assert:turtleX>0
+assert:turtleX<0

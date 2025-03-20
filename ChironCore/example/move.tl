@@ -3,7 +3,7 @@ repeat :a [
     :x = :y + 2
 ]
 
-goto (:x, :y)
+goto (20, :y)
 
 assert :x > 0
 assert :turtleX > 0
