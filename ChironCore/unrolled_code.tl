@@ -1,12 +1,28 @@
+:a=2
 if (:a > 0) [
-if (:z > 0) [
-:x=:y+2
+forward50
+:a=:a-2
+
+]
+if (:a > 1) [
+forward50
+:a=:a-2
+
+]
+if (:a > 2) [
+forward50
+:a=:a-2
+
+]
+if (:a > 3) [
+forward50
+:a=:a-2
+
+]
+if (:a > 4) [
+forward50
+:a=:a-2
 
 ]
 
-:z=:x+1
-
-]
-
-goto (:x, :y)
-assert:turtleX<0
+assert:turtleX==50

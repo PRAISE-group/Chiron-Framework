@@ -1,9 +1,8 @@
-:y = 0
+:a = 2
+
 repeat :a [
-    :x = :y + 2
+    forward 50
+    :a = :a - 2
 ]
 
-goto (20, :y)
-
-assert :x > 0
-assert :turtleX > 0
+assert :turtleX == 50

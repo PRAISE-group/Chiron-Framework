@@ -411,7 +411,7 @@ if __name__ == "__main__":
         unroll_bound = int(input("Enter the unroll bound for the program: "))
 
         if unroll_bound < 1:
-            print("Invalid unroll bound. Exiting..")
+            print("Invalid unroll bound. Exiting...")
             exit(1)
         
         unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
@@ -419,7 +419,7 @@ if __name__ == "__main__":
         cond_count = int(input("Enter the number of conditions in the program: "))
 
         if cond_count < 0:
-            print("Invalid number of conditions. Exiting..")
+            print("Invalid number of conditions. Exiting...")
             exit(1)
 
         if cond_count != 0:
@@ -450,7 +450,7 @@ if __name__ == "__main__":
         # tacGen.printTAC() # Printing TAC
 
         if tacGen.assertCount == 0:
-            print("No conditions found in the program. Exiting..")
+            print("No conditions found in the program. Exiting...")
             exit(1)
 
         cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
@@ -461,8 +461,8 @@ if __name__ == "__main__":
 
         cfgB.dumpCFG(ssaCfg, 'ssa_cfg') # Saving SSA Form of the program to file ssa_cfg.png
 
-        print("\nConverting program to SMT-LIB format..\n")
+        print("\nConverting program to SMT-LIB format...\n")
         smt = bmc.BMC(ssaCfg)
         smt.convertSSAtoSMT()
         smt.solve(tacGen.getFreeVariables())
-        print("DONE..")
+        print("DONE...")
