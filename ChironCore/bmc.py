@@ -19,10 +19,9 @@ class BMC:
         self.varConditions = {} # varConditions[var] = condition for var
         for bb in self.cfg.nodes():
             for stmt, _ in bb.instrlist:
-                if isinstance(stmt, ChironSSA.PhiCommand):
+                if isinstance(stmt, (ChironSSA.PhiCommand, ChironSSA.AssignmentCommand, ChironSSA.SinCommand, ChironSSA.CosCommand, ChironSSA.DegToRadCommand)):
                     self.varConditions[stmt.lvar.name] = self.bbConditions[bb]
-                elif isinstance(stmt, ChironSSA.AssignmentCommand):
-                    self.varConditions[stmt.lvar.name] = self.bbConditions[bb]
+
 
     def buildConditions(self):
         topological_order = list(self.cfg.get_topological_order())
@@ -58,8 +57,11 @@ class BMC:
                     rhs_expr = rvars[0]
                     for i in range(1, len(stmt.rvars)):
                         rhs_expr = z3.If(self.varConditions[stmt.rvars[i].name], rvars[i], (rhs_expr))
-    
-                    self.solver.add(lvar == rhs_expr)
+
+                    if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == rhs_expr))
+                    elif self.varConditions[stmt.lvar.name] is not False:
+                        self.solver.add(lvar == rhs_expr)
     
                 elif isinstance(stmt, ChironSSA.AssignmentCommand):
                     lvar = None
@@ -117,33 +119,75 @@ class BMC:
                         rvar2 = z3.Real(stmt.rvar2.name)
     
                     if stmt.op == "+":
-                        self.solver.add(lvar == (rvar1 + rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 + rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 + rvar2))
                     elif stmt.op == "-":
-                        self.solver.add(lvar == (rvar1 - rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 - rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 - rvar2))
                     elif stmt.op == "*":
-                        self.solver.add(lvar == (rvar1 * rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 * rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 * rvar2))
                     elif stmt.op == "/":
-                        self.solver.add(lvar == (rvar1 / rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 / rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 / rvar2))
                     elif stmt.op == "%":
-                        self.solver.add(lvar == (rvar1 % rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 % rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 % rvar2))
                     elif stmt.op == "<":
-                        self.solver.add(lvar == (rvar1 < rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 < rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 < rvar2))
                     elif stmt.op == ">":
-                        self.solver.add(lvar == (rvar1 > rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 > rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 > rvar2))
                     elif stmt.op == "<=":
-                        self.solver.add(lvar == (rvar1 <= rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 <= rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 <= rvar2))
                     elif stmt.op == ">=":
-                        self.solver.add(lvar == (rvar1 >= rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 >= rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 >= rvar2))
                     elif stmt.op == "==":
-                        self.solver.add(lvar == (rvar1 == rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 == rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 == rvar2))
                     elif stmt.op == "!=":
-                        self.solver.add(lvar == (rvar1 != rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 != rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == (rvar1 != rvar2))
                     elif stmt.op == "and":
-                        self.solver.add(lvar == z3.And(rvar1, rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == z3.And(rvar1, rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == z3.And(rvar1, rvar2))
                     elif stmt.op == "or":
-                        self.solver.add(lvar == z3.Or(rvar1, rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == z3.Or(rvar1, rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == z3.Or(rvar1, rvar2))
                     elif stmt.op == "not":
-                        self.solver.add(lvar == z3.Not(rvar2))
+                        if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                            self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == z3.Not(rvar2)))
+                        elif self.varConditions[stmt.lvar.name] is not False:
+                            self.solver.add(lvar == z3.Not(rvar2))
     
                 elif isinstance(stmt, ChironSSA.AssertCommand):
                     cond = None
@@ -162,17 +206,26 @@ class BMC:
                     elif isinstance(stmt.rvar, ChironSSA.Num):
                         rvar = z3.RealVal(stmt.rvar.value)
                     lvar = z3.Real(stmt.lvar.name)
-                    self.solver.add(lvar == (rvar * 3.14 / 180))
+                    if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar * 3.14 / 180)))
+                    elif self.varConditions[stmt.lvar.name] is not False:
+                        self.solver.add(lvar == (rvar * 3.14 / 180))
 
                 elif isinstance(stmt, ChironSSA.CosCommand):         # Using taylor series
                     rvar = z3.Real(stmt.rvar.name)
                     rhs_expr = 1 - (rvar ** 2) / 2 + (rvar ** 4) / 24 - (rvar ** 6) / 720 + (rvar ** 8) / 40320 - (rvar ** 10) / 3628800 + (rvar ** 12) / 479001600 - (rvar ** 14) / 87178291200 + (rvar ** 16) / 20922789888000 - (rvar ** 18) / 6402373705728000 + (rvar ** 20) / 2432902008176640000
-                    self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
+                    if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], z3.Real(stmt.lvar.name) == rhs_expr))
+                    elif self.varConditions[stmt.lvar.name] is not False:
+                        self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
 
                 elif isinstance(stmt, ChironSSA.SinCommand):
                     rvar = z3.Real(stmt.rvar.name)
                     rhs_expr = rvar - (rvar ** 3) / 6 + (rvar ** 5) / 120 - (rvar ** 7) / 5040 + (rvar ** 9) / 362880 - (rvar ** 11) / 39916800 + (rvar ** 13) / 6227020800 - (rvar ** 15) / 1307674368000 + (rvar ** 17) / 355687428096000 - (rvar ** 19) / 121645100408832000 + (rvar ** 21) / 51090942171709440000
-                    self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
+                    if self.varConditions[stmt.lvar.name] not in (None, True, False):
+                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], z3.Real(stmt.lvar.name) == rhs_expr))
+                    elif self.varConditions[stmt.lvar.name] is not False:
+                        self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
 
                 elif isinstance(stmt, ChironSSA.MoveCommand):
                     pass
