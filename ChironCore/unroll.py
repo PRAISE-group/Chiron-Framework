@@ -7,7 +7,7 @@ from turtparse.tlangVisitor import tlangVisitor
 class UnrollLoops(tlangVisitor):
     def __init__(self, bound):
         self.bound = bound
-        pass
+        self.repeatVariablesCounter = 0
 
     def visitStart(self, ctx:tlangParser.StartContext):
         stmtList = self.visit(ctx.instruction_list())
@@ -83,8 +83,11 @@ class UnrollLoops(tlangVisitor):
                 code += loopBlock + "\n"
         else:
             # variable number of iterations
+            repeatVariable = ":__repeat" + str(self.repeatVariablesCounter)
+            code += repeatVariable + " = " + repeatCount + "\n"
             for i in range(self.bound):
-                code += "if (" + repeatCount + " > " + str(i) + ") [\n" + loopBlock + "\n]\n"
+                code += "if (" + repeatVariable + " > " + str(i) + ") [\n" + loopBlock + "\n]\n"
+            self.repeatVariablesCounter += 1
 
         return code
 
