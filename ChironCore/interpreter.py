@@ -252,13 +252,7 @@ class ConcreteInterpreter(Interpreter):
 
         class_def = class_header
         init_method = "    def __init__(self"  # Start of __init__
-        init_body = ""
-        has_init_content = False  # Track if __init__ has any assignments
-
-        # Inherit instance attributes from base classes (left to right order)
-        if stmt.baseClasses:
-            init_body += "        super().__init__()\n"
-            has_init_content = True
+        init_body = "        super().__init__()\n"
 
         # Handle normal attributes (instance attributes)
         for attr in attributes:
@@ -266,20 +260,19 @@ class ConcreteInterpreter(Interpreter):
             attr_name = str(attr.lvar).replace(":", "")
             attr_value = addContext(attr.rexpr) if attr.rexpr else "None"
             init_body += f"        self.{attr_name} = {attr_value}\n"
-            has_init_content = True
 
         # Handle object attributes
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
             init_body += f"        self.{lhs} = None\n"
-            has_init_content = True
+
 
         
 
         init_method += "):\n"  # Close the __init__ method signature
         class_def += init_method
-        class_def += init_body if has_init_content else "        pass\n"
+        class_def += init_body 
 
         print(class_def, "Class Definition")
 

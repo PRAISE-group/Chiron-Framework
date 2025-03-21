@@ -18,6 +18,7 @@ class astGenPass(tlangVisitor):
         self.stmtList = []
         self.subStmtList = []
         self.virtualRegCount = 0
+        self.class_register = ""
 
     def getLval(self, ctx:tlangParser.LvalueContext):
 
@@ -100,7 +101,6 @@ class astGenPass(tlangVisitor):
 
         base = ctx.baseAccess().VAR().getText()
         
-
         # Traverse through the nested access ('.' for attributes, '[]' for indices)
         accesses = []
         i = 1  # Start from second child (skip baseAccess)
@@ -111,7 +111,10 @@ class astGenPass(tlangVisitor):
             if isinstance(child, TerminalNodeImpl) and child.getText() == '.':
                 # Next child must be a VAR (attribute access)
                 i += 1  # Move to VAR
-                accesses.append(ctx.children[i].getText())
+                mangled_name = ctx.children[i].getText()
+                if base == ":self" and i==2 and ctx.children[i].getText().startswith(":__"):
+                    mangled_name = f":_{self.class_register}{mangled_name.replace(":","")}"
+                accesses.append(mangled_name)
 
             elif child.getText() == '[':
                 # Array access: Process the expression inside `[]`
@@ -156,13 +159,14 @@ class astGenPass(tlangVisitor):
         # Extract the left-hand side (target variable or object access)
         lval = self.getLval(ctx.lvalue())
         # Extract the class name
-        # The last VAR is the class being instantiated
+        # The last VAR is the clazss being instantiated
         class_name = ctx.VAR().getText()
 
         return [(ChironAST.ObjectInstantiationCommand(lval, class_name), 1)]
 
     def visitClassDeclaration(self, ctx: tlangParser.ClassDeclarationContext):
         className = ctx.VAR()[0].getText()  # Extract class name
+        self.class_register = className.replace(":","")
         baseClasses = [var.getText() for var in ctx.VAR()[1:]] if len(ctx.VAR()) > 1 else None # Extract base classes
         attributes = []
         objectAttributes = []

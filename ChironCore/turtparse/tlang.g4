@@ -143,7 +143,7 @@ value : NUM
 
 NUM  : [0-9]+        ;
 REAL : [0-9]+('.'[0-9]+)?;
-VAR  : ':'[a-zA-Z_] [a-zA-Z0-9]* ;
+VAR  : ':''__'?[a-zA-Z_] [a-zA-Z0-9]* ;
 
 NAME : [a-zA-Z]+     ;
 
