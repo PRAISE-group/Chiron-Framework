@@ -24,4 +24,3 @@ class :Hexagon(:Polygon, :Shape) {
 
 :hex = new :Hexagon()
 :hex.drawHex()
-:pol = new :Polygon()

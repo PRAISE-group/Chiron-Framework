@@ -92,11 +92,14 @@ class ConcreteInterpreter(Interpreter):
     # Ref: https://realpython.com/beginners-guide-python-turtle
     cond_eval = None  # used as a temporary variable within the embedded program interpreter
     prg = None
+    # virtual argument register
     argument = None
+    # virtual return value register
     return_value = None
+    # list of user-defined classes
     class_list = None
 
-    # map of function name to their pc in the IR
+    # map from name of functions to their pc
     function_addresses = {}
     # stack for handling function calls
     call_stack = []
@@ -109,9 +112,6 @@ class ConcreteInterpreter(Interpreter):
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
-        print("###########################Intermediate Representation (IR):#############")
-        for index, instruction in enumerate(self.ir):
-            print(f"{index}: {instruction} | {instruction[0]}")
 
     def interpret(self):
         print("Program counter : ", self.pc)
@@ -176,43 +176,41 @@ class ConcreteInterpreter(Interpreter):
             exec("setattr(self.prg,\"%s\",%s)" % (var, val))
 
     def handleFunctionDeclaration(self, stmt, tgt):
-        print(f"Function Declaration: {stmt.name}")
+        # body of the function starts from next instruction
         self.function_addresses[stmt.name] = self.pc + 1
         return tgt
 
     def handleFunctionCall(self, stmt, tgt):
-        print("[1]", stmt, "printing stmt")
-        if stmt.caller:
-            print("FINDING CLASS NAME!###################")
-            print("Caller: ", stmt.caller)
-            print(stmt.name)
-            caller_class = eval(addContext(stmt.caller)).__class__.__name__
-            print(caller_class)
-            method_name = ":" + str(caller_class) + "@" + str(stmt.name)
+        # Handling call stack
+        # Save the return address on the call stack
         self.call_stack.append(self.pc + 1)
-        # Save the current program context
+        # Save the current program context on the call stack
         self.call_stack.append(self.prg)
-        # Initialize a new program context for the function call
+        # Save the arguments on the call stack
         for arg in stmt.args:
             arg_value = addContext(arg)
             exec(f"self.argument = {arg_value}")
             self.call_stack.append(self.argument)
-        self.prg = ProgramContext()
+        # Jump to the function address
+        # If the function is a method, the name will be in the form of "caller@method"
         if stmt.caller:
-            self.pc = self.function_addresses[method_name]
+            caller_class = eval(addContext(stmt.caller)).__class__.__name__
+            method_name = ":" + str(caller_class) + "@" + str(stmt.name)
+            self.pc = self.function_addresses[method_name]   
         else:
             self.pc = self.function_addresses[stmt.name]
+        # Initialize a new program context for the new activation record
+        self.prg = ProgramContext()
         return 0
 
+    # Copying the return values in their respective placeholders
     def handleReturnRead(self, stmt, tgt):
-        print(f"Read Return: {stmt.returnValues}")
         for rval in reversed(stmt.returnValues):
             rval = str(rval).replace(":", "")
             exec(f"self.prg.{rval} = self.call_stack.pop()")
         return 1
 
     def handleFunctionReturn(self, stmt, tgt):
-        print(f"Function Return: {stmt}")
         # Restore the previous program context
         rval_list = []
         for rval in stmt.returnValues:
@@ -224,23 +222,17 @@ class ConcreteInterpreter(Interpreter):
         self.call_stack.extend(rval_list)
         return 0
 
+    # Copying the parameters in their respective placeholders
     def handleParametersPassing(self, stmt, tgt):
-        print(f"Parameters Passing: {stmt.params}")
         for param in reversed(stmt.params):
             param = str(param).replace(":", "")
             param_value = self.call_stack.pop()
-            print("PRINTING PARAM VALUE###############", param_value, param)
             setattr(self.prg, param, param_value)
-            print("PRINTING PARAM VALUE###############",
-                  getattr(self.prg, param))
         return 1
 
     def handleClassDeclaration(self, stmt, tgt):
-        print(f"Class Declaration: {stmt.className}")
-
         className = stmt.className.replace(":", "")
         attributes = stmt.attributes  # List of attribute assignments
-
         # Handle inheritance if base classes exist
         if hasattr(stmt, "baseClasses") and stmt.baseClasses:
             base_classes = [getattr(self.class_list, str(
@@ -249,36 +241,25 @@ class ConcreteInterpreter(Interpreter):
             class_header = f"class {className}({base_str}):\n"
         else:
             class_header = f"class {className}:\n"
-
         class_def = class_header
         init_method = "    def __init__(self"  # Start of __init__
         init_body = "        super().__init__()\n"
-
-        # Handle normal attributes (instance attributes)
+        # Handle normal attributes (non-object attributes)
         for attr in attributes:
             attr, target = attr
             attr_name = str(attr.lvar).replace(":", "")
             attr_value = addContext(attr.rexpr) if attr.rexpr else "None"
             init_body += f"        self.{attr_name} = {attr_value}\n"
-
         # Handle object attributes
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
             init_body += f"        self.{lhs} = None\n"
-
-
-        
-
         init_method += "):\n"  # Close the __init__ method signature
         class_def += init_method
         class_def += init_body 
-
-        print(class_def, "Class Definition")
-
         # Step 1: Execute the class definition (store it inside self.class_list)
         exec(class_def, globals(), self.class_list.__dict__)
-
         # Step 2: Assign object attributes after class creation
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
@@ -286,31 +267,22 @@ class ConcreteInterpreter(Interpreter):
             rhs = addContext(objectAttr.class_name).replace(
                 "self.prg.", "self.class_list.")
             exec(f"self.class_list.{className}.{lhs} = {rhs}()")
-
-        # Inherit methods from base classes (right to left order)
-        temp_function_addresses = {}
+        # Inherit methods from base classes 
+        inherited_function_addresses = {}
         if stmt.baseClasses:
-            for key, value in self.function_addresses.items():
-                key_parts = key.split("@")
-                if key_parts[0] in reversed(stmt.baseClasses):
-                    new_key = stmt.className + "@" + key_parts[1]
-                    temp_function_addresses[new_key] = value
-            self.function_addresses.update(temp_function_addresses)
-
-        print("Printing function addresses:[][][] ", self.function_addresses)
+            for function_name, address in self.function_addresses.items():
+                class_name, method_name = function_name.split("@")
+                if class_name in reversed(stmt.baseClasses):
+                    new_function_name = f"{stmt.className}@{method_name}"
+                    inherited_function_addresses[new_function_name] = address
+            self.function_addresses.update(inherited_function_addresses)
         return 1
 
     def handleObjectInstantiation(self, stmt, tgt):
-        print(f"Creating new instance of {stmt.class_name} for {stmt.target}")
-
         lhs = str(stmt.target).replace(":", "")
         rhs = addContext(stmt.class_name).replace(
             "self.prg.", "self.class_list.")
-
-        # exec(instance_code, globals(), self.prg.__dict__)  # Store in self.prg
         exec(f"self.prg.{lhs} = {rhs}()")
-        print(f"Instance created: {lhs} -> {getattr(self.prg, lhs)}")
-
         return 1
 
     def handleAssignment(self, stmt, tgt):
