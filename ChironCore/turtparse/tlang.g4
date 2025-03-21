@@ -77,7 +77,7 @@ expression :
 
 
 
-classDeclaration : 'class' VAR ('(' (VAR)* ')')? '{' classBody '}' ;
+classDeclaration : 'class' VAR ('(' VAR (',' (VAR)*)? ')')? '{' classBody '}' ;
 
 classBody : (classAttributeDeclaration)* (functionDeclaration)*;
 

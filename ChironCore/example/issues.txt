@@ -5,6 +5,6 @@
 5. instruction_list can contain both function declaration and classDeclaration this can cause problems
 6. Multiple class inheritance is not yet supported!
 7. return is compulsory in function declaration
-8. Solution to Avoid Unexpected Changes in Mutable Class Variables: use __init__ method during class declaration
+8. Solution to Avoid Unexpected Changes in Mutable Class Variables: use __init__ method during class declaration [fixed]
 9. Writing self is compulsory in methods of class parameters
 10. class must have at least one assignment statement [fixed]

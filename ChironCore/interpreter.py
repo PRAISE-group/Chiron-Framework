@@ -243,30 +243,43 @@ class ConcreteInterpreter(Interpreter):
 
         # Handle inheritance if base classes exist
         if hasattr(stmt, "baseClasses") and stmt.baseClasses:
-            # Build a comma-separated list of base classes.
-            # We assume the base classes are already stored in self.class_list.
             base_classes = [getattr(self.class_list, str(
                 b).replace(":", "")) for b in stmt.baseClasses]
             base_str = ", ".join([b.__name__ for b in base_classes])
             class_header = f"class {className}({base_str}):\n"
-
         else:
             class_header = f"class {className}:\n"
 
-        class_def = class_header + "    pass\n"  # Ensure class has a valid body if no attributes
+        class_def = class_header
+        init_method = "    def __init__(self"  # Start of __init__
+        init_body = ""
+        has_init_content = False  # Track if __init__ has any assignments
 
-        # Handle normal attributes
+        # Inherit instance attributes from base classes (left to right order)
+        if stmt.baseClasses:
+            init_body += "        super().__init__()\n"
+            has_init_content = True
+
+        # Handle normal attributes (instance attributes)
         for attr in attributes:
             attr, target = attr
             attr_name = str(attr.lvar).replace(":", "")
-            attr_value = addContext(attr.rexpr) if attr.rexpr else None
-            class_def += f"    {attr_name} = {attr_value}\n"
+            attr_value = addContext(attr.rexpr) if attr.rexpr else "None"
+            init_body += f"        self.{attr_name} = {attr_value}\n"
+            has_init_content = True
 
-        # Handle object attributes (initialize to None first)
+        # Handle object attributes
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
-            class_def += f"    {lhs} = None\n"
+            init_body += f"        self.{lhs} = None\n"
+            has_init_content = True
+
+        
+
+        init_method += "):\n"  # Close the __init__ method signature
+        class_def += init_method
+        class_def += init_body if has_init_content else "        pass\n"
 
         print(class_def, "Class Definition")
 
@@ -281,25 +294,16 @@ class ConcreteInterpreter(Interpreter):
                 "self.prg.", "self.class_list.")
             exec(f"self.class_list.{className}.{lhs} = {rhs}()")
 
-        # go through the function addresses dict and inherit the methods of base classes from right to left (order of inheritance)
-        # this is done by copying the function addresses of the base classes to the current class
-        # the name of the method should be the `className`+ @ + `methodName`. This can be achieved by first finding all the methods whose name
-        # starts with each of the base classes and only removing the classname part and updating it to the current class and creating one extra
-        # entry with the current class name and the method name
+        # Inherit methods from base classes (right to left order)
         temp_function_addresses = {}
         if stmt.baseClasses:
             for key, value in self.function_addresses.items():
                 key_parts = key.split("@")
-                print("Printing key parts: ", key_parts)
-                print("printing class name and base classes: ",
-                        stmt.className, stmt.baseClasses)
                 if key_parts[0] in reversed(stmt.baseClasses):
                     new_key = stmt.className + "@" + key_parts[1]
-                    print("Printing new key############################: ", new_key)
                     temp_function_addresses[new_key] = value
             self.function_addresses.update(temp_function_addresses)
 
-        # print(f"Instance created: {lhs} -> {getattr(self.prg, lhs)}")
         print("Printing function addresses:[][][] ", self.function_addresses)
         return 1
 
