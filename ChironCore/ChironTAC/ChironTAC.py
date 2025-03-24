@@ -6,14 +6,6 @@ class TAC(object):
 class Instruction(TAC):
     pass
 
-class DegToRadCommand(Instruction):
-    def __init__(self, lvar, rvar): # lvar = degToRad(rvar)
-        self.lvar = lvar
-        self.rvar = rvar
-    
-    def __str__(self):
-        return self.lvar.__str__() + " = degToRad(" + self.rvar.__str__() + ")"
-
 class CosCommand(Instruction):
     def __init__(self, lvar, rvar): # lvar = cos(rvar)
         self.lvar = lvar

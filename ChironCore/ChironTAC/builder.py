@@ -287,12 +287,11 @@ class TACGenerator:
                     movevar = ChironTAC.Var(f":__move_{self.moveCount}")
                     self.moveCount += 1
                     self.parseExpresssion(stmt.expr, movevar)
-                self.line += 1
-                self.tac.append((ChironTAC.MoveCommand(stmt.direction, movevar), 1))
+                
                 if (stmt.direction == "forward" or stmt.direction == "backward"):
                     self.line += 6
-                    self.tac.append((ChironTAC.CosCommand(ChironTAC.Var(":__cos_theta"), ChironTAC.Var(":turtleThetaRad")), 1))
-                    self.tac.append((ChironTAC.SinCommand(ChironTAC.Var(":__sin_theta"), ChironTAC.Var(":turtleThetaRad")), 1))
+                    self.tac.append((ChironTAC.CosCommand(ChironTAC.Var(":__cos_theta"), ChironTAC.Var(":turtleThetaDeg")), 1))
+                    self.tac.append((ChironTAC.SinCommand(ChironTAC.Var(":__sin_theta"), ChironTAC.Var(":turtleThetaDeg")), 1))
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__delta_x"), movevar, ChironTAC.Var(":__cos_theta"), "*"), 1))
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":__delta_y"), movevar, ChironTAC.Var(":__sin_theta"), "*"), 1))
                     if (stmt.direction == "forward"):
@@ -302,27 +301,28 @@ class TACGenerator:
                         self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleX"), ChironTAC.Var(":turtleX"), ChironTAC.Var(":__delta_x"), "-"), 1))
                         self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleY"), ChironTAC.Var(":turtleY"), ChironTAC.Var(":__delta_y"), "-"), 1))
                 elif (stmt.direction == "left"):
-                    self.line += 3
+                    self.line += 2
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), movevar, "-"), 1))
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Num(360), "%"), 1))
-                    self.tac.append((ChironTAC.DegToRadCommand(ChironTAC.Var(":turtleThetaRad"), ChironTAC.Var(":turtleThetaDeg")), 1))
                 elif (stmt.direction == "right"):
-                    self.line += 3
+                    self.line += 2
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), movevar, "+"), 1))
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Num(360), "%"), 1))
-                    self.tac.append((ChironTAC.DegToRadCommand(ChironTAC.Var(":turtleThetaRad"), ChironTAC.Var(":turtleThetaDeg")), 1))
                 else:
                     raise NotImplementedError("Unknown move direction: %s, %s." % (type(stmt), stmt))
+                
+                self.line += 1
+                self.tac.append((ChironTAC.MoveCommand(stmt.direction, movevar), 1))
             
             elif isinstance(stmt, ChironAST.PenCommand):
                 self.line += 2
-                self.tac.append((ChironTAC.PenCommand(stmt.status), 1))
                 if (stmt.status == "penup"):
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtlePen"), ChironTAC.Num(1), ChironTAC.Num(0), "+"), 1))
                 elif (stmt.status == "pendown"):
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtlePen"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
                 else:
                     raise NotImplementedError("Unknown pen status: %s, %s." % (type(stmt), stmt))
+                self.tac.append((ChironTAC.PenCommand(stmt.status), 1))
             
             elif isinstance(stmt, ChironAST.GotoCommand):
                 xvar = None
@@ -344,9 +344,9 @@ class TACGenerator:
                     self.gotoCount += 1
                     self.parseExpresssion(stmt.ycor, yvar)
                 self.line += 3
-                self.tac.append((ChironTAC.GotoCommand(xvar, yvar), 1))
                 self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleX"), xvar, ChironTAC.Num(0), "+"), 1))
                 self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleY"), yvar, ChironTAC.Num(0), "+"), 1))
+                self.tac.append((ChironTAC.GotoCommand(xvar, yvar), 1))
             
             elif isinstance(stmt, ChironAST.NoOpCommand):
                 self.line += 1
@@ -382,7 +382,6 @@ class TACGenerator:
         self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleX"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
         self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleY"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
         self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
-        self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaRad"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1))
         self.tac.insert(0, (ChironTAC.AssignmentCommand(ChironTAC.Var(":turtlePen"), ChironTAC.Num(0), ChironTAC.Num(0), "+"), 1)) # 0->down 1->up
         
     def getFreeVariables(self):
@@ -419,10 +418,6 @@ class TACGenerator:
                     self.freeVars.add(stmt.rvar.__str__())
                 boundVars.add(stmt.lvar.__str__())
             elif isinstance(stmt, ChironTAC.CosCommand):
-                if isinstance(stmt.rvar, ChironTAC.Var) and stmt.rvar.__str__() not in boundVars:
-                    self.freeVars.add(stmt.rvar.__str__())
-                boundVars.add(stmt.lvar.__str__())
-            elif isinstance(stmt, ChironTAC.DegToRadCommand):
                 if isinstance(stmt.rvar, ChironTAC.Var) and stmt.rvar.__str__() not in boundVars:
                     self.freeVars.add(stmt.rvar.__str__())
                 boundVars.add(stmt.lvar.__str__())

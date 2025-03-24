@@ -88,12 +88,6 @@ class SSABuilder:
                 instr.lvar = self.new_name(instr.lvar.name)
                 if isinstance(instr.rvar, ChironSSA.Var):
                     instr.rvar = ChironSSA.Var(instr.rvar.name + "$" + str(self.stack[instr.rvar.name][-1]))
-            
-            elif isinstance(instr, ChironSSA.DegToRadCommand):
-                temp.add(instr.lvar.name)
-                instr.lvar = self.new_name(instr.lvar.name)
-                if isinstance(instr.rvar, ChironSSA.Var):
-                    instr.rvar = ChironSSA.Var(instr.rvar.name + "$" + str(self.stack[instr.rvar.name][-1]))
 
         visited = set()
         def phi_dfs(curr, var):
@@ -218,11 +212,6 @@ class SSABuilder:
                 lvar = ChironSSA.Var(instr.lvar.name)
                 rvar = ChironSSA.Var(instr.rvar.name) if isinstance(instr.rvar, ChironTAC.Var) else ChironSSA.Num(instr.rvar.value)
                 ir[ir.index((instr, tgt))] = (ChironSSA.CosCommand(lvar, rvar), tgt)
-
-            elif isinstance(instr, ChironTAC.DegToRadCommand):
-                lvar = ChironSSA.Var(instr.lvar.name)
-                rvar = ChironSSA.Var(instr.rvar.name) if isinstance(instr.rvar, ChironTAC.Var) else ChironSSA.Num(instr.rvar.value)
-                ir[ir.index((instr, tgt))] = (ChironSSA.DegToRadCommand(lvar, rvar), tgt)
 
             elif isinstance(instr, ChironTAC.PenCommand):
                 ir[ir.index((instr, tgt))] = (ChironSSA.PenCommand(instr.status), tgt)

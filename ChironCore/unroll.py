@@ -83,7 +83,7 @@ class UnrollLoops(tlangVisitor):
                 code += loopBlock + "\n"
         else:
             # variable number of iterations
-            repeatVariable = ":__repeat" + str(self.repeatVariablesCounter)
+            repeatVariable = ":_repeat" + str(self.repeatVariablesCounter)
             code += repeatVariable + " = " + repeatCount + "\n"
             for i in range(self.bound):
                 code += "if (" + repeatVariable + " > " + str(i) + ") [\n" + loopBlock + "\n]\n"

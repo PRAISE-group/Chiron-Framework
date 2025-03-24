@@ -8,6 +8,9 @@ from cfg import cfgBuilder
 class BMC:
     def __init__(self, cfg):
         self.solver = z3.Solver()
+        self.solver_without_cond = z3.Solver()
+        self.angle_conditions = z3.BoolVal(True)
+        self.assert_conditions = z3.BoolVal(True)
         self.cfg = cfg
 
         self.bbConditions = {} # bbConditions[bb] = condition for bb
@@ -19,7 +22,7 @@ class BMC:
         self.varConditions = {} # varConditions[var] = condition for var
         for bb in self.cfg.nodes():
             for stmt, _ in bb.instrlist:
-                if isinstance(stmt, (ChironSSA.PhiCommand, ChironSSA.AssignmentCommand, ChironSSA.SinCommand, ChironSSA.CosCommand, ChironSSA.DegToRadCommand)):
+                if isinstance(stmt, (ChironSSA.PhiCommand, ChironSSA.AssignmentCommand, ChironSSA.SinCommand, ChironSSA.CosCommand)):
                     self.varConditions[stmt.lvar.name] = self.bbConditions[bb] if self.bbConditions[bb] is not None else z3.BoolVal(True)
 
     def buildConditions(self):
@@ -46,14 +49,11 @@ class BMC:
             self.bbConditions[node] = node.get_condition()
 
     def convertSSAtoSMT(self):
-        assert_conditions = z3.BoolVal(True)
         for bb in self.cfg.nodes():
             for stmt, _ in bb.instrlist:
                 if isinstance(stmt, ChironSSA.PhiCommand):
                     lvar = z3.Int(stmt.lvar.name)
-                    if stmt.lvar.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$", ":__cos_theta$", ":__sin_theta$")):
-                        lvar = z3.Real(stmt.lvar.name)
-                    rvars = [z3.Real(rvar.name) if rvar.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$", ":__cos_theta$", ":__sin_theta$")) else z3.Int(rvar.name) for rvar in stmt.rvars]
+                    rvars = [z3.Int(rvar.name) for rvar in stmt.rvars]
                     
                     rhs_expr = rvars[0]
                     for i in range(1, len(stmt.rvars)):
@@ -63,7 +63,7 @@ class BMC:
                         self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == rhs_expr))
                     elif self.varConditions[stmt.lvar.name] is not False:
                         self.solver.add(lvar == rhs_expr)
-    
+                        
                 elif isinstance(stmt, ChironSSA.AssignmentCommand):
                     lvar = None
                     rvar1 = ChironSSA.Unused()
@@ -111,13 +111,6 @@ class BMC:
                         continue
                     else:
                         raise Exception("Unknown SSA instruction")
-                    
-                    if isinstance(stmt.lvar, ChironSSA.Var) and stmt.lvar.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$", ":__cos_theta$", ":__sin_theta$")):
-                        lvar = z3.Real(stmt.lvar.name)
-                    if isinstance(stmt.rvar1, ChironSSA.Var) and stmt.rvar1.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$", ":__cos_theta$", ":__sin_theta$")):
-                        rvar1 = z3.Real(stmt.rvar1.name)
-                    if isinstance(stmt.rvar2, ChironSSA.Var) and stmt.rvar2.name.startswith((":turtleX$", ":turtleY$", ":__delta_x$", ":__delta_y$", ":turtleThetaRad$", ":__cos_theta$", ":__sin_theta$")):
-                        rvar2 = z3.Real(stmt.rvar2.name)
     
                     if stmt.op == "+":
                         if self.varConditions[stmt.lvar.name] not in (None, True, False):
@@ -142,8 +135,12 @@ class BMC:
                     elif stmt.op == "%":
                         if self.varConditions[stmt.lvar.name] not in (None, True, False):
                             self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 % rvar2)))
+                            if stmt.lvar.name.startswith(":turtleThetaDeg$"):
+                                self.angle_conditions = z3.And(self.angle_conditions, z3.Implies(self.varConditions[stmt.lvar.name], z3.Or(lvar == 0, lvar == 90, lvar == 180, lvar == 270)))
                         elif self.varConditions[stmt.lvar.name] is not False:
                             self.solver.add(lvar == (rvar1 % rvar2))
+                            if stmt.lvar.name.startswith(":turtleThetaDeg$"):
+                                self.angle_conditions = z3.And(self.angle_conditions, z3.Or(lvar == 0, lvar == 90, lvar == 180, lvar == 270))
                     elif stmt.op == "<":
                         if self.varConditions[stmt.lvar.name] not in (None, True, False):
                             self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar1 < rvar2)))
@@ -198,37 +195,23 @@ class BMC:
                         cond = z3.BoolVal(False)
                     elif isinstance(stmt.cond, ChironSSA.Var):
                         cond = z3.Bool(stmt.cond.name)
-                    assert_conditions = z3.And(assert_conditions, cond)
+                    self.assert_conditions = z3.And(self.assert_conditions, cond)
 
-                elif isinstance(stmt, ChironSSA.DegToRadCommand):
-                    rvar = None
-                    if isinstance(stmt.rvar, ChironSSA.Var):
-                        rvar = z3.Real(stmt.rvar.name)
-                    elif isinstance(stmt.rvar, ChironSSA.Num):
-                        rvar = z3.RealVal(stmt.rvar.value)
-                    lvar = z3.Real(stmt.lvar.name)
+                elif isinstance(stmt, ChironSSA.CosCommand): # Only for 0, 90, 180, 270 degree
+                    rvar = z3.Int(stmt.rvar.name)
+                    rhs_expr = z3.If(rvar == 0, 1, z3.If(rvar == 90, 0, z3.If(rvar == 180, -1, 0)))
                     if self.varConditions[stmt.lvar.name] not in (None, True, False):
-                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], lvar == (rvar * 3.14 / 180)))
+                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], z3.Int(stmt.lvar.name) == rhs_expr))
                     elif self.varConditions[stmt.lvar.name] is not False:
-                        self.solver.add(lvar == (rvar * 3.14 / 180))
-
-                elif isinstance(stmt, ChironSSA.CosCommand):         # Using taylor series
-                    rvar = z3.Real(stmt.rvar.name)
-                    rhs_expr = 1 - (rvar ** 2) / 2 + (rvar ** 4) / 24
-                    # rhs_expr = 1 - (rvar ** 2) / 2 + (rvar ** 4) / 24 - (rvar ** 6) / 720 + (rvar ** 8) / 40320 - (rvar ** 10) / 3628800 + (rvar ** 12) / 479001600 - (rvar ** 14) / 87178291200 + (rvar ** 16) / 20922789888000 - (rvar ** 18) / 6402373705728000 + (rvar ** 20) / 2432902008176640000
-                    if self.varConditions[stmt.lvar.name] not in (None, True, False):
-                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], z3.Real(stmt.lvar.name) == rhs_expr))
-                    elif self.varConditions[stmt.lvar.name] is not False:
-                        self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
+                        self.solver.add(z3.Int(stmt.lvar.name) == rhs_expr)
 
                 elif isinstance(stmt, ChironSSA.SinCommand):
-                    rvar = z3.Real(stmt.rvar.name)
-                    rhs_expr = rvar - (rvar ** 3) / 6
-                    # rhs_expr = rvar - (rvar ** 3) / 6 + (rvar ** 5) / 120 - (rvar ** 7) / 5040 + (rvar ** 9) / 362880 - (rvar ** 11) / 39916800 + (rvar ** 13) / 6227020800 - (rvar ** 15) / 1307674368000 + (rvar ** 17) / 355687428096000 - (rvar ** 19) / 121645100408832000 + (rvar ** 21) / 51090942171709440000
+                    rvar = z3.Int(stmt.rvar.name)
+                    rhs_expr = z3.If(rvar == 0, 0, z3.If(rvar == 90, 1, z3.If(rvar == 180, 0, -1)))
                     if self.varConditions[stmt.lvar.name] not in (None, True, False):
-                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], z3.Real(stmt.lvar.name) == rhs_expr))
+                        self.solver.add(z3.Implies(self.varConditions[stmt.lvar.name], z3.Int(stmt.lvar.name) == rhs_expr))
                     elif self.varConditions[stmt.lvar.name] is not False:
-                        self.solver.add(z3.Real(stmt.lvar.name) == rhs_expr)
+                        self.solver.add(z3.Int(stmt.lvar.name) == rhs_expr)
 
                 elif isinstance(stmt, ChironSSA.MoveCommand):
                     pass
@@ -244,20 +227,24 @@ class BMC:
                     pass
                 else:
                     raise Exception("Unknown SSA instruction")
-        
-        assert_conditions = z3.Tactic('ctx-simplify').apply(assert_conditions).as_expr()
-        self.solver.add(z3.Not(assert_conditions))
+                
+        self.solver_without_cond.add(self.solver.assertions())
+        self.assert_conditions = z3.Tactic('ctx-simplify').apply(self.assert_conditions).as_expr()
+        self.angle_conditions = z3.Tactic('ctx-simplify').apply(self.angle_conditions).as_expr()
 
     def solve(self, inputVars):
-        print("The clauses are:")
-        print(self.solver, end="\n\n")
-        
+        self.solver.add(z3.Not(self.assert_conditions))
+        self.solver.add(self.angle_conditions)
+
+        # print("The clauses are:")
+        # print(self.solver, end="\n\n")
+
         sat = self.solver.check()
 
         if sat == z3.sat:
             print("Condition not satisfied! Bug found for the following input:")
             model = self.solver.model()
-            print(model)
+
             solution = {}
             for var in model:
                 varname, index = str(var).split("$")
@@ -267,7 +254,22 @@ class BMC:
                     print(var + " = " + str(solution[var]))
 
         elif sat == z3.unsat:
-            print("Condition satisfied for all inputs!")
+            solver_with_angle = z3.Solver()
+            solver_with_angle.add(self.solver_without_cond.assertions())
+            solver_with_angle.add(self.angle_conditions)
+            sat_angle = solver_with_angle.check()
+
+            # solver_with_assert = z3.Solver()
+            # solver_with_assert.add(self.solver_without_cond.assertions())
+            # solver_with_assert.add(z3.Not(self.assert_conditions))
+            # sat_assert = solver_with_assert.check()
+
+            if sat_angle == z3.unsat:
+                print("Angle not 0, 90, 180, 270 degrees for all cases")
+            elif sat_angle != z3.unknown: # sat_assert is unsat
+                print("Condition satisfied for all inputs!")
+            else:
+                print("Unknown")
         else:
             print("Unknown")
 

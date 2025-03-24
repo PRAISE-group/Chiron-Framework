@@ -1,8 +1,17 @@
-:a = 2
+// left 90          // valid
+// assert 1 > 0     // true
 
-repeat :a [
-    forward 50
-    :a = :a - 2
+// left 45          // invalid
+// assert 1 > 0     // true
+
+// left 90          // valid
+// assert 1 < 0     // flase
+
+// left 45          // invalid
+// assert 1 < 0     // flase
+
+repeat 3 [
+    left 90
 ]
 
-assert :turtleX == 50
+assert :turtleX == 0
