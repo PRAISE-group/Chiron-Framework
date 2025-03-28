@@ -275,6 +275,18 @@ public:
         }
         throw runtime_error("Invalid value");
     }
+    
+    any visitFuncExpr(tlangParser::FuncExprContext *ctx) override { return nullptr; }
+    any visitVoidFunction(tlangParser::VoidFunctionContext *ctx) override { return nullptr; }
+    any visitValueFunction(tlangParser::ValueFunctionContext *ctx) override { return nullptr; }
+    any visitVoidReturn(tlangParser::VoidReturnContext *ctx) override { return nullptr; }
+    any visitValueReturn(tlangParser::ValueReturnContext *ctx) override { return nullptr; }
+    any visitParametersDeclaration(tlangParser::ParametersDeclarationContext *ctx) override { return nullptr; }
+    any visitParameterCall(tlangParser::ParameterCallContext *ctx) override { return nullptr; }
+    any visitVoidFuncCall(tlangParser::VoidFuncCallContext *ctx) override { return nullptr; }
+    any visitValueFuncCall(tlangParser::ValueFuncCallContext *ctx) override { return nullptr; }
+    any visitFunction_list(tlangParser::Function_listContext *ctx) override { return nullptr; }
+    any visitFunction_declaration(tlangParser::Function_declarationContext *ctx) override { return nullptr; }
 
     // Default implementations for rules not used:
     any visitMoveOp(tlangParser::MoveOpContext*) override { return nullptr; }

@@ -8,10 +8,10 @@ ifeq ($(shell uname), Darwin)
     ANTLR_INCLUDE ?= /opt/homebrew/opt/antlr4-cpp-runtime/include
     ANTLR_LIB ?= /opt/homebrew/opt/antlr4-cpp-runtime/lib
 else
-    LLVM_INCLUDE ?= /usr/include/llvm-12
-    LLVM_LIB ?= /usr/lib/llvm-12
-    ANTLR_INCLUDE ?= /usr/local/include
-    ANTLR_LIB ?= /usr/local/lib
+    LLVM_INCLUDE ?= /usr/include/llvm
+    LLVM_LIB ?= /usr/lib64
+    ANTLR_INCLUDE ?= /usr/include/antlr4-runtime
+    ANTLR_LIB ?= /usr/lib64
 endif
 
 CXXFLAGS = -std=c++17 -I$(LLVM_INCLUDE) -I$(ANTLR_INCLUDE) -I./turtparse -I./ChironAST
@@ -41,3 +41,6 @@ $(TARGET): $(OBJS)
 # Clean up generated files
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+cleanobj:
+	rm -f $(OBJS)

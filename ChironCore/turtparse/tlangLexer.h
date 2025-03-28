@@ -14,10 +14,11 @@ public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
     T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
-    T__14 = 15, T__15 = 16, T__16 = 17, PLUS = 18, MINUS = 19, MUL = 20, 
-    DIV = 21, PENCOND = 22, LT = 23, GT = 24, EQ = 25, NEQ = 26, LTE = 27, 
-    GTE = 28, AND = 29, OR = 30, NOT = 31, NUM = 32, VAR = 33, NAME = 34, 
-    Whitespace = 35
+    T__14 = 15, T__15 = 16, T__16 = 17, T__17 = 18, T__18 = 19, T__19 = 20, 
+    T__20 = 21, T__21 = 22, T__22 = 23, T__23 = 24, T__24 = 25, PLUS = 26, 
+    MINUS = 27, MUL = 28, DIV = 29, PENCOND = 30, LT = 31, GT = 32, EQ = 33, 
+    NEQ = 34, LTE = 35, GTE = 36, AND = 37, OR = 38, NOT = 39, NUM = 40, 
+    VAR = 41, NAME = 42, Whitespace = 43
   };
 
   explicit tlangLexer(antlr4::CharStream *input);

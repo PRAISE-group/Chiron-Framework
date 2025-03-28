@@ -27,6 +27,46 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitFunction_list(tlangParser::Function_listContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFunction_declaration(tlangParser::Function_declarationContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitVoidFunction(tlangParser::VoidFunctionContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitValueFunction(tlangParser::ValueFunctionContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitVoidReturn(tlangParser::VoidReturnContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitValueReturn(tlangParser::ValueReturnContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitParametersDeclaration(tlangParser::ParametersDeclarationContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitParameterCall(tlangParser::ParameterCallContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitVoidFuncCall(tlangParser::VoidFuncCallContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitValueFuncCall(tlangParser::ValueFuncCallContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitInstruction(tlangParser::InstructionContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -76,6 +116,10 @@ public:
   }
 
   virtual std::any visitValueExpr(tlangParser::ValueExprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFuncExpr(tlangParser::FuncExprContext *ctx) override {
     return visitChildren(ctx);
   }
 

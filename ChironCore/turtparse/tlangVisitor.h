@@ -25,6 +25,26 @@ public:
 
     virtual std::any visitStrict_ilist(tlangParser::Strict_ilistContext *context) = 0;
 
+    virtual std::any visitFunction_list(tlangParser::Function_listContext *context) = 0;
+
+    virtual std::any visitFunction_declaration(tlangParser::Function_declarationContext *context) = 0;
+
+    virtual std::any visitVoidFunction(tlangParser::VoidFunctionContext *context) = 0;
+
+    virtual std::any visitValueFunction(tlangParser::ValueFunctionContext *context) = 0;
+
+    virtual std::any visitVoidReturn(tlangParser::VoidReturnContext *context) = 0;
+
+    virtual std::any visitValueReturn(tlangParser::ValueReturnContext *context) = 0;
+
+    virtual std::any visitParametersDeclaration(tlangParser::ParametersDeclarationContext *context) = 0;
+
+    virtual std::any visitParameterCall(tlangParser::ParameterCallContext *context) = 0;
+
+    virtual std::any visitVoidFuncCall(tlangParser::VoidFuncCallContext *context) = 0;
+
+    virtual std::any visitValueFuncCall(tlangParser::ValueFuncCallContext *context) = 0;
+
     virtual std::any visitInstruction(tlangParser::InstructionContext *context) = 0;
 
     virtual std::any visitConditional(tlangParser::ConditionalContext *context) = 0;
@@ -50,6 +70,8 @@ public:
     virtual std::any visitUnaryExpr(tlangParser::UnaryExprContext *context) = 0;
 
     virtual std::any visitValueExpr(tlangParser::ValueExprContext *context) = 0;
+
+    virtual std::any visitFuncExpr(tlangParser::FuncExprContext *context) = 0;
 
     virtual std::any visitAddExpr(tlangParser::AddExprContext *context) = 0;
 
