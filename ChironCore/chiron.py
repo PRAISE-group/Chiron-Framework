@@ -27,6 +27,7 @@ import submissionAI as AISub
 from sbflSubmission import computeRanks
 # from IrToSmtlib import IrToSmtlib
 from CFGtoSmtlib import CFGtoSmtlib
+from LoopToSmtlib import LoopToSmtlib
 from ConstraintToSmtlib import ConstraintToSmtlib
 from CheckOutput import CheckOutput
 import csv
@@ -410,24 +411,24 @@ if __name__ == "__main__":
         constraint_filepath, output_filepath = args.smtlib
         constraint_statement = ConstraintToSmtlib(constraint_filepath)
         cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
-        smtlib_code = CFGtoSmtlib(cfg)
-        param_code = []
-        if args.params:
-            for var, val in args.params.items(): 
-                param_code.append(f"(assert (= {var.lstrip(':')} {val}))")
-        smtlib_code = param_code + smtlib_code
-        vars = CheckOutput(constraint_statement, smtlib_code)
-        smtlib_code.append(constraint_statement)
-        decl_code = []
-        for var in vars:
-            decl_code.append(f"(declare-fun {var} () Int)")
-        end_part = "(check-sat)\n(get-model)"
-        smtlib_code = decl_code + smtlib_code
-        smtlib_code.append(end_part)
-        with open(output_filepath, "w") as output_file:
-            for code in smtlib_code:
-                output_file.write(str(code) + "\n")
-        print(f"SMT-LIB code written to: {output_filepath}")
+        smtlib_code = LoopToSmtlib(cfg)
+        # param_code = []
+        # if args.params:
+        #     for var, val in args.params.items(): 
+        #         param_code.append(f"(assert (= {var.lstrip(':')} {val}))")
+        # smtlib_code = param_code + smtlib_code
+        # vars = CheckOutput(constraint_statement, smtlib_code)
+        # smtlib_code.append(constraint_statement)
+        # decl_code = []
+        # for var in vars:
+        #     decl_code.append(f"(declare-fun {var} () Int)")
+        # end_part = "(check-sat)\n(get-model)"
+        # smtlib_code = decl_code + smtlib_code
+        # smtlib_code.append(end_part)
+        # with open(output_filepath, "w") as output_file:
+        #     for code in smtlib_code:
+        #         output_file.write(str(code) + "\n")
+        # print(f"SMT-LIB code written to: {output_filepath}")
 
 
         

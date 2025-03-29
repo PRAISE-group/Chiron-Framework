@@ -6,3 +6,6 @@
 - Z3 Playground : https://jfmc.github.io/z3-play/
 - re :  https://docs.python.org/3/library/re.html
 - Python : https://www.python.org/
+- PyGraphviz :   sudo apt-get update
+                 sudo apt-get install graphviz graphviz-dev
+                 
