@@ -302,11 +302,11 @@ class TACGenerator:
                         self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleY"), ChironTAC.Var(":turtleY"), ChironTAC.Var(":__delta_y"), "-"), 1))
                 elif (stmt.direction == "left"):
                     self.line += 2
-                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), movevar, "-"), 1))
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), movevar, "+"), 1))
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Num(360), "%"), 1))
                 elif (stmt.direction == "right"):
                     self.line += 2
-                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), movevar, "+"), 1))
+                    self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), movevar, "-"), 1))
                     self.tac.append((ChironTAC.AssignmentCommand(ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Var(":turtleThetaDeg"), ChironTAC.Num(360), "%"), 1))
                 else:
                     raise NotImplementedError("Unknown move direction: %s, %s." % (type(stmt), stmt))

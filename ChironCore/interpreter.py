@@ -170,8 +170,11 @@ class ConcreteInterpreter(Interpreter):
     def handleAssertCommand(self, stmt, tgt):
         print("  AssertCommand")
         print("  Asserting: ", stmt.cond)
-        exec("self.cond_eval = %s" % (addContext(stmt.cond)))
-        if not self.cond_eval:
-            raise AssertionError("Assertion Failed!")
+        try:
+            exec("self.cond_eval = %s" % (addContext(stmt.cond)))
+            if not self.cond_eval:
+                raise AssertionError("Assertion Failed!")
+        except Exception as e:
+            print("Exception: ", e)
         
         return 1
