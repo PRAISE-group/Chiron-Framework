@@ -28,8 +28,14 @@ class ConditionCommand(Instruction):
     def __str__(self):
         return self.cond.__str__()
 
-# Not Implemented Yet.
 class AssertCommand(Instruction):
+    def __init__(self, condition):
+        self.cond = condition
+
+    def __str__(self):
+        return self.cond.__str__()
+
+class AssumeCommand(Instruction):
     def __init__(self, condition):
         self.cond = condition
 

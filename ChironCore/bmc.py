@@ -11,6 +11,7 @@ class BMC:
         self.solver_without_cond = z3.Solver()
         self.angle_conditions = z3.BoolVal(True)
         self.assert_conditions = z3.BoolVal(True)
+        self.assume_conditions = z3.BoolVal(True)
         self.cfg = cfg
 
         self.bbConditions = {} # bbConditions[bb] = condition for bb
@@ -197,6 +198,16 @@ class BMC:
                         cond = z3.Bool(stmt.cond.name)
                     self.assert_conditions = z3.And(self.assert_conditions, cond)
 
+                elif isinstance(stmt, ChironSSA.AssumeCommand):
+                    cond = None
+                    if isinstance(stmt.cond, ChironSSA.BoolTrue):
+                        cond = z3.BoolVal(True)
+                    elif isinstance(stmt.cond, ChironSSA.BoolFalse):
+                        cond = z3.BoolVal(False)
+                    elif isinstance(stmt.cond, ChironSSA.Var):
+                        cond = z3.Bool(stmt.cond.name)
+                    self.assume_conditions = z3.And(self.assume_conditions, cond)
+
                 elif isinstance(stmt, ChironSSA.CosCommand): # Only for 0, 90, 180, 270 degree
                     rvar = z3.Int(stmt.rvar.name)
                     rhs_expr = z3.If(rvar == 0, 1, z3.If(rvar == 90, 0, z3.If(rvar == 180, -1, 0)))
@@ -231,10 +242,12 @@ class BMC:
         self.solver_without_cond.add(self.solver.assertions())
         self.assert_conditions = z3.Tactic('ctx-simplify').apply(self.assert_conditions).as_expr()
         self.angle_conditions = z3.Tactic('ctx-simplify').apply(self.angle_conditions).as_expr()
+        self.assume_conditions = z3.Tactic('ctx-simplify').apply(self.assume_conditions).as_expr()
 
     def solve(self, inputVars):
         self.solver.add(z3.Not(self.assert_conditions))
         self.solver.add(self.angle_conditions)
+        self.solver.add(self.assume_conditions)
 
         # print("The clauses are:")
         # print(self.solver, end="\n\n")

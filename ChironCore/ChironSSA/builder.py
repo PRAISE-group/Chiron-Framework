@@ -63,6 +63,10 @@ class SSABuilder:
                 if isinstance(instr.cond, ChironSSA.Var):
                     instr.cond = ChironSSA.Var(instr.cond.name + "$" + str(self.stack[instr.cond.name][-1]))
 
+            elif isinstance(instr, ChironSSA.AssumeCommand):
+                if isinstance(instr.cond, ChironSSA.Var):
+                    instr.cond = ChironSSA.Var(instr.cond.name + "$" + str(self.stack[instr.cond.name][-1]))
+
             elif isinstance(instr, ChironSSA.ConditionCommand):
                 if isinstance(instr.cond, ChironSSA.Var):
                     instr.cond = ChironSSA.Var(instr.cond.name + "$" + str(self.stack[instr.cond.name][-1]))
@@ -161,6 +165,10 @@ class SSABuilder:
                     if isinstance(instr.cond, ChironSSA.Var) and instr.cond.name not in varkill:
                         self.globals.add(instr.cond.name)
 
+                elif isinstance(instr, ChironSSA.AssumeCommand):
+                    if isinstance(instr.cond, ChironSSA.Var) and instr.cond.name not in varkill:
+                        self.globals.add(instr.cond.name)
+
                 elif isinstance(instr, ChironSSA.ConditionCommand):
                     if isinstance(instr.cond, ChironSSA.Var) and instr.cond.name not in varkill:
                         self.globals.add(instr.cond.name)
@@ -189,6 +197,10 @@ class SSABuilder:
             elif isinstance(instr, ChironTAC.AssertCommand):
                 cond = ChironSSA.Var(instr.cond.name) if isinstance(instr.cond, ChironTAC.Var) else ChironSSA.BoolTrue() if isinstance(instr.cond, ChironTAC.BoolTrue) else ChironSSA.BoolFalse()
                 ir[ir.index((instr, tgt))] = (ChironSSA.AssertCommand(cond), tgt)
+
+            elif isinstance(instr, ChironTAC.AssumeCommand):
+                cond = ChironSSA.Var(instr.cond.name) if isinstance(instr.cond, ChironTAC.Var) else ChironSSA.BoolTrue() if isinstance(instr.cond, ChironTAC.BoolTrue) else ChironSSA.BoolFalse()
+                ir[ir.index((instr, tgt))] = (ChironSSA.AssumeCommand(cond), tgt)
 
             elif isinstance(instr, ChironTAC.ConditionCommand):
                 cond = ChironSSA.Var(instr.cond.name) if isinstance(instr.cond, ChironTAC.Var) else ChironSSA.BoolTrue() if isinstance(instr.cond, ChironTAC.BoolTrue) else ChironSSA.BoolFalse()

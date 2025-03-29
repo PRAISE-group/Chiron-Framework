@@ -13,6 +13,7 @@ class TACGenerator:
         self.tempCount = 0
         self.branchCount = 0
         self.assertCount = 0
+        self.assumeCount = 0
         self.moveCount = 0
         self.gotoCount = 0
         self.ast_to_tac_line = {}
@@ -276,6 +277,13 @@ class TACGenerator:
                 self.parseExpresssion(stmt.cond, assertvar)
                 self.line += 1
                 self.tac.append((ChironTAC.AssertCommand(assertvar), 1))
+
+            elif isinstance(stmt, ChironAST.AssumeCommand):
+                assumevar = ChironTAC.Var(f":__assume_{self.assumeCount}")
+                self.assumeCount += 1
+                self.parseExpresssion(stmt.cond, assumevar)
+                self.line += 1
+                self.tac.append((ChironTAC.AssumeCommand(assumevar), 1))
             
             elif isinstance(stmt, ChironAST.MoveCommand):
                 movevar = None
@@ -403,6 +411,9 @@ class TACGenerator:
                 if isinstance(stmt.cond, ChironTAC.Var) and stmt.cond.__str__() not in boundVars:
                     self.freeVars.add(stmt.cond.__str__())
             elif isinstance(stmt, ChironTAC.AssertCommand):
+                if isinstance(stmt.cond, ChironTAC.Var) and stmt.cond.__str__() not in boundVars:
+                    self.freeVars.add(stmt.cond.__str__())
+            elif isinstance(stmt, ChironTAC.AssumeCommand):
                 if isinstance(stmt.cond, ChironTAC.Var) and stmt.cond.__str__() not in boundVars:
                     self.freeVars.add(stmt.cond.__str__())
             elif isinstance(stmt, ChironTAC.MoveCommand):

@@ -84,6 +84,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#assumeCommand.
+    def visitAssumeCommand(self, ctx:tlangParser.AssumeCommandContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#unaryExpr.
     def visitUnaryExpr(self, ctx:tlangParser.UnaryExprContext):
         return self.visitChildren(ctx)

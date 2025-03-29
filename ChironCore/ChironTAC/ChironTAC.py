@@ -45,6 +45,13 @@ class AssertCommand(Instruction):
 
     def __str__(self):
         return "ASSERT: " + self.cond.__str__()
+
+class AssumeCommand(Instruction):
+    def __init__(self, condition):
+        self.cond = condition
+
+    def __str__(self):
+        return "ASSUME: " + self.cond.__str__()
     
 class MoveCommand(Instruction):
     def __init__(self, motion, var):

@@ -416,6 +416,22 @@ if __name__ == "__main__":
         
         unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
 
+        constraint_count = int(input("Enter the number of constraints in the program: "))
+        if constraint_count < 0:
+            print("Invalid number of constraints. Exiting...")
+            exit(1)
+
+        if constraint_count != 0:
+            constraints = []
+            for i in range(constraint_count):
+                constraints.append(input(f"Enter constraint {i+1}: "))
+
+            constraint_stmt = constraints[0]
+            for i in range(1, constraint_count):
+                constraint_stmt = constraint_stmt + " && " + constraints[i]
+
+            unrolled_code = unrolled_code + '\n' + "assume " + constraint_stmt
+
         cond_count = int(input("Enter the number of conditions in the program: "))
 
         if cond_count < 0:

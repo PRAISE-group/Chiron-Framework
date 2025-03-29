@@ -100,3 +100,6 @@ class UnrollLoops(tlangVisitor):
     def visitAssertionCommand(self, ctx:tlangParser.AssertionCommandContext):
         return ctx.getText()
 
+    def visitAssumeCommand(self, ctx:tlangParser.AssumeCommandContext):
+        return ctx.getText()
+

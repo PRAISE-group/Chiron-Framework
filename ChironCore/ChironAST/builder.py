@@ -183,3 +183,7 @@ class astGenPass(tlangVisitor):
 
     def visitAssertionCommand(self, ctx:tlangParser.AssertionCommandContext):
         return [(ChironAST.AssertCommand(self.visit(ctx.condition())), 1)]
+
+    def visitAssumeCommand(self, ctx:tlangParser.AssumeCommandContext):
+        return [(ChironAST.AssumeCommand(self.visit(ctx.condition())), 1)]
+

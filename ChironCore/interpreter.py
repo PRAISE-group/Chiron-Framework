@@ -109,6 +109,8 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleNoOpCommand(stmt, tgt)
         elif isinstance(stmt, ChironAST.AssertCommand):
             ntgt = self.handleAssertCommand(stmt, tgt)
+        elif isinstance(stmt, ChironAST.AssumeCommand):
+            ntgt = self.handleAssumeCommand(stmt, tgt)
         else:
             raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
 
@@ -178,3 +180,16 @@ class ConcreteInterpreter(Interpreter):
             print("Exception: ", e)
         
         return 1
+
+    def handleAssumeCommand(self, stmt, tgt):
+        print("  AssumeCommand")
+        print("  Assuming: ", stmt.cond)
+        try:
+            exec("self.cond_eval = %s" % (addContext(stmt.cond)))
+            if not self.cond_eval:
+                raise AssertionError("Assumption Failed!")
+        except Exception as e:
+            print("Exception: ", e)
+        
+        return 1
+

@@ -18,6 +18,7 @@ instruction : assignment
 	    | gotoCommand
 	    | pauseCommand
 		| assertionCommand
+        | assumeCommand
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -41,6 +42,8 @@ penCommand : 'penup' | 'pendown' ;
 pauseCommand : 'pause' ;
 
 assertionCommand : 'assert' condition ;
+
+assumeCommand : 'assume' condition ;
 
 expression : 
              unaryArithOp expression               #unaryExpr
