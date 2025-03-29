@@ -5,8 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "llvm/IR/Value.h"
-#include "llvm/Support/raw_ostream.h"
+#include <llvm/IR/Value.h>
+#include <llvm/IR/Function.h>
+#include <llvm/Support/raw_ostream.h>
 
 class InstrAST {
 public:
@@ -148,4 +149,22 @@ public:
         repCounter(repCounter), varname(varname), body(std::move(body)) {}
 
     llvm::Value* codegen() override;
+};
+
+class FunctionAST : public InstrAST {
+    std::string name;
+    std::vector<std::string> args;
+    std::vector<std::unique_ptr<InstrAST>> body;
+    std::unique_ptr<ExpressionAST> returnValue;
+    bool isVoid;
+
+public:
+    FunctionAST(const std::string& name, std::vector<std::string> args, std::vector<std::unique_ptr<InstrAST>> body, std::unique_ptr<ExpressionAST> returnValue, bool isVoid) :
+        name(name), args(std::move(args)), body(std::move(body)), returnValue(std::move(returnValue)), isVoid(isVoid) {}
+
+    llvm::Value* codegen() override;
+
+    const std::string& getName() const {
+        return name;
+    }
 };

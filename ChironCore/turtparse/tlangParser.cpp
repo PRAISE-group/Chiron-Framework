@@ -114,7 +114,7 @@ void tlangParserInitialize() {
   	93,5,2,0,0,93,94,3,2,1,0,94,95,3,14,7,0,95,96,5,3,0,0,96,11,1,0,0,0,97,
   	98,5,4,0,0,98,99,5,42,0,0,99,100,3,18,9,0,100,101,5,2,0,0,101,102,3,2,
   	1,0,102,103,3,16,8,0,103,104,5,3,0,0,104,13,1,0,0,0,105,106,5,5,0,0,106,
-  	15,1,0,0,0,107,108,5,6,0,0,108,109,3,62,31,0,109,17,1,0,0,0,110,111,5,
+  	15,1,0,0,0,107,108,5,6,0,0,108,109,3,48,24,0,109,17,1,0,0,0,110,111,5,
   	7,0,0,111,123,5,8,0,0,112,113,5,7,0,0,113,118,5,41,0,0,114,115,5,9,0,
   	0,115,117,5,41,0,0,116,114,1,0,0,0,117,120,1,0,0,0,118,116,1,0,0,0,118,
   	119,1,0,0,0,119,121,1,0,0,0,120,118,1,0,0,0,121,123,5,8,0,0,122,110,1,
@@ -723,8 +723,8 @@ tlangParser::ValueReturnContext::ValueReturnContext(ParserRuleContext *parent, s
   : ParserRuleContext(parent, invokingState) {
 }
 
-tlangParser::ValueContext* tlangParser::ValueReturnContext::value() {
-  return getRuleContext<tlangParser::ValueContext>(0);
+tlangParser::ExpressionContext* tlangParser::ValueReturnContext::expression() {
+  return getRuleContext<tlangParser::ExpressionContext>(0);
 }
 
 
@@ -756,7 +756,7 @@ tlangParser::ValueReturnContext* tlangParser::valueReturn() {
     setState(107);
     match(tlangParser::T__5);
     setState(108);
-    value();
+    expression(0);
    
   }
   catch (RecognitionException &e) {

@@ -23,7 +23,7 @@ valueFunction : 'valuefunc' NAME parametersDeclaration '{' instruction_list valu
 
 voidReturn: 'voidreturn' ;
 
-valueReturn: 'valuereturn' value ;
+valueReturn: 'valuereturn' expression ;
 
 parametersDeclaration: '(' ')'
         | '(' VAR (',' VAR)* ')'
