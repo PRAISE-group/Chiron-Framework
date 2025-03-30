@@ -397,6 +397,7 @@ void ConverIRtoObjectFile(){
     outFile.close();
 
     std::string llvmLinkCommand = "llvm-link output.ll ./CTurtle/CustomCTurtle.ll -S -o combined.ll";
+    // std::string llvmLinkCommand = "llvm-link output.ll ./CTurtle/CustomCTurtle2.ll -S -o combined.ll";
     int result = system(llvmLinkCommand.c_str());
     if (result != 0) {
         llvm::errs() << "Error running llvm-link\n";
@@ -404,6 +405,7 @@ void ConverIRtoObjectFile(){
     }
 
     std::string llcCommand = "llc -filetype=obj -o combined.o combined.ll";
+    // std::string llcCommand = "llc -filetype=obj -relocation-model=pic -o combined.o combined.ll";
     result = system(llcCommand.c_str());
     if (result != 0) {
         llvm::errs() << "Error running llc\n";

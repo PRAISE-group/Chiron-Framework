@@ -12,11 +12,15 @@ else
     LLVM_LIB ?= /usr/lib64
     ANTLR_INCLUDE ?= /usr/include/antlr4-runtime
     ANTLR_LIB ?= /usr/lib64
+    # LLVM_INCLUDE ?= /usr/include/llvm-18
+    # LLVM_LIB ?= /usr/lib/llvm-18
+    # ANTLR_INCLUDE ?= /usr/local/include/antlr4-runtime
+    # ANTLR_LIB ?= /usr/local/lib
 endif
 
 CXXFLAGS = -std=c++17 -I$(LLVM_INCLUDE) -I$(ANTLR_INCLUDE) -I./turtparse -I./ChironAST
-
 LDFLAGS = -L$(LLVM_LIB) -L$(ANTLR_LIB) -lLLVM -lantlr4-runtime
+# LDFLAGS = -L$(LLVM_LIB) -L$(ANTLR_LIB) -lLLVM-18 -lantlr4-runtime
 SRCS = main.cpp \
        turtparse/tlangLexer.cpp \
        turtparse/tlangParser.cpp \
