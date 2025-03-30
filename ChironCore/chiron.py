@@ -409,22 +409,29 @@ if __name__ == "__main__":
         print("DONE..")
     if args.smtlib:
         constraint_filepath, output_filepath = args.smtlib
-        constraint_statement = ConstraintToSmtlib(constraint_filepath)
+        pre_condition, post_condition, invariant = ConstraintToSmtlib(constraint_filepath)
         cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
-        smtlib_code = LoopToSmtlib(cfg)
-        # param_code = []
-        # if args.params:
-        #     for var, val in args.params.items(): 
-        #         param_code.append(f"(assert (= {var.lstrip(':')} {val}))")
-        # smtlib_code = param_code + smtlib_code
-        # vars = CheckOutput(constraint_statement, smtlib_code)
-        # smtlib_code.append(constraint_statement)
-        # decl_code = []
-        # for var in vars:
-        #     decl_code.append(f"(declare-fun {var} () Int)")
-        # end_part = "(check-sat)\n(get-model)"
-        # smtlib_code = decl_code + smtlib_code
-        # smtlib_code.append(end_part)
+        if invariant is None:
+            smtlib_code = CFGtoSmtlib(cfg)
+            param_code = []
+            if args.params:
+                for var, val in args.params.items(): 
+                    param_code.append(f"(assert (= {var.lstrip(':')} {val}))")
+            smtlib_code = param_code + smtlib_code
+            vars = CheckOutput(pre_condition, smtlib_code)
+            smtlib_code.append(pre_condition)
+            decl_code = []
+            for var in vars:
+                decl_code.append(f"(declare-fun {var} () Int)")
+            end_part = "(check-sat)\n(get-model)"
+            smtlib_code = decl_code + smtlib_code
+            smtlib_code.append(end_part)
+        else:
+            smtlib_code = LoopToSmtlib(cfg, invariant)
+            print(invariant)
+        
+        
+       
         # with open(output_filepath, "w") as output_file:
         #     for code in smtlib_code:
         #         output_file.write(str(code) + "\n")

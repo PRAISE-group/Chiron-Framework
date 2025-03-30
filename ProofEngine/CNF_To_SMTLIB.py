@@ -37,11 +37,10 @@ def CNF_To_SMTLIB(cnf, literal_map):
         else:
             return f"(and {exprs[0]} {nest_and(exprs[1:])})"
     
-    def wrap_with_assert(s):
-        return f"(assert {s})"
+    
     
     expression = nest_and(clauses)
-    expression = wrap_with_assert(expression)
+    # expression = wrap_with_assert(expression)
     
     return expression
 

@@ -6,7 +6,6 @@ def extract_variables(expression: str):
     
     keywords = {"ite", "and", "or", "not", "assert", "div"}
     variables = {token for token in tokens if token not in keywords and not token.isdigit()}
-    
     return sorted(variables)  # Sorted for consistency
 
 def CheckOutput(constraint_statement, smtlib_code):
