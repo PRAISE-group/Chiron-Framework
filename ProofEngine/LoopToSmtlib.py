@@ -319,7 +319,27 @@ def rename_vars(statements, vars_to_modify):
 
     return updated_statements
 
-def LoopToSmtlib(cfg, invariant):
+def replace_smtlib_variables(smtlib_stmt: str, variables: list, s: str) -> str:
+    """
+    Replaces each instance of the given variables in the SMT-LIB statement with (variable+s).
+    
+    :param smtlib_stmt: The input SMT-LIB statement as a string.
+    :param variables: A list of variable names to be replaced.
+    :param s: The string to append to each variable.
+    :return: The modified SMT-LIB statement.
+    """
+    
+    def replacement(match):
+        var_name = match.group(0)
+        return f'{var_name}{s}'
+    
+    # Use regex word boundaries to ensure whole variable replacement
+    pattern = r'\b(' + '|'.join(map(re.escape, variables)) + r')\b'
+    modified_stmt = re.sub(pattern, replacement, smtlib_stmt)
+    
+    return modified_stmt
+
+def LoopToSmtlib(cfg):
     back_edges = find_back_edges(cfg)
     if len(back_edges) == 0:
         return None
@@ -340,11 +360,8 @@ def LoopToSmtlib(cfg, invariant):
     # loop_body = loop_body_head + loop_body_without_head
     after_loop = process_if_else_blocks(after_loop, cfg)
 
-    # print(loop_body)
     vars = classify_vars(loop_body)[1]
-    # print(vars)
     loop_body = rename_vars(loop_body, vars)
-    # print(loop_body)
     
     # Convert to SMT-LIB in order
     def sectionTosmtlib(section):
@@ -363,36 +380,33 @@ def LoopToSmtlib(cfg, invariant):
             else:
                 print("Invalid Statement: Only assignment and if-else blocks are allowed")
                 return
-        code = f"(and "
+        # code = f"(and "
+        code = ""
         for entry in smtlib_code:
             code += entry + " "
         code = code[:-1]
-        code += ")"
+        # code += ")"
         return code
     
     loop_init = before_loop[-1]
-    # print(loop_init)
     loop_init = rename_vars([loop_init], vars)[0]
-    # print(loop_init)
     loop_var = re.match(r":([\w_]+)", loop_init[1]).group(1)
     loop_count = re.match(r".*=\s*(.+)", loop_init[1]).group(1)
     loop_count = Infix_To_Prefix(loop_count, True)
-    loop_condition = f"(and (> {loop_var} 0) (<= {loop_var} {loop_count}))"
+    loop_condition = f"(> {loop_var} 0) (<= {loop_var} {loop_count})"
     
     before_loop = before_loop[:-1]
     pre_condition = sectionTosmtlib(before_loop)
     post_condition = sectionTosmtlib(after_loop)
     loop_body_code = sectionTosmtlib(loop_body)
-    
-    
-    
+
+    return pre_condition, loop_body_code, post_condition, loop_condition, vars
     # print(loop_var)
     # print(pre_condition)
     # print(post_condition)
     # print(loop_condition)
     # print(loop_body_code)
     
-    return [pre_condition, loop_body_code, post_condition, loop_condition]
 
 
     

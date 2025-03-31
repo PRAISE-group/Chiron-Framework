@@ -1,29 +1,28 @@
-import z3
+(not (and  ))
 
-# Create a solver instance
-s = z3.Solver()
+=> 
+(and  (= s_in 0) (and (>= n1 0) (and (< n_in 100000) (>= k 5)))) 
+(= (- (+ s_in n_in) (* (div (+ s_in n_in) 3) 3)) 0)
 
-# Declare integer variables
-a = z3.Int('a')  # First term
-d = z3.Int('d')  # Common difference
-n = z3.Int('n')  # Term index (should be >= 1)
-T_n = z3.Int('T_n')  # The nth term
+(=> 
+ and (= x (- n_in (* (div n_in 10) 10))) (= s1 (+ s_in x)) (= n1 (div n_in 10)) (= n_out n1) (= s_out s1) (> __rep_counter_1 0) (<= __rep_counter_1 k) (= (- (+ s_in n_in) (* (div (+ s_in n_in) 3) 3)) 0)
+ (= (- (+ s_out n_out) (* (div (+ s_out n_out) 3) 3)) 0))
 
-# Declare a function f(n) representing the nth term of AP
-f = z3.Function('f', z3.IntSort(), z3.IntSort())
+(=> 
+ (and (= x (- n_in (* (div n_in 10) 10))) (= s1 (+ s_in x)) (= n1 (div n_in 10)) (= n_out n1) (= s_out s1) (not (and (> __rep_counter_1 0) (<= __rep_counter_1 k) true))) 
+ (and (= ans (ite (= (- s_out (* (div s_out 3) 3)) 0) 1 0)) (= (- n_out (* (div n_out 3) 3)) 0))) 
 
-# Define the nth term function using universal quantification
-s.add(z3.ForAll(n, z3.Implies(n >= 1, f(n) == a + (n - 1) * d)))
 
-# Assert that the computed nth term is correct
-s.add(T_n == f(n))
-
-# Check satisfiability
-print(s.check())
-
-# Get and print the model
-print(s.model())
-
+n1 7719
+k 0
+s_out 0
+s1 0
+__rep_counter_1 1
+s_in 0
+n_in 77190
+x 0
+n_out 7719
+ans 2
 
 
 

@@ -28,8 +28,10 @@ from sbflSubmission import computeRanks
 # from IrToSmtlib import IrToSmtlib
 from CFGtoSmtlib import CFGtoSmtlib
 from LoopToSmtlib import LoopToSmtlib
+from LoopToSmtlib import replace_smtlib_variables
 from ConstraintToSmtlib import ConstraintToSmtlib
 from CheckOutput import CheckOutput
+from CheckOutput import extract_variables
 import csv
 
 def cleanup():
@@ -409,33 +411,51 @@ if __name__ == "__main__":
         print("DONE..")
     if args.smtlib:
         constraint_filepath, output_filepath = args.smtlib
-        pre_condition, post_condition, invariant = ConstraintToSmtlib(constraint_filepath)
+        pre_condition_cons, post_condition_cons, invariant = ConstraintToSmtlib(constraint_filepath)
         cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+
+        param_code = ""
+        if args.params:
+            for var, val in args.params.items(): 
+                param_code += f"(= {var.lstrip(':')} {val})"
+
         if invariant is None:
+            param_code = f"(assert (and {param_code} true))\n"
             smtlib_code = CFGtoSmtlib(cfg)
-            param_code = []
-            if args.params:
-                for var, val in args.params.items(): 
-                    param_code.append(f"(assert (= {var.lstrip(':')} {val}))")
             smtlib_code = param_code + smtlib_code
-            vars = CheckOutput(pre_condition, smtlib_code)
-            smtlib_code.append(pre_condition)
-            decl_code = []
-            for var in vars:
-                decl_code.append(f"(declare-fun {var} () Int)")
-            end_part = "(check-sat)\n(get-model)"
-            smtlib_code = decl_code + smtlib_code
-            smtlib_code.append(end_part)
         else:
-            smtlib_code = LoopToSmtlib(cfg, invariant)
-            print(invariant)
-        
-        
+            pre_condition, loop_body_code, post_condition, loop_condition, vars = LoopToSmtlib(cfg)
+            pre_condition = f"(and {param_code} {pre_condition} {pre_condition_cons})"
+            post_condition = f"(and {post_condition} {post_condition_cons})"
+            vars = [var[1:] if var.startswith(":") else var for var in vars]
+            pre_condition = replace_smtlib_variables(pre_condition, vars, "_in")
+            post_condition = replace_smtlib_variables(post_condition, vars, "_out")
+            invariant_in = replace_smtlib_variables(invariant, vars, "_in")
+            invariant_out = replace_smtlib_variables(invariant, vars, "_out")
+            smtlib_code = ""
+            smtlib_code += f"(=> {pre_condition} {invariant_in}) "
+            smtlib_code += f"(=> (and {loop_body_code} {loop_condition} {invariant_in}) {invariant_out}) "
+            smtlib_code += f"(=> (and {loop_body_code} (not (and {loop_condition} true))) {post_condition}) "
+            smtlib_code = f"(assert (not (and {smtlib_code})))"
+            print(smtlib_code)
+            # print(vars)
+            # print(invariant_in)
+            # print(invariant_out)
+            # print(pre_condition)
+            # print(post_condition)
+            # print(invariant)
+            # print(loop_condition)
+            # print(loop_body_code)
+
        
-        # with open(output_filepath, "w") as output_file:
-        #     for code in smtlib_code:
-        #         output_file.write(str(code) + "\n")
-        # print(f"SMT-LIB code written to: {output_filepath}")
-
-
-        
+        vars = extract_variables(smtlib_code)
+        decl_code = ""
+        for var in vars:
+            decl_code += f"(declare-fun {var} () Int)\n"
+        end_part = "(check-sat)\n(get-model)"
+        smtlib_code = decl_code + smtlib_code + "\n"
+        smtlib_code += end_part
+        with open(output_filepath, "w") as output_file:
+            for code in smtlib_code:
+                output_file.write(str(code))
+        print(f"SMT-LIB code written to: {output_filepath}")

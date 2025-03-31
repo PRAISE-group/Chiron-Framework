@@ -1,5 +1,5 @@
 :s = 0
-repeat 10[
+repeat :k[
     :x = :n - ((:n/10)*10)
     :s1 = :s + :x
     :n1 = :n/10

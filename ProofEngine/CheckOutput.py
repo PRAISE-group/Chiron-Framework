@@ -4,7 +4,7 @@ def extract_variables(expression: str):
     # Match variable-like words that are not numbers and are not part of function calls
     tokens = re.findall(r'[a-zA-Z_]\w*', expression)
     
-    keywords = {"ite", "and", "or", "not", "assert", "div"}
+    keywords = {"ite", "and", "or", "not", "assert", "div", "true", "false"}
     variables = {token for token in tokens if token not in keywords and not token.isdigit()}
     return sorted(variables)  # Sorted for consistency
 
