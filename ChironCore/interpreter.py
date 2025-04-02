@@ -1,4 +1,4 @@
-from unittest import result
+
 from ChironAST import ChironAST
 from ChironHooks import Chironhooks
 import turtle
@@ -83,14 +83,12 @@ class ConcreteInterpreter(Interpreter):
     def __init__(self, irHandler, params):
         super().__init__(irHandler, params)
         self.prg = ProgramContext()
-        self.hashMap = {}
         # Hooks Object:
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
 
     def interpret(self):
-        
         print("Program counter : ", self.pc)
         stmt, tgt = self.ir[self.pc]
         print(stmt, stmt.__class__.__name__, tgt)
@@ -109,14 +107,8 @@ class ConcreteInterpreter(Interpreter):
             ntgt = self.handleGotoCommand(stmt, tgt)
         elif isinstance(stmt, ChironAST.NoOpCommand):
             ntgt = self.handleNoOpCommand(stmt, tgt)
-        elif isinstance(stmt, ChironAST.PrintCommand):
-            ntgt = self.handlePrintCommand(stmt, tgt)
-        elif isinstance(stmt, ChironAST.IncrementCommand):
-            ntgt = self.handleIncrementCommand(stmt, tgt)
-        elif isinstance(stmt, ChironAST.DumpCommand):
-            ntgt = self.handleDumpCommand(stmt, tgt)
         else:
-            raise NotImplementedError("Unknown instruction: %s, %s." % (type(stmt), stmt))
+            raise NotImplementedError("Unknown instruction: %s, %s."%(type(stmt), stmt))
 
         # TODO: handle statement
         self.pc += ntgt
@@ -171,31 +163,4 @@ class ConcreteInterpreter(Interpreter):
         xcor = addContext(stmt.xcor)
         ycor = addContext(stmt.ycor)
         exec("self.trtl.goto(%s, %s)" % (xcor, ycor))
-        return 1
-
-    def handlePrintCommand(self, stmt, tgt):
-        print(" PrintCommand")
-        # Convert the expression to a string that can be evaluated.
-        exprStr = addContext(stmt.expr)
-        # Evaluate the expression in the current program context.
-        result = eval(exprStr)
-        # Dump the result to a file instead of printing to the console.
-        with open("print_output.txt", "a") as f:
-            f.write(str(exprStr) + " = " + str(result) + "\n")
-        return 1
-
-    def handleIncrementCommand(self, stmt, tgt):
-        print("  IncrementCommand")
-        exprStr = addContext(stmt.var)
-        key = eval(exprStr)
-        current_value = self.hashMap.get(key, 0)
-        self.hashMap[key] = current_value + 1
-        return 1
-
-    def handleDumpCommand(self, stmt, tgt):
-        print("  DumpCommand")
-        # Dump each key/value pair to file (e.g. hash_dump.txt)
-        with open("hash_dump.txt", "w") as f:
-            for k, v in self.hashMap.items():
-                f.write(f"{k}: {v}\n")
         return 1

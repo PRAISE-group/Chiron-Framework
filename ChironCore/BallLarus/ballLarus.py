@@ -9,6 +9,7 @@ import networkx as nx
 from ChironAST import ChironAST
 from irhandler import IRHandler
 from interpreter import ConcreteInterpreter
+from BallLarus.bl_interpreter import BallLarusInterpreter
 import turtle
 from networkx.drawing.nx_agraph import to_agraph
 
@@ -49,8 +50,10 @@ class BallLarusProfiler:
         # Instrument the IR
         self.instrument_ir()
 
-        # The instrumented program will be run by the ConcreteInterpreter
-        inptr = ConcreteInterpreter(self.irHandler, self.args)
+        # # The instrumented program will be run by the ConcreteInterpreter
+        # inptr = ConcreteInterpreter(self.irHandler, self.args)
+        # The instrumented program will be run by the BallLarusInterpreter
+        inptr = BallLarusInterpreter(self.irHandler, self.args)
         terminated = False
         inptr.initProgramContext(self.args.params)
         while True:
