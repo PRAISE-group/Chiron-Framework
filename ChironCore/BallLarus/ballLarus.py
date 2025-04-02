@@ -4,8 +4,12 @@
 Ball-Larus path profiling implementation for the Chiron Framework.
 """
 
+from os import path
 import sys
+from tabnanny import check
 import networkx as nx
+from networkx import MultiDiGraph
+from networkx import efficiency
 from ChironAST import ChironAST
 from irhandler import IRHandler
 from interpreter import ConcreteInterpreter
@@ -84,7 +88,7 @@ class BallLarusProfiler:
         # NumPaths(exit) = 1
         # NumPaths(v) = sum(NumPaths(w)) for all edges v->w
         num_paths = {self.exit_node: 1}
-        
+
         # Get nodes in reverse topological order (from exit to entry)
         try:
             for node in reversed(list(nx.topological_sort(self.acyclic_cfg))):
@@ -113,6 +117,7 @@ class BallLarusProfiler:
             for edge in self.acyclic_cfg.out_edges(node, data=True):
                 successor = edge[1]
                 edge[2]['weight'] = val
+                edge[2]['chord_edge'] = False
                 if successor in num_paths:
                     val += num_paths[successor]
 
@@ -124,9 +129,133 @@ class BallLarusProfiler:
             for edge in self.acyclic_cfg.out_edges(node, data=True):
                 print(f"{node.name} -> {edge[1].name}: {edge[2]['weight']}")
 
+        self.efficient_event_counting()
         # TODO: Implement efficient event counting algorithm
         # Now we will use the efficient event counting algorithm to compute the edge weights
-        # self.efficient_event_counting()
+
+    def efficient_event_counting(self):
+        # Create a copy of the acyclic CFG as a MultiDiGraph
+        mst_graph = nx.MultiDiGraph(self.acyclic_cfg)
+        
+        # Add an edge from exit to entry with very high weight (practically infinity)
+        inf = 1000000000
+        mst_graph.add_edge(self.exit_node, self.entry_node, weight=inf) #inf = 1e9
+        
+        # Implement Kruskal's algorithm for maximum spanning tree
+        # 1. Get all edges with their weights and sort by weight in descending order
+        edges = []
+        for u, v, data in mst_graph.edges(data=True):
+            weight = data.get('weight', 0)
+            edges.append((u, v, weight, data))
+        
+        # Sort edges by weight in descending order (for maximum spanning tree)
+        edges.sort(key=lambda x: x[2], reverse=True)
+        
+        # Initialize a disjoint-set data structure for cycle detection
+        # We'll use a simple dictionary for this
+        parent = {node: node for node in mst_graph.nodes()}
+        
+        def find(node):
+            # Find the root/representative of the set containing node
+            if parent[node] != node:
+                parent[node] = find(parent[node])  # Path compression
+            return parent[node]
+        
+        def union(node1, node2):
+            # Merge the sets containing node1 and node2
+            root1 = find(node1)
+            root2 = find(node2)
+            if root1 != root2:
+                parent[root2] = root1
+        
+        # Build the MST
+        mst_edges = []
+        for u, v, weight, data in edges:
+            # Skip adding this edge if it would create a cycle
+            if find(u) != find(v):
+                mst_edges.append((u, v, data))
+                union(u, v)
+        
+        # Mark all edges as chord_edge=True by default
+        for u, v, data in mst_graph.edges(data=True):
+            data['chord_edge'] = True
+        
+        for u, v, data in mst_edges:
+            for edge in mst_graph.out_edges(u, data=True):
+                if edge[1] == v and edge[2] == data:
+                    edge[2]['chord_edge'] = False
+
+
+
+        print("Chord edges:")
+        for u,v,data in mst_graph.edges(data=True):
+            if data['chord_edge']:
+                print(f"{u.name} -> {v.name}: {data['weight']}")
+
+        # mst_tree will be an undirected graph
+        mst_tree = nx.DiGraph()
+        for u,v,data in mst_graph.edges(data=True):
+            if(data['chord_edge'] == False):
+                weight = data['weight']
+                if(u == self.exit_node and v == self.entry_node):
+                    print("Dummy edge from exit to entry")
+                    weight = 0
+                # mst_tree.add_edge(u,v,weight)
+                mst_tree.add_edge(u,v,weight=weight)
+                mst_tree.add_edge(v,u,weight= -weight)
+
+        for u, v, data in mst_graph.edges(data=True):
+            if data['chord_edge']:
+                # Use DFS to calculate the path weight sum from u to v in the MST
+                path_weight_sum = 0
+                vis = {}
+                def dfs_path(node, target, weight_sum):
+                    """
+                    Recursive DFS to find a path and its weight sum from node to target.
+                    Returns True if a path is found, False otherwise.
+                    """
+                    if node in vis:
+                        return False
+                    vis[node] = True
+                    nonlocal path_weight_sum
+                    if node == target:
+                        path_weight_sum = weight_sum
+                        return True
+                    
+                    # print(len(mst_tree.out_edges(node)))
+                    for edge in mst_tree.out_edges(node, data=True):
+                        successor = edge[1]
+                        print(f"  {node.name} -> {successor.name}: {edge[2]['weight']}")
+                        if dfs_path(successor, target, weight_sum + edge[2]['weight']):
+                            return True
+                            
+                    return False
+                
+                # Start DFS from u to find a path to v
+                print(f"Finding path from {u.name} to {v.name}")
+                path_found = dfs_path(v, u, 0)
+                if path_found == False:
+                    assert False
+                    path_found = dfs_path(u, v, 0)
+                assert path_found == True
+
+                data['weight2'] = data['weight']
+                data['weight'] += path_weight_sum
+                print(f"{u.name} ----> {v.name}: {data['weight']}")
+        
+        for u, v, data in mst_graph.edges(data=True):
+            if data['chord_edge'] == False:
+                data['weight2'] = data['weight']
+                data['weight'] = 0
+
+        # Remove the dummy edge from exit to entry
+        mst_graph.remove_edge(self.exit_node, self.entry_node)
+        print("Chord edges:")
+        for u,v,data in mst_graph.edges(data=True):
+            if data['chord_edge']:
+                print(f"{u.name} -> {v.name}: {data['weight']}")
+        
+        self.acyclic_cfg = mst_graph
     
     def instrument_ir(self):
         """
@@ -245,10 +374,13 @@ class BallLarusProfiler:
 
                 # Part 1
                 weight = 0
+                check_flag = 0
                 for edge in self.acyclic_cfg.out_edges(source, data=True):
-                    if edge[1] == target and edge[2].get('new_edge') is True:
+                    if edge[1] == self.exit_node and edge[2].get('new_edge') is True:
+                        check_flag = 1
                         weight = edge[2]['weight']
                         break
+                assert check_flag == 1
                 update_instr = ChironAST.AssignmentCommand(
                     path_register_var,
                     ChironAST.Sum(path_register_var, ChironAST.Num(weight))
@@ -266,10 +398,14 @@ class BallLarusProfiler:
                 update_offsets(len(new_ir)-1)
 
                 # Part 2
+                check_flag = 0
                 for edge in self.acyclic_cfg.out_edges(self.entry_node, data=True):
                     if edge[1] == target and edge[2].get('new_edge') is True:
                         weight = edge[2]['weight']
+                        check_flag = 1
                         break
+                
+                assert check_flag == 1
                 update_instr = ChironAST.AssignmentCommand(
                     path_register_var,
                     ChironAST.Num(weight)
@@ -350,7 +486,7 @@ class BallLarusProfiler:
             next_node = None
             new_edge = False
             for edge in self.acyclic_cfg.out_edges(current_node, data=True):
-                weight = edge[2].get('weight', 0)
+                weight = edge[2].get('weight2', 0)
                 if weight > max_weight and path_number >= weight:
                     max_weight = weight
                     next_node = edge[1]
