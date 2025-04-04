@@ -41,7 +41,7 @@ class AnalysisCommand(Instruction):
         self.stmt = statement
         self.cond = condition
     def __str__(self):
-        return self.stmt + " " + self.cond.__str__()
+        return self.stmt + " (" + self.cond.__str__() + ")"
 
 class MoveCommand(Instruction):
     def __init__(self, motion, expr):
