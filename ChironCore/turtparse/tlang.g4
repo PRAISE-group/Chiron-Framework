@@ -4,11 +4,15 @@ grammar tlang;
 start : instruction_list EOF
       ;
 
-instruction_list : (instruction)*
+instruction_list : (instruction | declaration)*
 		 ;
 
 strict_ilist : (instruction)+
              ;
+
+declaration : classDeclaration
+		| functionDeclaration
+		;
 
 instruction : functionCallWithReturnValues
 		| assignment
@@ -19,9 +23,7 @@ instruction : functionCallWithReturnValues
 	    | penCommand
 	    | gotoCommand
 	    | pauseCommand
-		| classDeclaration
 		| objectInstantiation
-		| functionDeclaration
 		| functionCall
 		| returnStatement
 	    ;

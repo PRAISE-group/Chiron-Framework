@@ -1,5 +1,10 @@
+
 def add(:a, :b)
 {
     return :a + :b
 }
-print(add(add(2, 3), 4))
+def increment(:a)
+{
+    return add(:a, 1)
+}
+print(increment(4))

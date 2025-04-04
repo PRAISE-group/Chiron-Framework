@@ -55,11 +55,11 @@ def drawRangoli(:size)
     return
 }
 
-penup
 class :Point {
     :x = -300
     :y = -300
 }
+penup
 :point = new :Point()
 goto (:point.:x, :point.:y)
 

@@ -24,6 +24,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#declaration.
+    def visitDeclaration(self, ctx:tlangParser.DeclarationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#instruction.
     def visitInstruction(self, ctx:tlangParser.InstructionContext):
         return self.visitChildren(ctx)

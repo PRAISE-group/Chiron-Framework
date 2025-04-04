@@ -36,13 +36,19 @@ class astGenPass(tlangVisitor):
 
     def visitInstruction_list(self, ctx: tlangParser.Instruction_listContext):
         instrList = []
+
+        for declr in ctx.declaration():
+            self.stmtList.extend(self.subStmtList + self.visit(declr))
+            self.subStmtList = []
+            self.virtualRegCount = 0
+            
         for instr in ctx.instruction():
             self.stmtList.extend(self.subStmtList + self.visit(instr))
             self.subStmtList = []
             self.virtualRegCount = 0
 
         return []
-
+    
     def visitStrict_ilist(self, ctx: tlangParser.Strict_ilistContext):
         # TODO: code refactoring. visitInstruction_list and visitStrict_ilist have same body
         instrList = []
