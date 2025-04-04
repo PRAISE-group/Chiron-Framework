@@ -236,7 +236,7 @@ if __name__ == "__main__":
 
     # generate control_flow_graph from IR statements.
     if args.control_flow:
-        cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+        cfg = cfgB.buildCFG(ir, "control_flow_graph", False)
         irHandler.setCFG(cfg)
     else:
         irHandler.setCFG(None)
@@ -247,6 +247,9 @@ if __name__ == "__main__":
 
     if args.ir:
         irHandler.pretty_print(irHandler.ir)
+        ir1 = irHandler.ir
+        for stmt in ir1:
+            print(stmt[0])
 
     if args.abstractInterpretation:
         AISub.analyzeUsingAI(irHandler)

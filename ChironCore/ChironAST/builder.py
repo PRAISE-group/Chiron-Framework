@@ -97,7 +97,7 @@ class astGenPass(tlangVisitor):
 
     def visitCondition(self, ctx:tlangParser.ConditionContext):
         if ctx.PENCOND():
-            return ChironAST.PenStatus();
+            return ChironAST.PenStatus()
 
         if ctx.NOT():
             expr1 = self.visit(ctx.condition(0))
@@ -172,3 +172,8 @@ class astGenPass(tlangVisitor):
 
     def visitPenCommand(self, ctx:tlangParser.PenCommandContext):
         return [(ChironAST.PenCommand(ctx.getText()), 1)]
+    
+    def visitAnalysisCommand(self, ctx:tlangParser.AnalysisCommandContext):
+        analysisCommand = ctx.analysisStatement().getText()
+        analysisCondition = ctx.condition().getText()
+        return [(ChironAST.AnalysisCommand(analysisCommand, analysisCondition), 1)]
