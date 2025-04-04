@@ -60,7 +60,7 @@ llvm::Value* NumberExpressionAST::codegen() {
 llvm::Value* VariableExpressionAST::codegen() {
     llvm::AllocaInst *V = SymbolTable[name];
     if (!V) {
-        return nullptr;
+        throw std::runtime_error("Variable not declared: " + name);
     }
     return Builder->CreateLoad(V->getAllocatedType(), V, name.c_str());
 }
@@ -76,7 +76,7 @@ llvm::Value* BinArithExpressionAST::codegen() {
         
         llvm::Value *R = RHS->codegen();
         if (!R) {
-            return nullptr;
+            throw std::runtime_error("Invalid right-hand side expression");
         }
 
         llvm::Value* formatStr = Builder->CreateGlobalStringPtr("%d\n", "fmt");
@@ -87,9 +87,13 @@ llvm::Value* BinArithExpressionAST::codegen() {
 
     llvm::Value *L = LHS->codegen();
     llvm::Value *R = RHS->codegen();
-    if (!L || !R) {
-        return nullptr;
+    if(!L){
+        throw std::runtime_error("Invalid left-hand side expression");
     }
+    if(!R){
+        throw std::runtime_error("Invalid right-hand side expression");
+    }
+
     switch (op) {
         case PLUS:
             return Builder->CreateAdd(L, R, "addtmp");
@@ -100,29 +104,33 @@ llvm::Value* BinArithExpressionAST::codegen() {
         case DIV:
             return Builder->CreateSDiv(L, R, "divtmp");
         default:
-            return nullptr;
+            throw std::runtime_error("Invalid binary operator");
     }
 }
 
 llvm::Value* UnaryArithExpressionAST::codegen() {
     llvm::Value *R = RHS->codegen();
     if (!R) {
-        return nullptr;
+        throw std::runtime_error("Invalid right-hand side expression");
     }
+
     if (op == MINUS) {
         return Builder->CreateNeg(R, "negtmp");
     } else if (op == NOT) {
         return Builder->CreateNot(R, "nottmp");
     }
 
-    return nullptr;
+    throw std::runtime_error("Invalid unary operator");
 }
 
 llvm::Value* BinCondExpressionAST::codegen() {
     llvm::Value *L = LHS->codegen();
     llvm::Value *R = RHS->codegen();
-    if (!L || !R) {
-        return nullptr;
+    if (!L) {
+        throw std::runtime_error("Invalid left-hand side expression");
+    }
+    if (!R) {
+        throw std::runtime_error("Invalid right-hand side expression");
     }
     
     if(op == LT) {
@@ -143,17 +151,17 @@ llvm::Value* BinCondExpressionAST::codegen() {
         return Builder->CreateOr(L, R, "ortmp");
     }
 
-    return nullptr;
+    throw std::runtime_error("Invalid binary conditional operator");
 }
 
 llvm::Value* CallExpressionAST::codegen() {
     llvm::Function *CalleeFunc = CodeGenModule->getFunction(callee);
     if (!CalleeFunc) {
-        return nullptr;
+        throw std::runtime_error("Function not found: " + callee);
     }
 
     if (CalleeFunc->arg_size() != args.size()) {
-        return nullptr;
+        throw std::runtime_error("Incorrect number of arguments passed to function");
     }
 
     std::vector<llvm::Value*> ArgsValue;
@@ -161,8 +169,12 @@ llvm::Value* CallExpressionAST::codegen() {
     for (int i = 0, e = args.size(); i != e; ++i) {
         ArgsValue.push_back(args[i]->codegen());
         if (!ArgsValue.back()) {
-            return nullptr;
+            throw std::runtime_error("Invalid argument passed to function");
         }
+    }
+
+    if(CalleeFunc->getReturnType()->isVoidTy()) {
+        return Builder->CreateCall(CalleeFunc, ArgsValue);
     }
 
     return Builder->CreateCall(CalleeFunc, ArgsValue, "calltmp");
@@ -179,8 +191,14 @@ llvm::Value* PenCallExprAST::codegen() {
 llvm::Value* GotoCallExprAST::codegen() {
     llvm::Value *X = x->codegen();
     llvm::Value *Y = y->codegen();
-    if (!X || !Y) {
-        return nullptr;
+    if (!X) {
+        throw std::runtime_error("Invalid x-coordinate expression");
+    }
+    if (!Y) {
+        throw std::runtime_error("Invalid y-coordinate expression");
+    }
+    if (!X->getType()->isIntegerTy(32) || !Y->getType()->isIntegerTy(32)) {
+        throw std::runtime_error("Goto coordinates must be integers");
     }
 
     return Builder->CreateCall(HandleGoToFunc, {X, Y});
@@ -189,7 +207,7 @@ llvm::Value* GotoCallExprAST::codegen() {
 llvm::Value* MoveCallExprAST::codegen() {
     llvm::Value *V = val->codegen();
     if (!V) {
-        return nullptr;
+        throw std::runtime_error("Invalid value expression");
     }
 
     if(direction == "forward"){
@@ -202,13 +220,14 @@ llvm::Value* MoveCallExprAST::codegen() {
         return Builder->CreateCall(HandleLeftFunc, V);
     }
 
-    return nullptr;
+    throw std::runtime_error("Invalid move direction");
 }
 
 llvm::Value* IfExpressionAST::codegen() {
     llvm::Value *CondV = condition->codegen();
-    if (!CondV)
-        return nullptr;
+    if (!CondV){
+        throw std::runtime_error("Invalid condition expression");
+    }
 
     // Only convert CondV to an i1 boolean if it is not already i1.
     if (!CondV->getType()->isIntegerTy(1)) {
@@ -229,7 +248,9 @@ llvm::Value* IfExpressionAST::codegen() {
     Builder->SetInsertPoint(ThenBB);
     for (size_t i = 0; i < thenBlock.size(); ++i) {
         llvm::Value* val = thenBlock[i]->codegen();
-        if (!val) return nullptr;
+        if (!val){
+            throw std::runtime_error("Invalid then block expression");
+        }
     }
     Builder->CreateBr(MergeBB);
     ThenBB = Builder->GetInsertBlock();
@@ -238,7 +259,9 @@ llvm::Value* IfExpressionAST::codegen() {
     Builder->SetInsertPoint(ElseBB);
     for (size_t i = 0; i < elseBlock.size(); ++i) {
         llvm::Value* val = elseBlock[i]->codegen();
-        if (!val) return nullptr;
+        if (!val){
+            throw std::runtime_error("Invalid else block expression");
+        }
     }
     Builder->CreateBr(MergeBB);
     ElseBB = Builder->GetInsertBlock();
@@ -267,7 +290,7 @@ llvm::Value* LoopExpressionAST::codegen(){
     for(int i = 0; i < body.size(); i++){
         llvm::Value* val = body[i]->codegen();
         if(!val){
-            return nullptr;
+            throw std::runtime_error("Invalid loop body expression");
         }
     }
 
@@ -283,6 +306,72 @@ llvm::Value* LoopExpressionAST::codegen(){
     Builder->SetInsertPoint(AfterBB);
 
     return llvm::Constant::getNullValue(llvm::Type::getInt32Ty(*CodeGenContext));
+}
+
+llvm::Value *FunctionAST::codegen() {
+    std::vector<llvm::Type*> argTypes(args.size(), llvm::Type::getInt32Ty(*CodeGenContext));
+    llvm::FunctionType *FT = llvm::FunctionType::get(
+        isVoid ? llvm::Type::getVoidTy(*CodeGenContext) : llvm::Type::getInt32Ty(*CodeGenContext),
+        argTypes,
+        false
+    );
+
+    llvm::Function *TheFunction = llvm::Function::Create(
+        FT,
+        llvm::Function::ExternalLinkage,
+        name,
+        CodeGenModule.get()
+    );
+
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*CodeGenContext, "entry", TheFunction);
+    Builder->SetInsertPoint(BB);
+
+    std::map<std::string, llvm::AllocaInst*> StoredTable = SymbolTable;
+    SymbolTable.clear();
+
+    int i = 0;
+    for(auto &arg : TheFunction->args()){
+        arg.setName(args[i++]);
+        llvm::AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, arg.getName());
+        Builder->CreateStore(&arg, Alloca);
+        SymbolTable[std::string(arg.getName())] = Alloca;
+    }
+
+    for (size_t i = 0; i < body.size(); ++i) {
+        llvm::Value* val = body[i]->codegen();
+        if (!val) {
+            TheFunction->eraseFromParent();
+            SymbolTable = StoredTable;
+            throw std::runtime_error("Invalid function body expression");
+        }
+    }
+
+    llvm::Value *RV;
+
+    if (isVoid) {
+        RV = Builder->CreateRetVoid();
+    } else {
+        if (returnValue) {
+            RV = returnValue->codegen();
+            if (!RV) {
+                TheFunction->eraseFromParent();
+                SymbolTable = StoredTable;
+                throw std::runtime_error("Invalid return value expression");
+            }
+            RV = Builder->CreateRet(RV);
+        } else {
+            TheFunction->eraseFromParent();
+            SymbolTable = StoredTable;
+            throw std::runtime_error("Function should return a value");
+        }
+    }
+
+    llvm::verifyFunction(*TheFunction, &llvm::errs());
+    SymbolTable = StoredTable;
+
+    Builder->SetInsertPoint(&CodeGenModule->getFunction("main")->getEntryBlock());
+
+    return RV;
 }
 
 void IntializeModule() {

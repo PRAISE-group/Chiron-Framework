@@ -1,3 +1,36 @@
+voidfunc drawRectangle(:x, :y, :len) {
+	penup
+	goto (:x, :y)
+	pendown
+	repeat 4 [
+		forward :len
+		left 90
+	]
+	voidreturn
+}
+
+voidfunc drawPentagon(:x, :y, :len) {
+	penup
+	goto (:x, :y)
+	pendown
+	repeat 5 [
+		forward :len
+		left 72
+	]
+	voidreturn
+}
+
+voidfunc drawHexagon(:x, :y, :len) {
+	penup
+	goto (:x, :y)
+	pendown
+	repeat 6 [
+		backward :len
+		left 60
+	]
+	voidreturn
+}
+
 :x = 20
 :y = 30
 :z = 20
@@ -8,31 +41,13 @@ pendown
 repeat 3 [
 
 	if (:x > :y) [
-		penup
-		goto (:x, :y)
-		pendown
-		repeat 4 [
-			forward :x
-			left 90
-		]
+		procedure drawRectangle(:x, :y, :x)
 	] else [
-		penup
-		goto (:y, :x)
-		pendown
-		repeat 5 [
-			forward :p
-			left 72
-		]
+		procedure drawPentagon(:y, :x, :p)
 	]
 
 	if (:z >= :p) [
-		penup
-		goto (:p, :x + :z)
-		pendown
-		repeat 6 [
-			backward :x
-			left 60
-		]
+		procedure drawHexagon(:p, :x + :z, :x)
 	]
 
 	:x = :x + 10

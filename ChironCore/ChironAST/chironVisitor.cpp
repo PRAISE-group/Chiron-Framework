@@ -28,9 +28,19 @@ class ChironVisitorImpl : public tlangVisitor {
 public:
     any visitStart(tlangParser::StartContext *ctx) override {
         if (!ctx) {
-            std::cerr << "Parser returned null context!" << std::endl;
+            throw runtime_error("Parser returned null context");
         }
-        return visit(ctx->instruction_list());
+        auto functionResult = visit(ctx->function_list());
+        auto functionList = any_cast<vector<InstrAST*>>(functionResult);
+
+        auto result = visit(ctx->instruction_list());
+        auto instructions = any_cast<vector<InstrAST*>>(result);
+
+        vector<InstrAST*> allInstructions;
+        allInstructions.insert(allInstructions.end(), functionList.begin(), functionList.end());
+        allInstructions.insert(allInstructions.end(), instructions.begin(), instructions.end());
+        
+        return allInstructions;
     }
 
     any visitInstruction_list(tlangParser::Instruction_listContext *ctx) override {
@@ -60,12 +70,13 @@ public:
         if (ctx->penCommand())    return visit(ctx->penCommand());
         if (ctx->gotoCommand())   return visit(ctx->gotoCommand());
         if (ctx->pauseCommand())  return visit(ctx->pauseCommand());
+        if (ctx->voidFuncCall())  return visit(ctx->voidFuncCall());
         throw runtime_error("Unsupported instruction type");
     }
 
     any visitConditional(tlangParser::ConditionalContext *ctx) override {
         if (ctx->ifConditional()) {
-            std::cerr << "visit(ctx->ifConditional())\n";
+            // std::cerr << "visit(ctx->ifConditional())\n";
             return visit(ctx->ifConditional());
         }
         if (ctx->ifElseConditional()) {
@@ -78,7 +89,7 @@ public:
     any visitIfConditional(tlangParser::IfConditionalContext *ctx) override {
         auto condResult = visit(ctx->condition());
        
-        std::cerr << "visit(ctx->condition()) type: " << condResult.type().name() << "\n";
+        // std::cerr << "visit(ctx->condition()) type: " << condResult.type().name() << "\n";
         ExpressionAST* cond = getSingleExpr(condResult);
 
         // Visit the then block
@@ -172,7 +183,7 @@ public:
         );
         return result;
     }
-
+    
     any visitAddExpr(tlangParser::AddExprContext *ctx) override {
         ExpressionAST* lhs = getSingleExpr(visit(ctx->expression(0)));
         ExpressionAST* rhs = getSingleExpr(visit(ctx->expression(1)));
@@ -187,7 +198,7 @@ public:
         );
         return result;
     }
-
+    
     any visitMulExpr(tlangParser::MulExprContext *ctx) override {
         ExpressionAST* lhs = getSingleExpr(visit(ctx->expression(0)));
         ExpressionAST* rhs = getSingleExpr(visit(ctx->expression(1)));
@@ -202,9 +213,16 @@ public:
         );
         return result;
     }
-
+    
     any visitParenExpr(tlangParser::ParenExprContext *ctx) override {
         return visit(ctx->expression());
+    }
+
+    any visitFuncExpr(tlangParser::FuncExprContext *ctx) override {
+        if (ctx->valueFuncCall()) {
+            return visit(ctx->valueFuncCall());
+        }
+        throw runtime_error("Unsupported function expression type");
     }
 
     any visitCondition(tlangParser::ConditionContext *ctx) override {
@@ -276,17 +294,141 @@ public:
         throw runtime_error("Invalid value");
     }
     
-    any visitFuncExpr(tlangParser::FuncExprContext *ctx) override { return nullptr; }
-    any visitVoidFunction(tlangParser::VoidFunctionContext *ctx) override { return nullptr; }
-    any visitValueFunction(tlangParser::ValueFunctionContext *ctx) override { return nullptr; }
-    any visitVoidReturn(tlangParser::VoidReturnContext *ctx) override { return nullptr; }
-    any visitValueReturn(tlangParser::ValueReturnContext *ctx) override { return nullptr; }
-    any visitParametersDeclaration(tlangParser::ParametersDeclarationContext *ctx) override { return nullptr; }
-    any visitParameterCall(tlangParser::ParameterCallContext *ctx) override { return nullptr; }
-    any visitVoidFuncCall(tlangParser::VoidFuncCallContext *ctx) override { return nullptr; }
-    any visitValueFuncCall(tlangParser::ValueFuncCallContext *ctx) override { return nullptr; }
-    any visitFunction_list(tlangParser::Function_listContext *ctx) override { return nullptr; }
-    any visitFunction_declaration(tlangParser::Function_declarationContext *ctx) override { return nullptr; }
+    any visitFunction_list(tlangParser::Function_listContext *ctx) override {
+        vector<InstrAST*> functions;
+        for (auto *func : ctx->function_declaration()) {
+            auto subFunc = any_cast<vector<InstrAST*>>(visit(func));
+            functions.insert(functions.end(), subFunc.begin(), subFunc.end());
+        }
+        return functions;
+    }
+
+    any visitFunction_declaration(tlangParser::Function_declarationContext *ctx) override {
+        if (ctx->voidFunction()) {
+            return visit(ctx->voidFunction());
+        }
+        if (ctx->valueFunction()) {
+            return visit(ctx->valueFunction());
+        }
+        throw runtime_error("Unsupported function declaration type");
+    }
+
+    any visitParametersDeclaration(tlangParser::ParametersDeclarationContext *ctx) override {
+        vector<string> params;
+        for (auto *param : ctx->VAR()) {
+            params.push_back(param->getText());
+        }
+
+        return params;
+    }
+
+    any visitVoidFunction(tlangParser::VoidFunctionContext *ctx) override {
+        string name = ctx->NAME()->getText();
+
+        auto paramsResult = visit(ctx->parametersDeclaration());
+        vector<string> params;
+        if (paramsResult.has_value()) {
+            params = any_cast<vector<string>>(paramsResult);
+        }
+
+        auto instrResult = visit(ctx->instruction_list());
+        vector<InstrAST*> instructions = any_cast<vector<InstrAST*>>(instrResult);
+
+        auto returnResult = visit(ctx->voidReturn());
+        bool isVoid = any_cast<bool>(returnResult);
+
+        return vector<InstrAST*>{
+            make_unique<FunctionAST>(
+                name,
+                params,
+                vector<unique_ptr<InstrAST>>(instructions.begin(), instructions.end()),
+                nullptr,
+                isVoid
+            ).release()
+        };
+    }
+
+    any visitVoidReturn(tlangParser::VoidReturnContext *ctx) override {
+        if(ctx->getText() == "voidreturn") {
+            return true;
+        }
+
+        throw runtime_error("Void function should not have a return value");
+    }
+
+    any visitValueFunction(tlangParser::ValueFunctionContext *ctx) override {
+        string name = ctx->NAME()->getText();
+
+        auto paramsResult = visit(ctx->parametersDeclaration());
+        vector<string> params;
+        if (paramsResult.has_value()) {
+            params = any_cast<vector<string>>(paramsResult);
+        }
+
+        auto instrResult = visit(ctx->instruction_list());
+        vector<InstrAST*> instructions = any_cast<vector<InstrAST*>>(instrResult);
+
+        auto returnResult = visit(ctx->valueReturn());
+        if (!returnResult.has_value()) {
+            throw runtime_error("Value function should have a return value");
+        }
+        
+        ExpressionAST* returnExpr = getSingleExpr(returnResult);
+
+        return vector<InstrAST*>{
+            make_unique<FunctionAST>(
+                name,
+                params,
+                vector<unique_ptr<InstrAST>>(instructions.begin(), instructions.end()),
+                unique_ptr<ExpressionAST>(returnExpr),
+                false
+            ).release()
+        };
+    }
+
+    any visitValueReturn(tlangParser::ValueReturnContext *ctx) override {
+        ExpressionAST* expr = getSingleExpr(visit(ctx->expression()));
+        return vector<InstrAST*>{ expr };
+    }
+
+    any visitParameterCall(tlangParser::ParameterCallContext *ctx) override {
+        vector<InstrAST*> params;
+        for (auto *param : ctx->expression()) {
+            auto subParam = any_cast<vector<InstrAST*>>(visit(param));
+            params.insert(params.end(), subParam.begin(), subParam.end());
+        }
+        return params;
+    }
+
+    any visitVoidFuncCall(tlangParser::VoidFuncCallContext *ctx) override {
+        string name = ctx->NAME()->getText();
+        auto paramsResult = visit(ctx->parameterCall());
+        vector<ExpressionAST*> params;
+        if (paramsResult.has_value()) {
+            auto instrParams = any_cast<vector<InstrAST*>>(paramsResult);
+            for (auto *instr : instrParams) {
+                params.push_back(dynamic_cast<ExpressionAST*>(instr));
+            }
+        }
+        return vector<InstrAST*>{
+            new CallExpressionAST(name, vector<unique_ptr<ExpressionAST>>(params.begin(), params.end()))
+        };
+    }
+
+    any visitValueFuncCall(tlangParser::ValueFuncCallContext *ctx) override {
+        string name = ctx->NAME()->getText();
+        auto paramsResult = visit(ctx->parameterCall());
+        vector<ExpressionAST*> params;
+        if (paramsResult.has_value()) {
+            auto instrParams = any_cast<vector<InstrAST*>>(paramsResult);
+            for (auto *instr : instrParams) {
+                params.push_back(dynamic_cast<ExpressionAST*>(instr));
+            }
+        }
+        return vector<InstrAST*>{
+            new CallExpressionAST(name, vector<unique_ptr<ExpressionAST>>(params.begin(), params.end()))
+        };
+    }
 
     // Default implementations for rules not used:
     any visitMoveOp(tlangParser::MoveOpContext*) override { return nullptr; }

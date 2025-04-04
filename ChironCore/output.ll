@@ -31,7 +31,6 @@ declare void @finish()
 
 define i32 @main() {
 entry:
-  %__rep_counter_2 = alloca i32, align 4
   %__rep_counter_1 = alloca i32, align 4
   %":p" = alloca i32, align 4
   %":z" = alloca i32, align 4
@@ -50,110 +49,158 @@ entry:
   store i32 3, ptr %__rep_counter_1, align 4
   br label %loop
 
-loop:                                             ; preds = %ifcont32, %entry
+loop:                                             ; preds = %ifcont20, %entry
   %":x4" = load i32, ptr %":x", align 4
   %":y5" = load i32, ptr %":y", align 4
   %gttmp = icmp sgt i32 %":x4", %":y5"
   br i1 %gttmp, label %then, label %else
 
 then:                                             ; preds = %loop
-  call void @handlePenUp()
   %":x6" = load i32, ptr %":x", align 4
   %":y7" = load i32, ptr %":y", align 4
-  call void @handleGoTo(i32 %":x6", i32 %":y7")
-  call void @handlePenDown()
-  store i32 4, ptr %__rep_counter_2, align 4
-  br label %loop8
-
-loop8:                                            ; preds = %loop8, %then
-  %":x9" = load i32, ptr %":x", align 4
-  call void @handleForward(i32 %":x9")
-  call void @handleLeft(i32 90)
-  %__rep_counter_210 = load i32, ptr %__rep_counter_2, align 4
-  %nextvar = sub i32 %__rep_counter_210, 1
-  store i32 %nextvar, ptr %__rep_counter_2, align 4
-  %loopcond = icmp ne i32 %nextvar, 0
-  br i1 %loopcond, label %loop8, label %afterloop
-
-afterloop:                                        ; preds = %loop8
+  %":x8" = load i32, ptr %":x", align 4
+  call void @drawRectangle(i32 %":x6", i32 %":y7", i32 %":x8")
   br label %ifcont
 
 else:                                             ; preds = %loop
-  call void @handlePenUp()
-  %":y11" = load i32, ptr %":y", align 4
-  %":x12" = load i32, ptr %":x", align 4
-  call void @handleGoTo(i32 %":y11", i32 %":x12")
-  call void @handlePenDown()
-  store i32 5, ptr %__rep_counter_2, align 4
-  br label %loop13
-
-loop13:                                           ; preds = %loop13, %else
-  %":p14" = load i32, ptr %":p", align 4
-  call void @handleForward(i32 %":p14")
-  call void @handleLeft(i32 72)
-  %__rep_counter_215 = load i32, ptr %__rep_counter_2, align 4
-  %nextvar16 = sub i32 %__rep_counter_215, 1
-  store i32 %nextvar16, ptr %__rep_counter_2, align 4
-  %loopcond17 = icmp ne i32 %nextvar16, 0
-  br i1 %loopcond17, label %loop13, label %afterloop18
-
-afterloop18:                                      ; preds = %loop13
+  %":y9" = load i32, ptr %":y", align 4
+  %":x10" = load i32, ptr %":x", align 4
+  %":p11" = load i32, ptr %":p", align 4
+  call void @drawPentagon(i32 %":y9", i32 %":x10", i32 %":p11")
   br label %ifcont
 
-ifcont:                                           ; preds = %afterloop18, %afterloop
-  %":z19" = load i32, ptr %":z", align 4
-  %":p20" = load i32, ptr %":p", align 4
-  %gtetmp = icmp sge i32 %":z19", %":p20"
-  br i1 %gtetmp, label %then21, label %else31
+ifcont:                                           ; preds = %else, %then
+  %":z12" = load i32, ptr %":z", align 4
+  %":p13" = load i32, ptr %":p", align 4
+  %gtetmp = icmp sge i32 %":z12", %":p13"
+  br i1 %gtetmp, label %then14, label %else19
 
-then21:                                           ; preds = %ifcont
-  call void @handlePenUp()
-  %":p22" = load i32, ptr %":p", align 4
-  %":x23" = load i32, ptr %":x", align 4
-  %":z24" = load i32, ptr %":z", align 4
-  %addtmp = add i32 %":x23", %":z24"
-  call void @handleGoTo(i32 %":p22", i32 %addtmp)
-  call void @handlePenDown()
-  store i32 6, ptr %__rep_counter_2, align 4
-  br label %loop25
+then14:                                           ; preds = %ifcont
+  %":p15" = load i32, ptr %":p", align 4
+  %":x16" = load i32, ptr %":x", align 4
+  %":z17" = load i32, ptr %":z", align 4
+  %addtmp = add i32 %":x16", %":z17"
+  %":x18" = load i32, ptr %":x", align 4
+  call void @drawHexagon(i32 %":p15", i32 %addtmp, i32 %":x18")
+  br label %ifcont20
 
-loop25:                                           ; preds = %loop25, %then21
-  %":x26" = load i32, ptr %":x", align 4
-  call void @handleBackward(i32 %":x26")
-  call void @handleLeft(i32 60)
-  %__rep_counter_227 = load i32, ptr %__rep_counter_2, align 4
-  %nextvar28 = sub i32 %__rep_counter_227, 1
-  store i32 %nextvar28, ptr %__rep_counter_2, align 4
-  %loopcond29 = icmp ne i32 %nextvar28, 0
-  br i1 %loopcond29, label %loop25, label %afterloop30
+else19:                                           ; preds = %ifcont
+  br label %ifcont20
 
-afterloop30:                                      ; preds = %loop25
-  br label %ifcont32
+ifcont20:                                         ; preds = %else19, %then14
+  %":x21" = load i32, ptr %":x", align 4
+  %addtmp22 = add i32 %":x21", 10
+  %prnt23 = call i32 (ptr, ...) @printf(ptr @fmt.4, i32 %addtmp22)
+  store i32 %addtmp22, ptr %":x", align 4
+  %":y24" = load i32, ptr %":y", align 4
+  %addtmp25 = add i32 %":y24", 10
+  %prnt26 = call i32 (ptr, ...) @printf(ptr @fmt.5, i32 %addtmp25)
+  store i32 %addtmp25, ptr %":y", align 4
+  %":z27" = load i32, ptr %":z", align 4
+  %addtmp28 = add i32 %":z27", 10
+  %prnt29 = call i32 (ptr, ...) @printf(ptr @fmt.6, i32 %addtmp28)
+  store i32 %addtmp28, ptr %":z", align 4
+  %__rep_counter_130 = load i32, ptr %__rep_counter_1, align 4
+  %nextvar = sub i32 %__rep_counter_130, 1
+  store i32 %nextvar, ptr %__rep_counter_1, align 4
+  %loopcond = icmp ne i32 %nextvar, 0
+  br i1 %loopcond, label %loop, label %afterloop
 
-else31:                                           ; preds = %ifcont
-  br label %ifcont32
-
-ifcont32:                                         ; preds = %else31, %afterloop30
-  %":x33" = load i32, ptr %":x", align 4
-  %addtmp34 = add i32 %":x33", 10
-  %prnt35 = call i32 (ptr, ...) @printf(ptr @fmt.4, i32 %addtmp34)
-  store i32 %addtmp34, ptr %":x", align 4
-  %":y36" = load i32, ptr %":y", align 4
-  %addtmp37 = add i32 %":y36", 10
-  %prnt38 = call i32 (ptr, ...) @printf(ptr @fmt.5, i32 %addtmp37)
-  store i32 %addtmp37, ptr %":y", align 4
-  %":z39" = load i32, ptr %":z", align 4
-  %addtmp40 = add i32 %":z39", 10
-  %prnt41 = call i32 (ptr, ...) @printf(ptr @fmt.6, i32 %addtmp40)
-  store i32 %addtmp40, ptr %":z", align 4
-  %__rep_counter_142 = load i32, ptr %__rep_counter_1, align 4
-  %nextvar43 = sub i32 %__rep_counter_142, 1
-  store i32 %nextvar43, ptr %__rep_counter_1, align 4
-  %loopcond44 = icmp ne i32 %nextvar43, 0
-  br i1 %loopcond44, label %loop, label %afterloop45
-
-afterloop45:                                      ; preds = %ifcont32
+afterloop:                                        ; preds = %ifcont20
   call void @handlePenUp()
   call void @finish()
   ret i32 0
+}
+
+define void @drawRectangle(i32 %":x", i32 %":y", i32 %":len") {
+entry:
+  %__rep_counter_1 = alloca i32, align 4
+  %":len3" = alloca i32, align 4
+  %":y2" = alloca i32, align 4
+  %":x1" = alloca i32, align 4
+  store i32 %":x", ptr %":x1", align 4
+  store i32 %":y", ptr %":y2", align 4
+  store i32 %":len", ptr %":len3", align 4
+  call void @handlePenUp()
+  %":x4" = load i32, ptr %":x1", align 4
+  %":y5" = load i32, ptr %":y2", align 4
+  call void @handleGoTo(i32 %":x4", i32 %":y5")
+  call void @handlePenDown()
+  store i32 4, ptr %__rep_counter_1, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %":len6" = load i32, ptr %":len3", align 4
+  call void @handleForward(i32 %":len6")
+  call void @handleLeft(i32 90)
+  %__rep_counter_17 = load i32, ptr %__rep_counter_1, align 4
+  %nextvar = sub i32 %__rep_counter_17, 1
+  store i32 %nextvar, ptr %__rep_counter_1, align 4
+  %loopcond = icmp ne i32 %nextvar, 0
+  br i1 %loopcond, label %loop, label %afterloop
+
+afterloop:                                        ; preds = %loop
+  ret void
+}
+
+define void @drawPentagon(i32 %":x", i32 %":y", i32 %":len") {
+entry:
+  %__rep_counter_1 = alloca i32, align 4
+  %":len3" = alloca i32, align 4
+  %":y2" = alloca i32, align 4
+  %":x1" = alloca i32, align 4
+  store i32 %":x", ptr %":x1", align 4
+  store i32 %":y", ptr %":y2", align 4
+  store i32 %":len", ptr %":len3", align 4
+  call void @handlePenUp()
+  %":x4" = load i32, ptr %":x1", align 4
+  %":y5" = load i32, ptr %":y2", align 4
+  call void @handleGoTo(i32 %":x4", i32 %":y5")
+  call void @handlePenDown()
+  store i32 5, ptr %__rep_counter_1, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %":len6" = load i32, ptr %":len3", align 4
+  call void @handleForward(i32 %":len6")
+  call void @handleLeft(i32 72)
+  %__rep_counter_17 = load i32, ptr %__rep_counter_1, align 4
+  %nextvar = sub i32 %__rep_counter_17, 1
+  store i32 %nextvar, ptr %__rep_counter_1, align 4
+  %loopcond = icmp ne i32 %nextvar, 0
+  br i1 %loopcond, label %loop, label %afterloop
+
+afterloop:                                        ; preds = %loop
+  ret void
+}
+
+define void @drawHexagon(i32 %":x", i32 %":y", i32 %":len") {
+entry:
+  %__rep_counter_1 = alloca i32, align 4
+  %":len3" = alloca i32, align 4
+  %":y2" = alloca i32, align 4
+  %":x1" = alloca i32, align 4
+  store i32 %":x", ptr %":x1", align 4
+  store i32 %":y", ptr %":y2", align 4
+  store i32 %":len", ptr %":len3", align 4
+  call void @handlePenUp()
+  %":x4" = load i32, ptr %":x1", align 4
+  %":y5" = load i32, ptr %":y2", align 4
+  call void @handleGoTo(i32 %":x4", i32 %":y5")
+  call void @handlePenDown()
+  store i32 6, ptr %__rep_counter_1, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %":len6" = load i32, ptr %":len3", align 4
+  call void @handleBackward(i32 %":len6")
+  call void @handleLeft(i32 60)
+  %__rep_counter_17 = load i32, ptr %__rep_counter_1, align 4
+  %nextvar = sub i32 %__rep_counter_17, 1
+  store i32 %nextvar, ptr %__rep_counter_1, align 4
+  %loopcond = icmp ne i32 %nextvar, 0
+  br i1 %loopcond, label %loop, label %afterloop
+
+afterloop:                                        ; preds = %loop
+  ret void
 }

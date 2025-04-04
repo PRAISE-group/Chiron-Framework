@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     tlangVisitor* visitor = createChironVisitor();
     
     std::any result = visitor->visitStart(ctx);
-
+    
     try {
         std::vector<InstrAST*> instructions = std::any_cast<std::vector<InstrAST*>>(result);
         
@@ -61,16 +61,21 @@ int main(int argc, char *argv[]) {
         }
 
         ConverIRtoObjectFile();
-
+        
         for (auto instr : instructions) {
             delete instr;
         }
         delete visitor;
-
-    } catch (const std::bad_any_cast& e) {
-        std::cerr << "Error: " << e.what() << " (bad_any_cast)\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
+    } catch (...) {
+        std::cerr << "Unknown error occurred.\n";
         return 1;
     }
-
+    
+    file.close();
+    
     return 0;
 }
