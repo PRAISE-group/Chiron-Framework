@@ -34,8 +34,9 @@ from IrWithParams import IrWithParams
 # from ConstraintToSmtlib import ConstraintToSmtlib
 # from CheckOutput import CheckOutput
 # from CheckOutput import extract_variables
+from IfElseToITE import traverse_cfg
 import csv
-
+from TurtleCommandsCompiler import TurtleCommandsCompiler
 def cleanup():
     pass
 
@@ -413,6 +414,26 @@ if __name__ == "__main__":
         print("DONE..")
 
     if args.smtlib:
+        new_irList = []
+        turt_compiler = TurtleCommandsCompiler()        
+        for entry in irHandler.ir:
+            new_stmts = turt_compiler.compile(entry[0])
+            for st in new_stmts:
+                new_irList.append((st, entry[1]))
+        
+        cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
+        cfgB.dumpCFG(cfg, "control_flow_graph")
+        
+        irList = traverse_cfg(cfg)
+        print(irList)
+        # constraint_filepath, output_filepath = args.smtlib
+        # pre_condition_cons, post_condition_cons, invariant = ConstraintToSmtlib(constraint_filepath)
+        # cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+
+        # param_code = ""
+        # if args.params:
+        #     for var, val in args.params.items(): 
+        #         param_code += f"(= {var.lstrip(':')} {val})"
         ir = IrWithParams(args.params) + ir
         cfg = cfgB.buildCFG(ir, "control_flow_graph", False)
         # cfgB.dumpCFG(cfg, "control_flow_graph")
@@ -450,6 +471,14 @@ if __name__ == "__main__":
         #     smtlib_code += f"(=> (and {loop_body_code} (not (and {loop_condition} true))) {post_condition}) "
         #     smtlib_code = f"(assert (not (and {smtlib_code})))"
         #     print(smtlib_code)
+        #     # print(vars)
+        #     # print(invariant_in)
+        #     # print(invariant_out)
+        #     # print(pre_condition)
+        #     # print(post_condition)
+        #     # print(invariant)
+        #     # print(loop_condition)
+        #     # print(loop_body_code)
 
        
         # vars = extract_variables(smtlib_code)
