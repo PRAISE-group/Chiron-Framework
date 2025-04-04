@@ -1,6 +1,6 @@
 import sys
 from ConstraintParser import Constraint_Parser
-from Infix_To_Prefix import Infix_To_Prefix
+from ChironCore.Infix_To_Prefix import Infix_To_Prefix
 from CNF_To_SMTLIB import CNF_To_SMTLIB
 
 def ConstraintToSmtlib(filepath):

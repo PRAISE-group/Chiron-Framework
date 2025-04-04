@@ -175,5 +175,5 @@ class astGenPass(tlangVisitor):
     
     def visitAnalysisCommand(self, ctx:tlangParser.AnalysisCommandContext):
         analysisCommand = ctx.analysisStatement().getText()
-        analysisCondition = ctx.condition().getText()
+        analysisCondition = self.visit(ctx.condition())
         return [(ChironAST.AnalysisCommand(analysisCommand, analysisCondition), 1)]

@@ -1,12 +1,7 @@
-assume(:s==0 && :i==1)
+assume((:s==0) && (:i==0))
 repeat 10 [
-    invariant(:s == (:i*(:i-1))/2)
-    :s = :s+:i
+    invariant(:s == (:i*(:i+1))/2)
     :i = :i+1
-    if(:i>15)[
-        :i = 0
-    ] else[
-        :i = 10
-    ]
+    :s = :s+:i
 ]
 assert(:s == 55)

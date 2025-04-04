@@ -2,6 +2,7 @@
 Release = "Chiron v1.0.4"
 
 import ast
+import re
 import sys
 from ChironAST.builder import astGenPass
 import abstractInterpretation as AI
@@ -29,6 +30,7 @@ from sbflSubmission import computeRanks
 # from CFGtoSmtlib import CFGtoSmtlib
 from RenameVars import rename_vars
 from IrWithParams import IrWithParams
+from Infix_To_Prefix import Infix_To_Prefix
 # from LoopToSmtlib import LoopToSmtlib
 # from LoopToSmtlib import replace_smtlib_variables
 # from ConstraintToSmtlib import ConstraintToSmtlib
@@ -414,31 +416,108 @@ if __name__ == "__main__":
         print("DONE..")
 
     if args.smtlib:
+        # for entry in irHandler.ir:
+        #     print(entry[0])
+        # irHandler.pretty_print(irHandler.ir)
+
         new_irList = []
         turt_compiler = TurtleCommandsCompiler()        
         for entry in irHandler.ir:
             new_stmts = turt_compiler.compile(entry[0])
             for st in new_stmts:
                 new_irList.append((st, entry[1]))
-        
+        new_irList = IrWithParams(args.params) + new_irList
         cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
         cfgB.dumpCFG(cfg, "control_flow_graph")
-        
         irList = traverse_cfg(cfg)
-        print(irList)
-        # constraint_filepath, output_filepath = args.smtlib
-        # pre_condition_cons, post_condition_cons, invariant = ConstraintToSmtlib(constraint_filepath)
-        # cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+        vars_map, code = rename_vars(irList)
+        # print(vars_map)
+        # print(code)
+        pre_code = []
+        pre_condition = []
+        loop_condition = ""
+        loop_code = []
+        post_condition = ""
+        invariant_in = ""
+        invariant_out = ""
+        temp = []
+        for stmt in code:
+            if stmt[1] == 'loop-init':
+                stat = Infix_To_Prefix(stmt[0], True)
+                temp.append(stat)
+                pre_condition.append(stat)
+            elif stmt[1] == 'invariant_in':
+                invariant_in = Infix_To_Prefix(stmt[0], True)
+            elif stmt[1] == 'invariant_out':
+                invariant_out = Infix_To_Prefix(stmt[0], True)
+            elif stmt[1] == 'loop-condition':
+                loop_condition = Infix_To_Prefix(stmt[0], True)
+                pre_code = temp
+                temp = []
+            elif stmt[1] == 'loop-end':
+                temp.append(Infix_To_Prefix(stmt[0], True))
+                loop_code = temp
+                temp = []
+            elif stmt[1] == 'assume':
+                pre_condition.append(Infix_To_Prefix(stmt[0], True))
+            elif stmt[1] == 'assert':
+                post_condition = Infix_To_Prefix(stmt[0], True)
+            elif stmt[1] == 'ite':
+                pattern = r"(\w+)\s*=\s*\(\((.*?)\),\s*(.*?),\s*(.*?)\)"
+                match = re.match(pattern, stmt[0])
+                if_var = match.group(1)
+                if_cond = match.group(2)
+                if_value = match.group(3)
+                else_value = match.group(4)
+                stat = f"(= {if_var} (ite {Infix_To_Prefix(if_cond, True)} {Infix_To_Prefix(if_value, True)} {Infix_To_Prefix(else_value, True)}))"
+                temp.append(stat)
+            else:
+                temp.append(Infix_To_Prefix(stmt[0], True))
 
-        # param_code = ""
-        # if args.params:
-        #     for var, val in args.params.items(): 
-        #         param_code += f"(= {var.lstrip(':')} {val})"
-        ir = IrWithParams(args.params) + ir
-        cfg = cfgB.buildCFG(ir, "control_flow_graph", False)
-        # cfgB.dumpCFG(cfg, "control_flow_graph")
-        code = rename_vars(ir)
+        # print(pre_code)
+        # print(pre_condition)
+        # print(loop_condition)
+        # print(loop_code)
+        # print(post_condition)
+        # print(invariant_in)
+        # print(invariant_out)
+
+        smtlib_code = ""
+        for var, ct in vars_map.items():
+            for i in range(ct+1):
+                smtlib_code += f"(declare-fun {var}_{i} () Int)\n"
         
+        for stat in pre_code:
+            smtlib_code += f"(assert {stat})\n"
+
+        pre_condition = f"(and {pre_condition[0]} {pre_condition[1]})"
+        single_loop_body = "(and "
+        for stat in loop_code:
+            single_loop_body += f"{stat} "
+        single_loop_body += ")\n"
+
+        #a: pre_condition => invariant_in
+        #b: invariant_in & single_loop_body & loop_condition => invariant_out
+        #c: invariant_out & !loop_condition => post_condition
+        smtlib_code += "(push 1)\n"
+        smtlib_code += f"(assert (not (=> {pre_condition} {invariant_in})))\n"
+        smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
+        smtlib_code += "(push 1)\n"
+        smtlib_code += f"(assert (not (=> (and {invariant_in} {single_loop_body} {loop_condition}) {invariant_out})))\n"
+        smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
+        smtlib_code += "(push 1)\n"
+        smtlib_code += f"(assert (not (=> (and {invariant_out} (not {loop_condition})) {post_condition})))\n"
+        smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
+        print(smtlib_code)
+
+
+        # (assert (not (=> (and (= s_1 (div (* i_1 (+ i_1 1)) 2)) (not (> __rep_counter_1_0 0))) (= s_1 55))))
+        #     # if stmt[1] == "ite":
+        #     #     temp.append(f"stmt[0]")
+        #     # else:
+        #     #     new_stmt = Infix_To_Prefix(stmt[0], True)
+        #     new_code.append((new_stmt, stmt[1]))
+        # code = Infix_To_Prefix(code)
 
     # if args.smtlib:
     #     constraint_filepath, output_filepath = args.smtlib

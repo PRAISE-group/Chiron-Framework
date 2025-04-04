@@ -28,6 +28,9 @@ def traverse_cfg(cfg: ChironCFG):
                     if str(stmt[0]).startswith(":__rep_counter_1 = (:__rep_counter_1 - 1)"):
                         irList.append((str(stmt[0]), "loop-end"))
                         continue
+                    if str(stmt[0]).startswith(":__rep_counter_1"):
+                        irList.append((str(stmt[0]), "loop-init"))
+                        continue
                     irList.append((str(stmt[0]), "assign"))
                 
                 elif isinstance(stmt[0], ChironAST.ConditionCommand):
@@ -61,7 +64,7 @@ def traverse_cfg(cfg: ChironCFG):
                     false_branch_expr = false_branch_stmt.split('=')[1].strip()
                     if true_branch_var != false_branch_var:
                         raise ValueError(f"If-Else branches must assign to the same variable: Node: {node}, Statement: {stmt[0]}, Line: {stmt[1]}")
-                    ite_stmt = f"{true_branch_var} = ite ({condition}, {true_branch_expr}, {false_branch_expr})"
+                    ite_stmt = f"{true_branch_var} = ({condition}, {true_branch_expr}, {false_branch_expr})"
                     irList.append((ite_stmt, "ite"))
                 
                 elif isinstance(stmt[0], ChironAST.AnalysisCommand):

@@ -68,6 +68,7 @@ def Construct_AST(expr: str, replace_eq):
         tree = ast.parse(expr, mode='eval')
         return tree
     except SyntaxError as e:
+        print(expr)
         raise Exception(f"Syntax Error: {e}")
 
 def Infix_To_Prefix(expr: str, replace_eq = False):

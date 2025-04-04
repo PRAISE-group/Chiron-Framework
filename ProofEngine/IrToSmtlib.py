@@ -1,6 +1,6 @@
 import sys
 sys.path.insert(0, "../ChironCore/ChironAST/")
-from ProofEngine.Infix_To_Prefix import Infix_To_Prefix
+from ChironCore.Infix_To_Prefix import Infix_To_Prefix
 from ChironAST import ChironAST
 
 def IrToSmtlib(irList):

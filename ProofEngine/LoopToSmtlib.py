@@ -1,7 +1,7 @@
 import re
 import networkx as nx
 
-from Infix_To_Prefix import Infix_To_Prefix
+from ChironCore.Infix_To_Prefix import Infix_To_Prefix
 
 def extract_variable(statement):
     """Extracts the assigned variable and its value from an assignment statement."""

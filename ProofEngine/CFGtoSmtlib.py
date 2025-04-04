@@ -1,7 +1,7 @@
 import re
 import networkx as nx
 
-from Infix_To_Prefix import Infix_To_Prefix
+from ChironCore.Infix_To_Prefix import Infix_To_Prefix
 
 def validate_cfg_format(cfg):
     """
