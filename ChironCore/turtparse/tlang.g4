@@ -27,7 +27,8 @@ ifConditional : 'if' condition '[' strict_ilist ']' ;
 
 ifElseConditional : 'if' condition '[' strict_ilist ']' 'else' '[' strict_ilist ']' ;
 
-loop : 'repeat' value '[' strict_ilist ']' ;
+loop : 'repeat' value '[' strict_ilist ']'
+     | '@unroll' NUM 'repeat' value '[' strict_ilist ']' ;
 
 gotoCommand : 'goto' '(' expression ',' expression ')';
 

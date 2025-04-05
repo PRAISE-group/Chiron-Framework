@@ -3,6 +3,8 @@ Release = "Chiron v1.0.4"
 
 import ast
 import sys
+
+from antlr4 import InputStream
 from ChironAST.builder import astGenPass
 import abstractInterpretation as AI
 import dataFlowAnalysis as DFA
@@ -208,6 +210,14 @@ if __name__ == "__main__":
         help="Run Bounded Model Checking on a Chiron Program.",
     )
 
+    cmdparser.add_argument(
+        "-ub",
+        "--unroll-bound",
+        type=int,
+        default=10,
+        help="Unroll bound for the program. Default is 10.",
+    )
+
     args = cmdparser.parse_args()
     ir = ""
 
@@ -408,7 +418,7 @@ if __name__ == "__main__":
 
     if args.bmc:
         print("\nBounded Model Checking...")
-        unroll_bound = int(input("Enter the unroll bound for the program: "))
+        unroll_bound = args.unroll_bound
 
         if unroll_bound < 1:
             print("Invalid unroll bound. Exiting...")
@@ -416,48 +426,21 @@ if __name__ == "__main__":
         
         unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
 
-        constraint_count = int(input("Enter the number of constraints in the program: "))
-        if constraint_count < 0:
-            print("Invalid number of constraints. Exiting...")
-            exit(1)
-
-        if constraint_count != 0:
-            constraints = []
-            for i in range(constraint_count):
-                constraints.append(input(f"Enter constraint {i+1}: "))
-
-            constraint_stmt = constraints[0]
-            for i in range(1, constraint_count):
-                constraint_stmt = constraint_stmt + " && " + constraints[i]
-
-            unrolled_code = unrolled_code + '\n' + "assume " + constraint_stmt
-
-        cond_count = int(input("Enter the number of conditions in the program: "))
-
-        if cond_count < 0:
-            print("Invalid number of conditions. Exiting...")
-            exit(1)
-
-        if cond_count != 0:
-            cond = []
-            for i in range(cond_count):
-                cond.append(input(f"Enter condition {i+1}: "))
-
-            cond_stmt = "(" + cond[0] +")"
-            for i in range(1, cond_count):
-                cond_stmt = cond_stmt + " && (" + cond[i] + ")"
-            assert_stmt = "assert " + cond_stmt
-
-            unrolled_code = unrolled_code + '\n' + assert_stmt # for adding asserts at the end
-
-            # unrolled_code_lines = unrolled_code.split('\n')                # for adding asserts after every line
-            # unrolled_code_lines = [line for line in unrolled_code_lines if line != ""]
-            # unrolled_code = '\n'.join([line + '\n' + assert_stmt for line in unrolled_code_lines])
-
         with open("unrolled_code.tl", "w") as f:
             f.write(unrolled_code)
 
-        parseTree = getParseTree("unrolled_code.tl")
+        try:
+            lexer = tlangLexer(InputStream(unrolled_code))
+            stream = antlr4.CommonTokenStream(lexer)
+            lexer._listeners = [SyntaxErrorListener()]
+            tparser = tlangParser(stream)
+            tparser._listeners = [SyntaxErrorListener()]
+            parseTree = tparser.start()
+        except Exception as e:
+            print("\033[91m\n====================")
+            print(e.__str__() + "\033[0m\n")
+            exit(1)
+
         astgen = astGenPass()
         ir = astgen.visitStart(parseTree)
 

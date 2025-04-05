@@ -74,20 +74,23 @@ class UnrollLoops(tlangVisitor):
         return ctx.getText()
 
     def visitLoop(self, ctx:tlangParser.LoopContext):
+        unrollCount = self.bound
+        if ctx.NUM() is not None:
+            unrollCount = int(ctx.NUM().getText())
         repeatCount = self.visit(ctx.value())
         loopBlock = self.visit(ctx.strict_ilist())
         code = ""
         if (repeatCount[0] != ":"):
             # constant number of iterations
-            code += "assume " + str(repeatCount) + " <= " + str(self.bound) +"\n"
-            for i in range(min(int(repeatCount), self.bound)):
+            code += "assume " + str(repeatCount) + " <= " + str(unrollCount) +"\n"
+            for i in range(min(int(repeatCount), unrollCount)):
                 code += loopBlock + "\n"
         else:
             # variable number of iterations
             repeatVariable = ":_repeat" + str(self.repeatVariablesCounter)
             code += repeatVariable + " = " + repeatCount + "\n"
-            code += "assume " + repeatVariable + " <= " + str(self.bound) +" \n"
-            for i in range(self.bound):
+            code += "assume " + repeatVariable + " <= " + str(unrollCount) +" \n"
+            for i in range(unrollCount):
                 code += "if (" + repeatVariable + " > " + str(i) + ") [\n" + loopBlock + "\n]\n"
             self.repeatVariablesCounter += 1
 

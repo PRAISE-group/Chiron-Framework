@@ -1,222 +1,127 @@
-pendown
-assume 3 <= 10
-if ((:x>:y)) [
-penup
-goto (:x, :y)
-pendown
-assume 4 <= 10
-forward:x
-left90
-
-forward:x
-left90
-
-forward:x
-left90
-
-forward:x
-left90
-
-
-
-] else [
-penup
-goto (:y, :x)
-pendown
-assume 5 <= 10
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-
+:_repeat0 = :a
+assume :_repeat0 <= 5 
+if (:_repeat0 > 0) [
+forward10
+if ((:a<2)) [
+:y=3
 
 ]
-if ((:z>=:p)) [
-penup
-goto (:p, :x+:z)
-pendown
-assume 6 <= 10
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-
 
 ]
-:x=:x+10
-:y=:y+10
-:z=:z+10
-
-if ((:x>:y)) [
-penup
-goto (:x, :y)
-pendown
-assume 4 <= 10
-forward:x
-left90
-
-forward:x
-left90
-
-forward:x
-left90
-
-forward:x
-left90
-
-
-
-] else [
-penup
-goto (:y, :x)
-pendown
-assume 5 <= 10
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-
+if (:_repeat0 > 1) [
+forward10
+if ((:a<2)) [
+:y=3
 
 ]
-if ((:z>=:p)) [
-penup
-goto (:p, :x+:z)
-pendown
-assume 6 <= 10
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-
 
 ]
-:x=:x+10
-:y=:y+10
-:z=:z+10
-
-if ((:x>:y)) [
-penup
-goto (:x, :y)
-pendown
-assume 4 <= 10
-forward:x
-left90
-
-forward:x
-left90
-
-forward:x
-left90
-
-forward:x
-left90
-
-
-
-] else [
-penup
-goto (:y, :x)
-pendown
-assume 5 <= 10
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-forward:p
-left72
-
-
+if (:_repeat0 > 2) [
+forward10
+if ((:a<2)) [
+:y=3
 
 ]
-if ((:z>=:p)) [
-penup
-goto (:p, :x+:z)
-pendown
-assume 6 <= 10
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-backward:x
-left60
-
-
 
 ]
-:x=:x+10
-:y=:y+10
-:z=:z+10
+if (:_repeat0 > 3) [
+forward10
+if ((:a<2)) [
+:y=3
 
+]
 
-penup
+]
+if (:_repeat0 > 4) [
+forward10
+if ((:a<2)) [
+:y=3
 
-assert (:turtleX > 0)
+]
+
+]
+
+:_repeat1 = :a
+assume :_repeat1 <= 10 
+if (:_repeat1 > 0) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 1) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 2) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 3) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 4) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 5) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 6) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 7) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 8) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+if (:_repeat1 > 9) [
+forward10
+if ((:a<2)) [
+:y=3
+
+]
+
+]
+
+assert:turtleX<=1&&:turtleX>=-1&&:turtleY<=1&&:turtleY>=-1
