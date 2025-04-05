@@ -80,6 +80,9 @@ class astGenPass(tlangVisitor):
             print("###Caller Class", str(callerClass))
             print("##########")
             functionArgs.insert(0, callerClass) 
+            # call the private method with mangled name 
+            if len(callerClass.caller) == 1 and functionName.startswith("__") and callerClass.caller[0] == ":self":
+                functionName = f"_{self.class_register}{functionName}"
         print(functionArgs)
         return [(ChironAST.FunctionCallCommand(functionName, functionArgs, callerClass), 1)]
 

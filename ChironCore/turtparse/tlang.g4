@@ -4,10 +4,10 @@ grammar tlang;
 start : instruction_list EOF
       ;
 
-instruction_list : (instruction | declaration)*
+instruction_list : (instruction | declaration | comment)*
 		 ;
 
-strict_ilist : (instruction)+
+strict_ilist : (instruction | comment)+
              ;
 
 declaration : classDeclaration
@@ -118,6 +118,7 @@ condition : NOT condition
 	  | '(' condition ')'
 	  ;
 
+comment : '#' (NAME)* '#' ;
 
 binCondOp :  EQ | NEQ | LT | GT | LTE | GTE
 	 ;
@@ -147,6 +148,6 @@ NUM  : [0-9]+        ;
 REAL : [0-9]+('.'[0-9]+)?;
 VAR  : ':''__'?[a-zA-Z_] [a-zA-Z0-9]* ;
 
-NAME : [a-zA-Z]+     ;
+NAME : '__'?[a-zA-Z]+     ;
 
 Whitespace: [ \t\n\r]+ -> skip;

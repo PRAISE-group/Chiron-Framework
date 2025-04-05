@@ -10,6 +10,11 @@
 10. class must have at least one assignment statement [fixed]
 11. Function overloading with number of arguments [fixed]
 12. print the CHA 
+13. Regular variables can also start with __ !!
+14. Raise error when the normal function name start with __. semantic analysis. allow only private method in classes
+15. :self can only come in the first position in the object access of method call chain
+16. commenting now supported [fixed]
+17. first all the declaration will be processed and then the instructions!
 
 
 

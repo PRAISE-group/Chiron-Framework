@@ -214,6 +214,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#comment.
+    def visitComment(self, ctx:tlangParser.CommentContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#binCondOp.
     def visitBinCondOp(self, ctx:tlangParser.BinCondOpContext):
         return self.visitChildren(ctx)

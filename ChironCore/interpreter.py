@@ -176,8 +176,15 @@ class ConcreteInterpreter(Interpreter):
             exec("setattr(self.prg,\"%s\",%s)" % (var, val))
 
     def handleFunctionDeclaration(self, stmt, tgt):
-        # body of the function starts from next instruction
-        self.function_addresses[stmt.name + "_" + str(len(stmt.params))] = self.pc + 1
+        # mangle the name of private method as _ClassName__methodName
+        if "@" in stmt.name and stmt.name.split("@")[1].startswith("__"):
+            class_name, method_name = stmt.name.split("@")
+            function_name = class_name+ "@" + "_" + class_name.replace(":","") + method_name
+            print("[DEBUGGING] FUNCTION NAME MANGLED TO: ", function_name)
+        else:
+            function_name = stmt.name
+
+        self.function_addresses[function_name + "_" + str(len(stmt.params))] = self.pc + 1 # body of the function starts from next instruction
         return tgt
 
     def handleFunctionCall(self, stmt, tgt):

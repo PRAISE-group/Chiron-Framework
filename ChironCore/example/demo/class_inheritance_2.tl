@@ -1,6 +1,7 @@
 class :Shape {
     :length = 250
-    def moveForward(:self) {
+    def moveForward(:self) 
+    {
         forward :self.:length
         return
     }
@@ -10,12 +11,12 @@ class :Hexagon(:Shape) {
     :sides = 6
     def drawHex(:self) {
         repeat :self.:sides [
-            :self.moveForward(1000)
+            :self.__moveForward(100)
             right 60
         ]
         return
     }
-    def moveForward(:self, :distance) {
+    def __moveForward(:self, :distance) {
         forward :distance
         return
     }
@@ -23,3 +24,5 @@ class :Hexagon(:Shape) {
 
 :hex = new :Hexagon()
 :hex.drawHex()
+# This does not work #
+:hex.__moveForward(100) 
