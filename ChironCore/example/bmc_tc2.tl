@@ -16,11 +16,10 @@ repeat 7 [
 
 :s = 1
 
-@unroll 
 repeat :o [
     :s = :s * :x
     :o = :o - 1
 ]
 
 :z = 2*:p - 3*:q + 5*:r - 7*:s
-assert :z > -10000
+assert :z < -10000

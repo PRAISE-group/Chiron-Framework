@@ -1,5 +1,5 @@
 :t = 1
-assume :x > 0
+// assume :x > 0
 repeat 2 [
     :t = :t * :x
     assert :t > 0

@@ -469,8 +469,8 @@ if __name__ == "__main__":
             print("No conditions found in the program. Exiting...")
             exit(1)
 
-        cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
-        cfgB.dumpCFG(cfg, 'tac_cfg')
+        # cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
+        cfgB.dumpCFG(tacGen.tacCfg, 'tac_cfg')
 
         ssa = SSABuilder(tacGen.tac) # Converting TAC to SSA
         ssaCfg = ssa.build()
