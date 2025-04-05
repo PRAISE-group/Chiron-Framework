@@ -39,6 +39,8 @@ from Infix_To_Prefix import Infix_To_Prefix
 from IfElseToITE import traverse_cfg
 import csv
 from TurtleCommandsCompiler import TurtleCommandsCompiler
+from Z3Integration import Z3Solver
+
 def cleanup():
     pass
 
@@ -508,7 +510,11 @@ if __name__ == "__main__":
         smtlib_code += "(push 1)\n"
         smtlib_code += f"(assert (not (=> (and {invariant_out} (not {loop_condition})) {post_condition})))\n"
         smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
-        print(smtlib_code)
+        # print(smtlib_code)
+        output, errors = Z3Solver(smtlib_code)
+        print("\n======Z3 Output:======\n", output)
+        if errors:
+            print("Z3 Errors:", errors)
 
 
         # (assert (not (=> (and (= s_1 (div (* i_1 (+ i_1 1)) 2)) (not (> __rep_counter_1_0 0))) (= s_1 55))))
@@ -535,6 +541,7 @@ if __name__ == "__main__":
         #     param_code = f"(assert (and {param_code} true))\n"
         #     smtlib_code = CFGtoSmtlib(cfg)
         #     smtlib_code = param_code + smtlib_code
+        #     smtlib_code = f"(assert (not (and {smtlib_code})))"
         # else:
         #     pre_condition, loop_body_code, post_condition, loop_condition, vars = LoopToSmtlib(cfg)
         #     pre_condition = f"(and {param_code} {pre_condition} {pre_condition_cons})"
@@ -571,3 +578,5 @@ if __name__ == "__main__":
         #     for code in smtlib_code:
         #         output_file.write(str(code))
         # print(f"SMT-LIB code written to: {output_filepath}")
+
+    

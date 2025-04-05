@@ -133,6 +133,10 @@ class Div(BinArithOp):
     def __init__(self, lexpr, rexpr):
         super().__init__(lexpr, rexpr, "/")
 
+class Mod(BinArithOp):
+    def __init__(self, lexpr, rexpr):
+        super().__init__(lexpr, rexpr, "%")
+
 
 # --Boolean Expressions-----------------------------------------------
 

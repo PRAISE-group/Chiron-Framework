@@ -8,7 +8,7 @@ import sys
 
 def serializedATN():
     with StringIO() as buf:
-        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3(")
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3)")
         buf.write("\u00bb\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
         buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23\t\23")
@@ -27,8 +27,8 @@ def serializedATN():
         buf.write("\26\3\26\3\26\3\26\7\26\u00b0\n\26\f\26\16\26\u00b3\13")
         buf.write("\26\3\27\3\27\3\30\3\30\3\31\3\31\3\31\2\4\"*\32\2\4\6")
         buf.write("\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\2\n\3\2")
-        buf.write("\r\20\3\2\21\22\3\2\24\26\3\2\31\32\3\2\27\30\3\2\34!")
-        buf.write("\3\2\"#\3\2%&\2\u00b4\2\62\3\2\2\2\48\3\2\2\2\6<\3\2\2")
+        buf.write("\r\20\3\2\21\22\3\2\24\26\3\2\31\33\3\2\27\30\3\2\35\"")
+        buf.write("\3\2#$\3\2&\'\2\u00b4\2\62\3\2\2\2\48\3\2\2\2\6<\3\2\2")
         buf.write("\2\bH\3\2\2\2\nL\3\2\2\2\fN\3\2\2\2\16T\3\2\2\2\20^\3")
         buf.write("\2\2\2\22d\3\2\2\2\24k\3\2\2\2\26o\3\2\2\2\30r\3\2\2\2")
         buf.write("\32t\3\2\2\2\34v\3\2\2\2\36x\3\2\2\2 }\3\2\2\2\"\u0088")
@@ -47,7 +47,7 @@ def serializedATN():
         buf.write("\2YZ\7\6\2\2Z[\7\4\2\2[\\\5\6\4\2\\]\7\5\2\2]\17\3\2\2")
         buf.write("\2^_\7\7\2\2_`\5\60\31\2`a\7\4\2\2ab\5\6\4\2bc\7\5\2\2")
         buf.write("c\21\3\2\2\2de\7\b\2\2ef\7\t\2\2fg\5\"\22\2gh\7\n\2\2")
-        buf.write("hi\5\"\22\2ij\7\13\2\2j\23\3\2\2\2kl\7&\2\2lm\7\f\2\2")
+        buf.write("hi\5\"\22\2ij\7\13\2\2j\23\3\2\2\2kl\7\'\2\2lm\7\f\2\2")
         buf.write("mn\5\"\22\2n\25\3\2\2\2op\5\30\r\2pq\5\"\22\2q\27\3\2")
         buf.write("\2\2rs\t\2\2\2s\31\3\2\2\2tu\t\3\2\2u\33\3\2\2\2vw\7\23")
         buf.write("\2\2w\35\3\2\2\2xy\5 \21\2yz\7\t\2\2z{\5*\26\2{|\7\13")
@@ -64,9 +64,9 @@ def serializedATN():
         buf.write("\u0095\3\2\2\2\u0095#\3\2\2\2\u0096\u0094\3\2\2\2\u0097")
         buf.write("\u0098\t\5\2\2\u0098%\3\2\2\2\u0099\u009a\t\6\2\2\u009a")
         buf.write("\'\3\2\2\2\u009b\u009c\7\30\2\2\u009c)\3\2\2\2\u009d\u009e")
-        buf.write("\b\26\1\2\u009e\u009f\7$\2\2\u009f\u00aa\5*\26\7\u00a0")
+        buf.write("\b\26\1\2\u009e\u009f\7%\2\2\u009f\u00aa\5*\26\7\u00a0")
         buf.write("\u00a1\5\"\22\2\u00a1\u00a2\5,\27\2\u00a2\u00a3\5\"\22")
-        buf.write("\2\u00a3\u00aa\3\2\2\2\u00a4\u00aa\7\33\2\2\u00a5\u00a6")
+        buf.write("\2\u00a3\u00aa\3\2\2\2\u00a4\u00aa\7\34\2\2\u00a5\u00a6")
         buf.write("\7\t\2\2\u00a6\u00a7\5*\26\2\u00a7\u00a8\7\13\2\2\u00a8")
         buf.write("\u00aa\3\2\2\2\u00a9\u009d\3\2\2\2\u00a9\u00a0\3\2\2\2")
         buf.write("\u00a9\u00a4\3\2\2\2\u00a9\u00a5\3\2\2\2\u00aa\u00b1\3")
@@ -94,17 +94,17 @@ class tlangParser ( Parser ):
                      "'goto'", "'('", "','", "')'", "'='", "'forward'", 
                      "'backward'", "'left'", "'right'", "'penup'", "'pendown'", 
                      "'pause'", "'assert'", "'invariant'", "'assume'", "'+'", 
-                     "'-'", "'*'", "'/'", "'pendown?'", "'<'", "'>'", "'=='", 
-                     "'!='", "'<='", "'>='", "'&&'", "'||'", "'!'" ]
+                     "'-'", "'*'", "'/'", "'%'", "'pendown?'", "'<'", "'>'", 
+                     "'=='", "'!='", "'<='", "'>='", "'&&'", "'||'", "'!'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "<INVALID>", "PLUS", "MINUS", "MUL", "DIV", "PENCOND", 
-                      "LT", "GT", "EQ", "NEQ", "LTE", "GTE", "AND", "OR", 
-                      "NOT", "NUM", "VAR", "NAME", "Whitespace" ]
+                      "<INVALID>", "PLUS", "MINUS", "MUL", "DIV", "MOD", 
+                      "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", "GTE", 
+                      "AND", "OR", "NOT", "NUM", "VAR", "NAME", "Whitespace" ]
 
     RULE_start = 0
     RULE_instruction_list = 1
@@ -163,20 +163,21 @@ class tlangParser ( Parser ):
     MINUS=22
     MUL=23
     DIV=24
-    PENCOND=25
-    LT=26
-    GT=27
-    EQ=28
-    NEQ=29
-    LTE=30
-    GTE=31
-    AND=32
-    OR=33
-    NOT=34
-    NUM=35
-    VAR=36
-    NAME=37
-    Whitespace=38
+    MOD=25
+    PENCOND=26
+    LT=27
+    GT=28
+    EQ=29
+    NEQ=30
+    LTE=31
+    GTE=32
+    AND=33
+    OR=34
+    NOT=35
+    NUM=36
+    VAR=37
+    NAME=38
+    Whitespace=39
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -1242,6 +1243,9 @@ class tlangParser ( Parser ):
         def DIV(self):
             return self.getToken(tlangParser.DIV, 0)
 
+        def MOD(self):
+            return self.getToken(tlangParser.MOD, 0)
+
         def getRuleIndex(self):
             return tlangParser.RULE_multiplicative
 
@@ -1263,7 +1267,7 @@ class tlangParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 149
             _la = self._input.LA(1)
-            if not(_la==tlangParser.MUL or _la==tlangParser.DIV):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << tlangParser.MUL) | (1 << tlangParser.DIV) | (1 << tlangParser.MOD))) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)

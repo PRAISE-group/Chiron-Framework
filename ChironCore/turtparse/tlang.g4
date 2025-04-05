@@ -51,7 +51,7 @@ expression :
 		   | '(' expression ')'                    #parenExpr
  	   ;
 
-multiplicative : MUL | DIV;
+multiplicative : MUL | DIV | MOD;
 additive : PLUS | MINUS;
 
 unaryArithOp : MINUS ;
@@ -60,6 +60,7 @@ PLUS     : '+' ;
 MINUS    : '-' ;
 MUL  	 : '*' ;
 DIV      : '/' ;
+MOD      : '%' ;
 
 
 // TODO :
