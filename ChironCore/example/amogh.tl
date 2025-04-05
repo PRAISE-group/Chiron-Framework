@@ -12,7 +12,10 @@
 
 repeat :a [
     forward 10
+    if (:a < 2) [
+        :y = 3
+    ]
 ]
 
-assume :a < 1
+// assume :a == 2
 assert :turtleX <= 1 && :turtleX >= -1 && :turtleY <= 1 && :turtleY >= -1

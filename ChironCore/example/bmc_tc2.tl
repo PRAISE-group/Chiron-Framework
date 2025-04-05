@@ -1,4 +1,5 @@
 :p = 1
+
 repeat 5 [
     :t = :t * :x
 ]
@@ -14,8 +15,11 @@ repeat 7 [
 ]
 
 :s = 1
-repeat 9 [
+
+@unroll 
+repeat :o [
     :s = :s * :x
+    :o = :o - 1
 ]
 
 :z = 2*:p - 3*:q + 5*:r - 7*:s

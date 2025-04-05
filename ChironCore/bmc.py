@@ -196,7 +196,10 @@ class BMC:
                         cond = z3.BoolVal(False)
                     elif isinstance(stmt.cond, ChironSSA.Var):
                         cond = z3.Bool(stmt.cond.name)
-                    self.assert_conditions = z3.And(self.assert_conditions, cond)
+                    if self.varConditions[stmt.cond.name] not in (None, True, False):
+                        self.assert_conditions = z3.And(self.assert_conditions, z3.Implies(self.varConditions[stmt.cond.name], cond))
+                    elif self.varConditions[stmt.cond.name] is not False:
+                        self.assert_conditions = z3.And(self.assert_conditions, cond)
 
                 elif isinstance(stmt, ChironSSA.AssumeCommand):
                     cond = None
@@ -206,7 +209,10 @@ class BMC:
                         cond = z3.BoolVal(False)
                     elif isinstance(stmt.cond, ChironSSA.Var):
                         cond = z3.Bool(stmt.cond.name)
-                    self.assume_conditions = z3.And(self.assume_conditions, cond)
+                    if self.varConditions[stmt.cond.name] not in (None, True, False):
+                        self.assume_conditions = z3.And(self.assume_conditions, z3.Implies(self.varConditions[stmt.cond.name], cond))
+                    elif self.varConditions[stmt.cond.name] is not False:
+                        self.assume_conditions = z3.And(self.assume_conditions, cond)
 
                 elif isinstance(stmt, ChironSSA.CosCommand): # Only for 0, 90, 180, 270 degree
                     rvar = z3.Int(stmt.rvar.name)
@@ -249,8 +255,17 @@ class BMC:
         self.solver.add(self.angle_conditions)
         self.solver.add(self.assume_conditions)
 
-        # print("The clauses are:")
-        # print(self.solver, end="\n\n")
+        checker_with_assume = z3.Solver()
+        checker_with_assume.add(self.solver_without_cond.assertions())
+        checker_with_assume.add(self.assume_conditions)
+
+        assume_check = checker_with_assume.check()
+        if assume_check == z3.unsat:
+            print("Give a larger unroll bound")
+            return
+        elif assume_check == z3.unknown:
+            print("Cannot determine if unroll bound is sufficient")
+            return
 
         sat = self.solver.check()
 
