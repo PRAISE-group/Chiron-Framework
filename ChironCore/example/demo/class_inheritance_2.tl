@@ -10,13 +10,13 @@ class :Hexagon(:Shape) {
     :sides = 6
     def drawHex(:self) {
         repeat :self.:sides [
-            :self.moveForward()
+            :self.moveForward(1000)
             right 60
         ]
         return
     }
-    def moveForward(:self) {
-        forward 100
+    def moveForward(:self, :distance) {
+        forward :distance
         return
     }
 }
