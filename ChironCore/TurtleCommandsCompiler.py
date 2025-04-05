@@ -11,55 +11,75 @@ class TurtleCommandsCompiler():
         if(command.direction == "left"):
             lexpr = self.w
             rexpr = ChironAST.Sum(self.w, command.expr)
+            num = ChironAST.Num(360)
+            rexpr = ChironAST.Mod(rexpr, num)
             new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
             
         
         if(command.direction == "right"):
             lexpr = self.w
             rexpr = ChironAST.Diff(self.w, command.expr)
+            num = ChironAST.Num(360)
+            rexpr = ChironAST.Mod(rexpr, num)
             new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
             
-        # if(command.direction == "forward"):
-        #     if(self.w%360 == 0):
-        #         lexpr = self.x
-        #         rexpr = ChironAST.Sum(self.x, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
-                
-        #     if(self.w%360 == 90):
-        #         lexpr = self.y
-        #         rexpr = ChironAST.Sum(self.y, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
-                
-        #     if(self.w%360 == 180):
-        #         lexpr = self.x
-        #         rexpr = ChironAST.Diff(self.x, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
-                
-        #     if(self.w%360 == 270):
-        #         lexpr = self.y
-        #         rexpr = ChironAST.Diff(self.y, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
-        
-        # if(command.direction == "backward"):
-        #     if(self.w%360 == 0):
-        #         lexpr = self.x
-        #         rexpr = ChironAST.Diff(self.x, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
-                
-        #     if(self.w%360 == 90):
-        #         lexpr = self.y
-        #         rexpr = ChironAST.Diff(self.y, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
-                
-        #     if(self.w%360 == 180):
-        #         lexpr = self.x
-        #         rexpr = ChironAST.Sum(self.x, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
-                
-        #     if(self.w%360 == 270):
-        #         lexpr = self.y
-        #         rexpr = ChironAST.Sum(self.y, command.expr)
-        #         new_command = ChironAST.AssignmentCommand(lexpr, rexpr)
+        if(command.direction == "forward"):
+            commands = []
+
+            # x = x + forw_amt*((1-(n%2))*(1-2*(n//2)))
+            # y = y + forw_amt*((n%2)*(1-2*(n//2)))
+
+            n = ChironAST.Div(self.w, ChironAST.Num(90))
+            n_mod2 = ChironAST.Mod(n, ChironAST.Num(2))
+            n_div2 = ChironAST.Div(n, ChironAST.Num(2))
+            term2 = ChironAST.Diff(ChironAST.Num(1), ChironAST.Mult(ChironAST.Num(2), n_div2))
+            term1 = ChironAST.Diff(ChironAST.Num(1), n_mod2)
+            commands.append(
+                ChironAST.AssignmentCommand(
+                    self.x,
+                    ChironAST.Sum(
+                        self.x,
+                        ChironAST.Mult(command.expr, ChironAST.Mult(term1, term2))
+                    )
+                )
+            )
+            commands.append(
+                ChironAST.AssignmentCommand(
+                    self.y,
+                    ChironAST.Sum(
+                        self.y,
+                        ChironAST.Mult(command.expr, ChironAST.Mult(n_mod2, term2))
+                    )
+                )
+            )
+            return commands
+
+        if(command.direction == "backward"):
+            commands = []
+            n = ChironAST.Div(self.w, ChironAST.Num(90))
+            n_mod2 = ChironAST.Mod(n, ChironAST.Num(2))
+            n_div2 = ChironAST.Div(n, ChironAST.Num(2))
+            term2 = ChironAST.Diff(ChironAST.Mult(ChironAST.Num(2), n_div2), ChironAST.Num(1))
+            term1 = ChironAST.Diff(ChironAST.Num(1), n_mod2)
+            commands.append(
+                ChironAST.AssignmentCommand(
+                    self.x,
+                    ChironAST.Sum(
+                        self.x,
+                        ChironAST.Mult(command.expr, ChironAST.Mult(term1, term2))
+                    )
+                )
+            )
+            commands.append(
+                ChironAST.AssignmentCommand(
+                    self.y,
+                    ChironAST.Sum(
+                        self.y,
+                        ChironAST.Mult(command.expr, ChironAST.Mult(n_mod2, term2))
+                    )
+                )
+            )
+            return commands
         
         return [new_command]
         
@@ -83,4 +103,3 @@ class TurtleCommandsCompiler():
         if(type(command) == ChironAST.PenCommand):
             return self.compile_pen_command(command)
         return [command]
-    

@@ -429,6 +429,10 @@ if __name__ == "__main__":
             for st in new_stmts:
                 new_irList.append((st, entry[1]))
         new_irList = IrWithParams(args.params) + new_irList
+
+        irHandler.setIR(new_irList)
+        irHandler.pretty_print(irHandler.ir)
+
         cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
         cfgB.dumpCFG(cfg, "control_flow_graph")
         irList = traverse_cfg(cfg)
@@ -465,24 +469,21 @@ if __name__ == "__main__":
             elif stmt[1] == 'assert':
                 post_condition = Infix_To_Prefix(stmt[0], True)
             elif stmt[1] == 'ite':
-                pattern = r"(\w+)\s*=\s*\(\((.*?)\),\s*(.*?),\s*(.*?)\)"
+                print(stmt[0])
+                pattern = r"(\w+)\s*=\s*\(\((.*?)\),\s*\((.*?)\),\s*\((.*?)\)\)"
                 match = re.match(pattern, stmt[0])
                 if_var = match.group(1)
                 if_cond = match.group(2)
                 if_value = match.group(3)
                 else_value = match.group(4)
+                print(if_var)
+                print(if_cond)
+                print(if_value)
+                print(else_value)
                 stat = f"(= {if_var} (ite {Infix_To_Prefix(if_cond, True)} {Infix_To_Prefix(if_value, True)} {Infix_To_Prefix(else_value, True)}))"
                 temp.append(stat)
             else:
                 temp.append(Infix_To_Prefix(stmt[0], True))
-
-        # print(pre_code)
-        # print(pre_condition)
-        # print(loop_condition)
-        # print(loop_code)
-        # print(post_condition)
-        # print(invariant_in)
-        # print(invariant_out)
 
         smtlib_code = ""
         for var, ct in vars_map.items():
@@ -515,68 +516,5 @@ if __name__ == "__main__":
         print("\n======Z3 Output:======\n", output)
         if errors:
             print("Z3 Errors:", errors)
+        
 
-
-        # (assert (not (=> (and (= s_1 (div (* i_1 (+ i_1 1)) 2)) (not (> __rep_counter_1_0 0))) (= s_1 55))))
-        #     # if stmt[1] == "ite":
-        #     #     temp.append(f"stmt[0]")
-        #     # else:
-        #     #     new_stmt = Infix_To_Prefix(stmt[0], True)
-        #     new_code.append((new_stmt, stmt[1]))
-        # code = Infix_To_Prefix(code)
-
-    # if args.smtlib:
-    #     constraint_filepath, output_filepath = args.smtlib
-    #     # pre_condition_cons, post_condition_cons, invariant = ConstraintToSmtlib(constraint_filepath)
-    #     # cfg = cfgB.buildCFG(ir, "control_flow_graph", False)
-    #     code = rename_vars(ir) 
-        # for stmt in ir:
-        #     print(stmt[0])
-        # param_code = ""
-        # if args.params:
-        #     for var, val in args.params.items(): 
-        #         param_code += f"(= {var.lstrip(':')} {val})"
-
-        # if invariant is None:
-        #     param_code = f"(assert (and {param_code} true))\n"
-        #     smtlib_code = CFGtoSmtlib(cfg)
-        #     smtlib_code = param_code + smtlib_code
-        #     smtlib_code = f"(assert (not (and {smtlib_code})))"
-        # else:
-        #     pre_condition, loop_body_code, post_condition, loop_condition, vars = LoopToSmtlib(cfg)
-        #     pre_condition = f"(and {param_code} {pre_condition} {pre_condition_cons})"
-        #     post_condition = f"(and {post_condition} {post_condition_cons})"
-        #     vars = [var[1:] if var.startswith(":") else var for var in vars]
-        #     pre_condition = replace_smtlib_variables(pre_condition, vars, "_in")
-        #     post_condition = replace_smtlib_variables(post_condition, vars, "_out")
-        #     invariant_in = replace_smtlib_variables(invariant, vars, "_in")
-        #     invariant_out = replace_smtlib_variables(invariant, vars, "_out")
-        #     smtlib_code = ""
-        #     smtlib_code += f"(=> {pre_condition} {invariant_in}) "
-        #     smtlib_code += f"(=> (and {loop_body_code} {loop_condition} {invariant_in}) {invariant_out}) "
-        #     smtlib_code += f"(=> (and {loop_body_code} (not (and {loop_condition} true))) {post_condition}) "
-        #     smtlib_code = f"(assert (not (and {smtlib_code})))"
-        #     print(smtlib_code)
-        #     # print(vars)
-        #     # print(invariant_in)
-        #     # print(invariant_out)
-        #     # print(pre_condition)
-        #     # print(post_condition)
-        #     # print(invariant)
-        #     # print(loop_condition)
-        #     # print(loop_body_code)
-
-       
-        # vars = extract_variables(smtlib_code)
-        # decl_code = ""
-        # for var in vars:
-        #     decl_code += f"(declare-fun {var} () Int)\n"
-        # end_part = "(check-sat)\n(get-model)"
-        # smtlib_code = decl_code + smtlib_code + "\n"
-        # smtlib_code += end_part
-        # with open(output_filepath, "w") as output_file:
-        #     for code in smtlib_code:
-        #         output_file.write(str(code))
-        # print(f"SMT-LIB code written to: {output_filepath}")
-
-    

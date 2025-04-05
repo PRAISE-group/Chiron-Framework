@@ -9,6 +9,7 @@ repeat 4 [
     else [
         right 90
     ]
+    forward 10
     penup
 ]
-assert(:w == 270)
+assert(:y == 270)

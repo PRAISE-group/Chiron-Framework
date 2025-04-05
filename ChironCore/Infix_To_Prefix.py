@@ -46,7 +46,7 @@ class PrefixNotationConverter(ast.NodeVisitor):
             ast.LtE: '<=',
             ast.Eq: '=',
             ast.NotEq: '!=',
-            # ast.Mod: 'mod',
+            ast.Mod: 'mod',
             ast.And: 'and',
             ast.Or: 'or',
             ast.Not: '~',
@@ -64,6 +64,7 @@ def preprocess_expression(expr: str, replace_eq):
 
 def Construct_AST(expr: str, replace_eq):
     expr= preprocess_expression(expr, replace_eq)
+    # print(expr)
     try:
         tree = ast.parse(expr, mode='eval')
         return tree
