@@ -177,7 +177,7 @@ class ConcreteInterpreter(Interpreter):
 
     def handleFunctionDeclaration(self, stmt, tgt):
         # body of the function starts from next instruction
-        self.function_addresses[stmt.name] = self.pc + 1
+        self.function_addresses[stmt.name + "_" + str(len(stmt.params))] = self.pc + 1
         return tgt
 
     def handleFunctionCall(self, stmt, tgt):
@@ -195,10 +195,10 @@ class ConcreteInterpreter(Interpreter):
         # If the function is a method, the name will be in the form of "caller@method"
         if stmt.caller:
             caller_class = eval(addContext(stmt.caller)).__class__.__name__
-            method_name = ":" + str(caller_class) + "@" + str(stmt.name)
+            method_name = ":" + str(caller_class) + "@" + str(stmt.name) +  "_" + str(len(stmt.args))
             self.pc = self.function_addresses[method_name]   
         else:
-            self.pc = self.function_addresses[stmt.name]
+            self.pc = self.function_addresses[stmt.name + "_" + str(len(stmt.args))]
         # Initialize a new program context for the new activation record
         self.prg = ProgramContext()
         return 0

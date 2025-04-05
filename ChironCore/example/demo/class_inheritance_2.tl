@@ -15,6 +15,10 @@ class :Hexagon(:Shape) {
         ]
         return
     }
+    def moveForward(:self) {
+        forward 100
+        return
+    }
 }
 
 :hex = new :Hexagon()
