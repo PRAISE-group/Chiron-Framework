@@ -49,7 +49,8 @@ def rename_vars(ir):
 
         for var in rhs_vars:
             if var not in rename_map:
-                raise ValueError(f"Variable '{var}' not initialised before first use!")
+                rename_map[var] = 0
+                # raise ValueError(f"Variable '{var}' not initialised before first use!")
             rexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', rexpr)
 
         for var in lhs_vars:
