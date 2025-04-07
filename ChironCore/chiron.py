@@ -218,6 +218,14 @@ if __name__ == "__main__":
         help="Unroll bound for the program. Default is 10.",
     )
 
+    cmdparser.add_argument(
+        "-aconf",
+        "--angle-conf",
+        type=str,
+        default="",
+        help="Angle configuration file for BMC.",
+    )
+
     args = cmdparser.parse_args()
     ir = ""
 
@@ -420,6 +428,18 @@ if __name__ == "__main__":
         print("\nBounded Model Checking...")
         unroll_bound = args.unroll_bound
 
+        angle_conf = [[0, 1, 0], [90, 0, 1], [180, -1, 0], [270, 0, -1]]
+        if args.angle_conf:
+            with open(args.angle_conf, "r") as f:
+                angle_conf = f.read()
+                # csv format (angle,cos,sin)
+                angle_conf = [x.split(",") for x in angle_conf.split("\n") if x]
+                angle_conf = [
+                    (int(x[0]), float(x[1]), float(x[2])) for x in angle_conf
+                ]
+            
+        print("Valid angles: ", angle_conf)
+
         if unroll_bound < 1:
             print("Invalid unroll bound. Exiting...")
             exit(1)
@@ -461,7 +481,7 @@ if __name__ == "__main__":
         cfgB.dumpCFG(ssaCfg, 'ssa_cfg') # Saving SSA Form of the program to file ssa_cfg.png
 
         print("\nConverting program to SMT-LIB format...\n")
-        smt = bmc.BMC(ssaCfg)
+        smt = bmc.BMC(ssaCfg, angle_conf)
         smt.convertSSAtoSMT()
         smt.solve(tacGen.getFreeVariables())
         print("DONE...")

@@ -8,7 +8,7 @@ import sys
 
 def serializedATN():
     with StringIO() as buf:
-        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3*")
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3+")
         buf.write("\u00cd\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
         buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23\t\23")
@@ -29,11 +29,11 @@ def serializedATN():
         buf.write("\27\f\27\16\27\u00c5\13\27\3\30\3\30\3\31\3\31\3\32\3")
         buf.write("\32\3\32\2\4\",\33\2\4\6\b\n\f\16\20\22\24\26\30\32\34")
         buf.write("\36 \"$&(*,.\60\62\2\t\3\2\16\21\3\2\22\23\3\2\31\32\3")
-        buf.write("\2\27\30\3\2\35\"\3\2#$\3\2&\'\2\u00c8\2\64\3\2\2\2\4")
-        buf.write(":\3\2\2\2\6>\3\2\2\2\bK\3\2\2\2\nO\3\2\2\2\fQ\3\2\2\2")
-        buf.write("\16W\3\2\2\2\20o\3\2\2\2\22q\3\2\2\2\24x\3\2\2\2\26|\3")
-        buf.write("\2\2\2\30\177\3\2\2\2\32\u0081\3\2\2\2\34\u0083\3\2\2")
-        buf.write("\2\36\u0085\3\2\2\2 \u0088\3\2\2\2\"\u0094\3\2\2\2$\u00a7")
+        buf.write("\2\27\30\3\2\35\"\3\2#$\3\2&(\2\u00c8\2\64\3\2\2\2\4:")
+        buf.write("\3\2\2\2\6>\3\2\2\2\bK\3\2\2\2\nO\3\2\2\2\fQ\3\2\2\2\16")
+        buf.write("W\3\2\2\2\20o\3\2\2\2\22q\3\2\2\2\24x\3\2\2\2\26|\3\2")
+        buf.write("\2\2\30\177\3\2\2\2\32\u0081\3\2\2\2\34\u0083\3\2\2\2")
+        buf.write("\36\u0085\3\2\2\2 \u0088\3\2\2\2\"\u0094\3\2\2\2$\u00a7")
         buf.write("\3\2\2\2&\u00a9\3\2\2\2(\u00ab\3\2\2\2*\u00ad\3\2\2\2")
         buf.write(",\u00bb\3\2\2\2.\u00c6\3\2\2\2\60\u00c8\3\2\2\2\62\u00ca")
         buf.write("\3\2\2\2\64\65\5\4\3\2\65\66\7\2\2\3\66\3\3\2\2\2\679")
@@ -52,7 +52,7 @@ def serializedATN():
         buf.write("jk\5\62\32\2kl\7\4\2\2lm\5\6\4\2mn\7\5\2\2np\3\2\2\2o")
         buf.write("a\3\2\2\2og\3\2\2\2p\21\3\2\2\2qr\7\t\2\2rs\7\n\2\2st")
         buf.write("\5\"\22\2tu\7\13\2\2uv\5\"\22\2vw\7\f\2\2w\23\3\2\2\2")
-        buf.write("xy\7\'\2\2yz\7\r\2\2z{\5\"\22\2{\25\3\2\2\2|}\5\30\r\2")
+        buf.write("xy\7(\2\2yz\7\r\2\2z{\5\"\22\2{\25\3\2\2\2|}\5\30\r\2")
         buf.write("}~\5\"\22\2~\27\3\2\2\2\177\u0080\t\2\2\2\u0080\31\3\2")
         buf.write("\2\2\u0081\u0082\t\3\2\2\u0082\33\3\2\2\2\u0083\u0084")
         buf.write("\7\24\2\2\u0084\35\3\2\2\2\u0085\u0086\7\25\2\2\u0086")
@@ -113,8 +113,8 @@ class tlangParser ( Parser ):
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "PLUS", "MINUS", "MUL", "DIV", "MOD", 
                       "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", "GTE", 
-                      "AND", "OR", "NOT", "NUM", "VAR", "NAME", "Whitespace", 
-                      "Comment" ]
+                      "AND", "OR", "NOT", "NUM", "FLOAT", "VAR", "NAME", 
+                      "Whitespace", "Comment" ]
 
     RULE_start = 0
     RULE_instruction_list = 1
@@ -187,10 +187,11 @@ class tlangParser ( Parser ):
     OR=34
     NOT=35
     NUM=36
-    VAR=37
-    NAME=38
-    Whitespace=39
-    Comment=40
+    FLOAT=37
+    VAR=38
+    NAME=39
+    Whitespace=40
+    Comment=41
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -1222,7 +1223,7 @@ class tlangParser ( Parser ):
                 self.state = 139
                 self.expression(6)
                 pass
-            elif token in [tlangParser.NUM, tlangParser.VAR]:
+            elif token in [tlangParser.NUM, tlangParser.FLOAT, tlangParser.VAR]:
                 localctx = tlangParser.ValueExprContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
@@ -1716,6 +1717,9 @@ class tlangParser ( Parser ):
         def VAR(self):
             return self.getToken(tlangParser.VAR, 0)
 
+        def FLOAT(self):
+            return self.getToken(tlangParser.FLOAT, 0)
+
         def getRuleIndex(self):
             return tlangParser.RULE_value
 
@@ -1737,7 +1741,7 @@ class tlangParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 200
             _la = self._input.LA(1)
-            if not(_la==tlangParser.NUM or _la==tlangParser.VAR):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << tlangParser.NUM) | (1 << tlangParser.FLOAT) | (1 << tlangParser.VAR))) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)

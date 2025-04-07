@@ -444,8 +444,7 @@ class TACGenerator:
                     self.freeVars.add(stmt.rvar1.__str__())
                 if isinstance(stmt.rvar2, ChironTAC.Var) and stmt.rvar2.__str__() not in boundVars:
                     self.freeVars.add(stmt.rvar2.__str__())
-                if self.varConditions[stmt.lvar.name] is True:
-                    boundVars.add(stmt.lvar.__str__())
+                boundVars.add(stmt.lvar.__str__())
             elif isinstance(stmt, ChironTAC.ConditionCommand):
                 if isinstance(stmt.cond, ChironTAC.Var) and stmt.cond.__str__() not in boundVars:
                     self.freeVars.add(stmt.cond.__str__())
@@ -466,13 +465,11 @@ class TACGenerator:
             elif isinstance(stmt, ChironTAC.SinCommand):
                 if isinstance(stmt.rvar, ChironTAC.Var) and stmt.rvar.__str__() not in boundVars:
                     self.freeVars.add(stmt.rvar.__str__())
-                if self.varConditions[stmt.lvar.name] is True:
-                    boundVars.add(stmt.lvar.__str__())
+                boundVars.add(stmt.lvar.__str__())
             elif isinstance(stmt, ChironTAC.CosCommand):
                 if isinstance(stmt.rvar, ChironTAC.Var) and stmt.rvar.__str__() not in boundVars:
                     self.freeVars.add(stmt.rvar.__str__())
-                if self.varConditions[stmt.lvar.name] is True:
-                    boundVars.add(stmt.lvar.__str__())
+                boundVars.add(stmt.lvar.__str__())
     
         return self.freeVars
 

@@ -231,7 +231,7 @@ class Value(Expression):
 
 class Num(Value):
     def __init__(self, v):
-        self.val = int(v)
+        self.val = float(v)
 
     def __str__(self):
         return str(self.val)

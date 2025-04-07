@@ -95,11 +95,14 @@ AND: '&&';
 OR : '||';
 NOT: '!' ;
 
-value : NUM
+value : NUM  
       | VAR
+      | FLOAT
       ;
 
 NUM  : [0-9]+        ;
+
+FLOAT : NUM '.' NUM      ;
 
 VAR  : ':'[a-zA-Z_] [a-zA-Z0-9]* ;
 
