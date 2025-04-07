@@ -5,6 +5,6 @@ def add(:a, :b)
 }
 def increment(:a)
 {
-    return add(:a, 1)
+    return (add(:a, 1))
 }
 print(increment(4))

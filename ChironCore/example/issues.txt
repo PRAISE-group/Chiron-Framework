@@ -15,6 +15,7 @@
 15. :self can only come in the first position in the object access of method call chain
 16. commenting now supported [fixed]
 17. first all the declaration will be processed and then the instructions!
+18. Strictly enforce the keywords like return and def to not be used as function of class names
 
 
 

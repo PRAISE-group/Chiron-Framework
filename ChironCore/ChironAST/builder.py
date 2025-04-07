@@ -38,13 +38,17 @@ class astGenPass(tlangVisitor):
         instrList = []
 
         for declr in ctx.declaration():
-            self.stmtList.extend(self.subStmtList + self.visit(declr))
+            instrList = self.visit(declr)
+            self.stmtList.extend(self.subStmtList + instrList)
             self.subStmtList = []
+            instrList = []
             self.virtualRegCount = 0
             
         for instr in ctx.instruction():
-            self.stmtList.extend(self.subStmtList + self.visit(instr))
+            instrList = self.visit(instr)
+            self.stmtList.extend(self.subStmtList + instrList)
             self.subStmtList = []
+            instrList = []
             self.virtualRegCount = 0
 
         return []
