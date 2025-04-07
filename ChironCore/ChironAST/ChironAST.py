@@ -338,14 +338,14 @@ class Array(Value):
 #     #     return self.var.__str__() + "[" + self.idx.__str__() + "]"
 
 
-class ObjectOrArrayAccess(Value):
-    def __init__(self, var, accesses):
+class DataLocationAccess(Value):
+    def __init__(self, var, access_chain):
         self.var = var
-        self.accesses = accesses  # List of attribute names or indices
+        self.access_chain = access_chain  # List of attribute names or indices
 
     def __str__(self):
         result = self.var
-        for access in self.accesses:
+        for access in self.access_chain:
             if isinstance(access, list):  # Array indexing
                 indices_str = "".join(f"[{idx}]" for idx in access)
                 result += indices_str
@@ -354,12 +354,12 @@ class ObjectOrArrayAccess(Value):
         return result
 
 class MethodCaller:
-    def __init__(self, caller):
-        self.caller = caller
+    def __init__(self, access_chain):
+        self.access_chain = access_chain
 
     def __str__(self):
         result = ""
-        for access in self.caller:
+        for access in self.access_chain:
             if isinstance(access, list):  # Array indexing
                 indices_str = "".join(f"[{idx}]" for idx in access)
                 result += indices_str

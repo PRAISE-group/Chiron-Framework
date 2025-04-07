@@ -7,4 +7,4 @@ def increment(:a)
 {
     return (add(:a, 1))
 }
-print(increment(4))
+print(increment(4)*5)

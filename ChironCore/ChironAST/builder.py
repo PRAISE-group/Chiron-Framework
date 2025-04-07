@@ -14,174 +14,159 @@ sys.path.insert(0, os.path.join("..", "turtparse"))
 class astGenPass(tlangVisitor):
 
     def __init__(self):
-        self.repeatInstrCount = 0  # keeps count for no of 'repeat' instructions
-        self.stmtList = []
+        self.repeatInstrCount = 0           # Counter for 'repeat' instructions
+        self.stmtList = []                  # Final list of all executable statements
+        # Temporary list of sub-statements generated for expression breakdown
         self.subStmtList = []
+        # Counter for naming virtual registers used during code synthesis
         self.virtualRegCount = 0
-        self.class_register = ""
+        # Holds the name of the current class context being compiled
+        self.classRegister = None
 
-    def getLval(self, ctx:tlangParser.LvalueContext):
-
+    def visitLvalue(self, ctx: tlangParser.LvalueContext):
         if ctx.VAR():
             if isinstance(ctx.VAR(), list):
                 return ChironAST.Var(ctx.VAR()[0].getText())
             return ChironAST.Var(ctx.VAR().getText())
-        elif ctx.objectOrArrayAccess():
-            return self.visitObjectOrArrayAccess(ctx.objectOrArrayAccess())
+        elif ctx.dataLocationAccess():
+            return self.visitDataLocationAccess(ctx.dataLocationAccess())
 
     def visitStart(self, ctx: tlangParser.StartContext):
-        stmtList = self.visit(ctx.instruction_list())
-        self.stmtList.extend(stmtList)
+        """Entry point for visiting the parse tree. Returns the synthesized statement list."""
+        self.visit(ctx.statement_list())
         return self.stmtList
 
-    def visitInstruction_list(self, ctx: tlangParser.Instruction_listContext):
-        instrList = []
+    def visitStatement_list(self, ctx: tlangParser.Statement_listContext):
+        self.stmtList.extend(self.visit(ctx.declaration_list()))
+        self.stmtList.extend(self.visit(ctx.strict_ilist()))
 
-        for declr in ctx.declaration():
-            instrList = self.visit(declr)
-            self.stmtList.extend(self.subStmtList + instrList)
+    def processInstructionBlock(self, items):
+        """
+        Shared utility for processing declaration or instruction blocks.
+        Appends the resulting instructions and sub-statements to the main statement list.
+        """
+        stmtList = []
+        for item in items:
+            currStmtList = self.visit(item)
+            stmtList.extend(self.subStmtList + currStmtList)
             self.subStmtList = []
-            instrList = []
             self.virtualRegCount = 0
-            
-        for instr in ctx.instruction():
-            instrList = self.visit(instr)
-            self.stmtList.extend(self.subStmtList + instrList)
-            self.subStmtList = []
-            instrList = []
-            self.virtualRegCount = 0
+        return stmtList
 
-        return []
-    
+    def visitDeclaration_list(self, ctx: tlangParser.Declaration_listContext):
+        return self.processInstructionBlock(ctx.declaration())
+
     def visitStrict_ilist(self, ctx: tlangParser.Strict_ilistContext):
-        # TODO: code refactoring. visitInstruction_list and visitStrict_ilist have same body
-        instrList = []
-        for instr in ctx.instruction():
-            visvalue = self.visit(instr)
-            instrList.extend(self.subStmtList + visvalue)
-            self.subStmtList = []
-            self.virtualRegCount = 0
+        return self.processInstructionBlock(ctx.instruction())
 
-        return instrList
-
-    def visitFunctionDeclaration(self, ctx: tlangParser.FunctionDeclarationContext, className = None):
-        if className:
-            functionName = className + "@" + ctx.NAME().getText()
+    def visitFunctionDeclaration(self, ctx: tlangParser.FunctionDeclarationContext):
+        # address(pc) of method will be registered in the interpreter against the key of the form ":className@methodName"
+        if self.classRegister is not None:
+            functionName = ":" + self.classRegister + "@" + ctx.NAME().getText()
         else:
             functionName = ctx.NAME().getText()
         functionParams = [param.getText() for param in ctx.parameters(
         ).VAR()] if ctx.parameters() is not None else None
         functionBody = self.visit(ctx.strict_ilist())
+        # function compilation generated two extra statements apart from the function body
+        # 1. function declaration - This command is used to register the address(pc) of the function in the interpreter
+        #                           against the function name
+        # 2. parameters passing - This command is used to push the parameters to the function on the call stack
         return [(ChironAST.FunctionDeclarationCommand(functionName, functionParams, functionBody), len(functionBody) + 2)] + [(ChironAST.ParametersPassingCommand(functionParams), 1)] + functionBody
 
     def visitFunctionCall(self, ctx: tlangParser.FunctionCallContext):
         functionName = ctx.NAME().getText()
-        print("######caller context", ctx.methodCaller())
-        callerClass = self.visitMethodCaller(ctx.methodCaller()) if ctx.methodCaller().children is not None else None
+        # the object invoking the method, in case the function call is a method call
+        methodCaller = self.visitMethodCaller(
+            ctx.methodCaller()) if ctx.methodCaller().children is not None else None
         functionArgs = [self.visit(arg) for arg in ctx.arguments(
         ).expression()] if ctx.arguments() is not None else []
-        if callerClass:
-            print("###Caller Class", str(callerClass))
-            print("##########")
-            functionArgs.insert(0, callerClass) 
-            # call the private method with mangled name 
-            if len(callerClass.caller) == 1 and functionName.startswith("__") and callerClass.caller[0] == ":self":
-                functionName = f"_{self.class_register}{functionName}"
-        print(functionArgs)
-        return [(ChironAST.FunctionCallCommand(functionName, functionArgs, callerClass), 1)]
+        # if the function is a method call, insert the caller object as the first argument
+        if methodCaller:
+            functionArgs.insert(0, methodCaller)
+            # call private methods with mangled names
+            # eg, :self.__privateMethod() will be called as :self._className__privateMethod()
+            if len(methodCaller.access_chain) == 1 and methodCaller.access_chain[0] == ":self" and functionName.startswith("__"):
+                functionName = f"_{self.classRegister}{functionName}"
+        return [(ChironAST.FunctionCallCommand(functionName, functionArgs, methodCaller), 1)]
 
     def visitFunctionCallWithReturnValues(self, ctx: tlangParser.FunctionCallWithReturnValuesContext):
-        functionCallCommand = self.visitFunctionCall(ctx.functionCall())
-        returnLocations = [var.getText() for var in ctx.VAR()]
+        functionCallStmt = self.visitFunctionCall(ctx.functionCall())
+        returnLocations = [self.visit(lvalue) for lvalue in ctx.lvalue()]
+        # read return statement is used to pop the return values from the call stack and copy them to the variables
         readReturnCommand = ChironAST.ReadReturnCommand(returnLocations)
-        return functionCallCommand + [(readReturnCommand, 1)]
+        return functionCallStmt + [(readReturnCommand, 1)]
 
     def visitReturnStatement(self, ctx: tlangParser.ReturnStatementContext):
         returnValues = [self.visit(expr) for expr in ctx.expression(
         )] if ctx.expression() is not None else None
         return [(ChironAST.ReturnCommand(returnValues), 1)]
 
-    # computes list of recursive assign statements
     def visitAssignment(self, ctx: tlangParser.AssignmentContext):
-
-        # print(ctx.VAR().getText(),ctx.expression().getText())
-        lval = self.getLval(ctx)
+        lval = self.visit(ctx.lvalue())
         rval = self.visit(ctx.expression())
-        print(lval, rval, "Inside assignment")
         return [(ChironAST.AssignmentCommand(lval, rval), 1)]
 
-    def visitObjectOrArrayAccess(self, ctx: tlangParser.ObjectOrArrayAccessContext):
-
-        base = ctx.baseAccess().VAR().getText()
-        
+    def visitDataLocationAccess(self, ctx: tlangParser.DataLocationAccessContext):
+        base = ctx.baseVar().VAR().getText()
         # Traverse through the nested access ('.' for attributes, '[]' for indices)
-        accesses = []
-        i = 1  # Start from second child (skip baseAccess)
-
+        access_chain = []
+        i = 1  # Start from second child (skip baseVar)
         while i < len(ctx.children):
             child = ctx.children[i]
-
             if isinstance(child, TerminalNodeImpl) and child.getText() == '.':
                 # Next child must be a VAR (attribute access)
                 i += 1  # Move to VAR
-                mangled_name = ctx.children[i].getText()
-                if base == ":self" and i==2 and ctx.children[i].getText().startswith(":__"):
-                    mangled_name = f":_{self.class_register}{mangled_name.replace(":","")}"
-                accesses.append(mangled_name)
-
+                access = ctx.children[i].getText()
+                # Handle private attributes
+                # If the access is with ":self" and the attribute is private, mangle the name 
+                if base == ":self" and i == 2 and ctx.children[i].getText().startswith(":__"):
+                    access = f":_{self.classRegister}{access.replace(":", "")}"
+                access_chain.append(access)
             elif child.getText() == '[':
                 # Array access: Process the expression inside `[]`
                 i += 1  # Move to expression inside brackets
                 # Visit and evaluate expression
                 expr = self.visit(ctx.children[i])
-                accesses.append([expr.val])  # Store index as a list
-
+                access_chain.append([expr.val])  # Store index as a list
                 i += 1  # Skip closing ']'
-
             i += 1  # Move to the next child
+        return ChironAST.DataLocationAccess(base, access_chain)
 
-        return ChironAST.ObjectOrArrayAccess(base, accesses)
-    
     def visitMethodCaller(self, ctx: tlangParser.MethodCallerContext):
-        accesses = []
-        i = 0 
-
+        access_chain = []
+        i = 0
         while i < len(ctx.children):
             child = ctx.children[i]
-
-            if isinstance(child, TerminalNodeImpl) :
+            if isinstance(child, TerminalNodeImpl):
                 # Current child must be a VAR (attribute access)
-                accesses.append(ctx.children[i].getText())
+                access_chain.append(ctx.children[i].getText())
                 i += 1  # skip '.'
-
             elif child.getText() == '[':
                 # Array access: Process the expression inside `[]`
                 i += 1  # Move to expression inside brackets
                 # Visit and evaluate expression
                 expr = self.visit(ctx.children[i])
-                accesses.append([expr.val])  # Store index as a list
-
+                access_chain.append([expr.val])  # Store index as a list
                 i += 2  # Skip closing ']'
-
             i += 1  # Move to the next child
-
-        print(accesses)
-        return ChironAST.MethodCaller(accesses)
+        return ChironAST.MethodCaller(access_chain)
 
     def visitObjectInstantiation(self, ctx: tlangParser.ObjectInstantiationContext):
         # Extract the left-hand side (target variable or object access)
-        lval = self.getLval(ctx.lvalue())
+        lval = self.visit(ctx.lvalue())
         # Extract the class name
-        # The last VAR is the clazss being instantiated
+        # The last VAR is the class being instantiated
         class_name = ctx.VAR().getText()
-
         return [(ChironAST.ObjectInstantiationCommand(lval, class_name), 1)]
 
     def visitClassDeclaration(self, ctx: tlangParser.ClassDeclarationContext):
-        className = ctx.VAR()[0].getText()  # Extract class name
-        self.class_register = className.replace(":","")
-        baseClasses = [var.getText() for var in ctx.VAR()[1:]] if len(ctx.VAR()) > 1 else None # Extract base classes
+        className = ctx.VAR()[0].getText()
+        self.classRegister = className.replace(":", "")
+        baseClasses = [var.getText() for var in ctx.VAR()[1:]] if len(
+            ctx.VAR()) > 1 else None  # Extract base classes
         attributes = []
+        # attributes which are object instantiations
         objectAttributes = []
         methods = []
         if ctx.classBody():
@@ -190,19 +175,15 @@ class astGenPass(tlangVisitor):
                     assign_instr = self.visitAssignment(attrDecl.assignment())
                     attributes.extend(assign_instr)
                 if isinstance(attrDecl.objectInstantiation(), tlangParser.ObjectInstantiationContext):
-                    objectAttributes.extend(self.visitObjectInstantiation(attrDecl.objectInstantiation()))
+                    objectAttributes.extend(self.visitObjectInstantiation(
+                        attrDecl.objectInstantiation()))
             for methodCtx in ctx.classBody().functionDeclaration():
-                methods.extend(self.visitFunctionDeclaration(methodCtx, className))
-        # Extract methods of the class
+                methods.extend(self.visitFunctionDeclaration(
+                    methodCtx))
+        self.classRegister = None # Reset class register
+        # compiling class declaration generates one extra statement apart from the class body
+        # 1. class declaration - This command is used to register the class as a python class(along with its attributes) in the interpreter
         return [(ChironAST.ClassDeclarationCommand(className, baseClasses, attributes, objectAttributes), 1)] + methods
-
-    # def visitArrayAccess(self, ctx:tlangParser.ArrayAccessContext):
-    #     var = ctx.VAR().getText()
-    #     indices = [self.visit(expr).val for expr in ctx.expression()]  # Visit all expressions in []
-
-    #     # print(var, indices, "Inside multi-dimensional array access")
-
-    #     return ChironAST.ArrayAccess(var, indices)  # Return an object handling multiple indices
 
     def visitValue(self, ctx: tlangParser.ValueContext):
         if ctx.NUM():
@@ -213,36 +194,39 @@ class astGenPass(tlangVisitor):
             return ChironAST.Var(ctx.VAR().getText())
         elif ctx.array():
             return ChironAST.Array(ctx.array().getText())
-        elif ctx.objectOrArrayAccess():
-            return self.visitObjectOrArrayAccess(ctx.objectOrArrayAccess())
+        elif ctx.dataLocationAccess():
+            return self.visitDataLocationAccess(ctx.dataLocationAccess())
         elif ctx.functionCall():
             return self.visitFunctionCallExpr(ctx.functionCall())
 
     def visitFunctionCallExpr(self, ctx: tlangParser.FunctionCallContext):
+        # TODO: Refactoring, this function has similar body as visitFunctionCall
         functionName = ctx.NAME().getText()
-        callerClass = self.visitMethodCaller(ctx.methodCaller()) if ctx.methodCaller().children is not None else None
+        # the object invoking the method, in case the function call is a method call
+        methodCaller = self.visitMethodCaller(
+            ctx.methodCaller()) if ctx.methodCaller().children is not None else None
         functionArgs = [self.visit(arg) for arg in ctx.arguments(
         ).expression()] if ctx.arguments() is not None else []
-        if callerClass:
-            functionArgs.insert(0, callerClass)
+        # if the function is a method call, insert the caller object as the first argument
+        if methodCaller:
+            functionArgs.insert(0, methodCaller)
+            # call private methods with mangled names
+            # eg, :self.__privateMethod() will be called as :self._className__privateMethod()
+            if len(methodCaller.access_chain) == 1 and methodCaller.access_chain[0] == ":self" and functionName.startswith("__"):
+                functionName = f"_{self.classRegister}{functionName}"
+        # create a virtual register to store the return value
         returnLocation = ChironAST.Var(":__reg_" + str(self.virtualRegCount))
         self.virtualRegCount += 1
-        currStmtList = [(ChironAST.FunctionCallCommand(functionName, functionArgs, callerClass), 1)] + [(ChironAST.ReadReturnCommand([returnLocation]), 1)]
-        self.subStmtList.extend(currStmtList)
+        self.subStmtList.extend([(ChironAST.FunctionCallCommand(functionName, functionArgs,
+                         methodCaller), 1)] + [(ChironAST.ReadReturnCommand([returnLocation]), 1)])
         return returnLocation
-
-        
+    
     def visitAssignExpr(self, ctx: tlangParser.AssignExprContext):
-
-        print("Assignment Expr")
-        lval = self.getLval(ctx.lvalue())
+        lval = self.visit(ctx.lvalue())
         rval = self.visit(ctx.expression())
-        currentStmtList = [(ChironAST.AssignmentCommand(lval, rval), 1)]
-        self.subStmtList.extend(currentStmtList)
-        return lval
 
-        # return "("+ ChironAST.AssignmentCommand(lval, rval) + ")"
-        # return   # Calls visitAssignment
+        self.subStmtList.extend([(ChironAST.AssignmentCommand(lval, rval), 1)])
+        return lval
 
     def visitPrintStatement(self, ctx: tlangParser.PrintStatementContext):
         expr_value = self.visit(ctx.expression())  # Evaluate the expression

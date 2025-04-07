@@ -1,11 +1,12 @@
 
 grammar tlang;
 
-start : instruction_list EOF
+start : statement_list EOF
       ;
 
-instruction_list : (instruction | declaration | comment)*
-		 ;
+statement_list : declaration_list strict_ilist ;
+
+declaration_list : (declaration)* ;
 
 strict_ilist : (instruction | comment)+
              ;
@@ -50,7 +51,7 @@ array
  ;
 
 assignment : 
-		  ( VAR | objectOrArrayAccess )  '=' expression      
+		  lvalue  '=' expression      
 	   ;
 
 printStatement : 'print' '(' expression ')' ;
@@ -87,20 +88,20 @@ classAttributeDeclaration : assignment | objectInstantiation ;
 
 objectInstantiation : lvalue '=' 'new' VAR '(' ')' ;
 
-objectOrArrayAccess : baseAccess ('.' VAR | '[' expression ']')+ ;
+dataLocationAccess : baseVar ('.' VAR | '[' expression ']')+ ;
 
-baseAccess : VAR ;
+baseVar : VAR ;
 
 lvalue
     : VAR
-    | objectOrArrayAccess
+    | dataLocationAccess
     ;
 
 // function call
 functionCall : methodCaller NAME '(' arguments ')' ;
 methodCaller : ((VAR | '[' expression ']') '.')* ;
 
-functionCallWithReturnValues : ( VAR | objectOrArrayAccess) ( ',' ( VAR | objectOrArrayAccess) )+ '=' functionCall ;
+functionCallWithReturnValues : lvalue ( ',' lvalue )+ '=' functionCall ;
 
 // function declaration
 functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
@@ -139,7 +140,7 @@ NOT: '!' ;
 value : NUM
       | VAR
 	  | array
-	  | objectOrArrayAccess
+	  | dataLocationAccess
 	  | functionCall 							
 	  | REAL
       ;

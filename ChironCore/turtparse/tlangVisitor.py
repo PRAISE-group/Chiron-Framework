@@ -14,8 +14,13 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#instruction_list.
-    def visitInstruction_list(self, ctx:tlangParser.Instruction_listContext):
+    # Visit a parse tree produced by tlangParser#statement_list.
+    def visitStatement_list(self, ctx:tlangParser.Statement_listContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#declaration_list.
+    def visitDeclaration_list(self, ctx:tlangParser.Declaration_listContext):
         return self.visitChildren(ctx)
 
 
@@ -164,13 +169,13 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#objectOrArrayAccess.
-    def visitObjectOrArrayAccess(self, ctx:tlangParser.ObjectOrArrayAccessContext):
+    # Visit a parse tree produced by tlangParser#dataLocationAccess.
+    def visitDataLocationAccess(self, ctx:tlangParser.DataLocationAccessContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#baseAccess.
-    def visitBaseAccess(self, ctx:tlangParser.BaseAccessContext):
+    # Visit a parse tree produced by tlangParser#baseVar.
+    def visitBaseVar(self, ctx:tlangParser.BaseVarContext):
         return self.visitChildren(ctx)
 
 

@@ -180,7 +180,6 @@ class ConcreteInterpreter(Interpreter):
         if "@" in stmt.name and stmt.name.split("@")[1].startswith("__"):
             class_name, method_name = stmt.name.split("@")
             function_name = class_name+ "@" + "_" + class_name.replace(":","") + method_name
-            print("[DEBUGGING] FUNCTION NAME MANGLED TO: ", function_name)
         else:
             function_name = stmt.name
 
