@@ -110,11 +110,11 @@ class ChironCFG:
 
         self.idom = nx.immediate_dominators(self.nxgraph, entry)
         self.df = nx.dominance_frontiers(self.nxgraph, entry)
-        for i in self.nodes():
-            for j in self.nodes():
-                if i != j and self.idom[j] == i:
-                    self.dominator_tree[i].append(j)
 
+        # build the dominator tree
+        for i in self.nodes():
+            if i != entry:
+                self.dominator_tree[self.idom[i]].append(i)
 
     def get_topological_order(self):
         return list(nx.topological_sort(self.nxgraph))
