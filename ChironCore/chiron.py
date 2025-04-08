@@ -429,16 +429,16 @@ if __name__ == "__main__":
             for st in new_stmts:
                 new_irList.append((st, entry[1]))
         new_irList = IrWithParams(args.params) + new_irList
-
-        irHandler.setIR(new_irList)
-        irHandler.pretty_print(irHandler.ir)
+        # print(new_irList)
+        # irHandler.setIR(new_irList)
+        # irHandler.pretty_print(irHandler.ir)
 
         cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
         cfgB.dumpCFG(cfg, "control_flow_graph")
         irList = traverse_cfg(cfg)
         vars_map, code = rename_vars(irList)
         # print(vars_map)
-        # print(code)
+        print(code)
         pre_code = []
         pre_condition = []
         loop_condition = ""
@@ -469,7 +469,6 @@ if __name__ == "__main__":
             elif stmt[1] == 'assert':
                 post_condition = Infix_To_Prefix(stmt[0], True)
             elif stmt[1] == 'ite':
-                print(stmt[0])
                 pattern = r"(\w+)\s*=\s*\(\((.*?)\),\s*\((.*?)\),\s*\((.*?)\)\)"
                 match = re.match(pattern, stmt[0])
                 if_var = match.group(1)
@@ -509,9 +508,9 @@ if __name__ == "__main__":
         smtlib_code += f"(assert (not (=> (and {invariant_in} {single_loop_body} {loop_condition}) {invariant_out})))\n"
         smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
         smtlib_code += "(push 1)\n"
-        smtlib_code += f"(assert (not (=> (and {invariant_out} (not {loop_condition})) {post_condition})))\n"
+        smtlib_code += f"(assert (not (=> (and {invariant_out} (= __rep_counter_1_{vars_map["__rep_counter_1"]} 0)) {post_condition})))\n"
         smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
-        # print(smtlib_code)
+        print(smtlib_code)
         output, errors = Z3Solver(smtlib_code)
         print("\n======Z3 Output:======\n", output)
         if errors:
