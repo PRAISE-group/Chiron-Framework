@@ -46,22 +46,23 @@ def rename_vars(ir):
             rexpr = stmt[0]
             lhs_vars = []
             lexpr = ""
-
+        
         for var in rhs_vars:
+            if var == "REPCOUNTER":
+                rexpr = re.sub(rf':{var}\b', ':__rep_counter_1', rexpr)
+                var = "__rep_counter_1"
             if var not in rename_map:
                 rename_map[var] = 0
                 # raise ValueError(f"Variable '{var}' not initialised before first use!")
-            if var == "REPCOUNTER":
-                rexpr = re.sub(rf':{var}\b', f'{"__rep_counter_1"}_{rename_map["__rep_counter_1"]}', rexpr)
-            else:
-                rexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', rexpr)
-    
+            rexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', rexpr)
+
         for var in lhs_vars:
+            if var == "REPCOUNTER":
+                print("Warning: ':REPCOUNTER' is a reserved variable name for loop counter.")
+                lexpr = re.sub(rf':{var}\b', ':__rep_counter_1', lexpr)
+                var = "__rep_counter_1"
             if var not in rename_map:
                 rename_map[var] = 0
-            elif var == "REPCOUNTER":
-                # Warn user about REPCOUNTER
-                print(f"Warning: Variable '{var}' is the loop counter. Assigning it may cause unexpected behaviour.")
             else:
                 rename_map[var] = rename_map[var] + 1
             lexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', lexpr)
@@ -74,8 +75,12 @@ def rename_vars(ir):
         if stmt[1]=='loop-end':
             invariant_out = invariant
             for var in invariant_vars:
+                if var == "REPCOUNTER":
+                    invariant_out = re.sub(rf':{var}\b', ':__rep_counter_1', invariant_out)
+                    var = "__rep_counter_1"
                 if var not in rename_map:
-                    raise ValueError(f"Variable '{var}' not initialised before first use!")
+                    rename_map[var] = 0
+                    # raise ValueError(f"Variable '{var}' not initialised before first use!")
                 invariant_out = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', invariant_out)
             updated_ir.append((invariant_out, "invariant_out"))
     # print(updated_ir)
