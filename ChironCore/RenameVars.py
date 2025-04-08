@@ -50,11 +50,17 @@ def rename_vars(ir):
         for var in rhs_vars:
             if var not in rename_map:
                 raise ValueError(f"Variable '{var}' not initialised before first use!")
-            rexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', rexpr)
+            if var == "REPCOUNTER":
+                rexpr = re.sub(rf':{var}\b', f'{"__rep_counter_1"}_{rename_map["__rep_counter_1"]}', rexpr)
+            else:
+                rexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', rexpr)
 
         for var in lhs_vars:
             if var not in rename_map:
                 rename_map[var] = 0
+            elif var == "REPCOUNTER":
+                # Warn user about REPCOUNTER
+                print(f"Warning: Variable '{var}' is the loop counter. Assigning it may cause unexpected behaviour.")
             else:
                 rename_map[var] = rename_map[var] + 1
             lexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', lexpr)
