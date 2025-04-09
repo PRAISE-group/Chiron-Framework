@@ -36,9 +36,11 @@ voidfunc drawHexagon(:x, :y, :len) {
 :z = 20
 :p = 40
 
+:steps = 3
+
 pendown
 
-repeat 3 [
+repeat :steps [
 
 	if (:x > :y) [
 		procedure drawRectangle(:x, :y, :x)

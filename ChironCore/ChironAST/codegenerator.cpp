@@ -279,7 +279,13 @@ llvm::Value* LoopExpressionAST::codegen(){
         RC = CreateEntryBlockAlloca(Builder->GetInsertBlock()->getParent(), varname);
         SymbolTable[varname] = RC;
     }
-    Builder->CreateStore(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*CodeGenContext), repCounter), RC);
+
+    llvm::Value *RepCount = repCounter->codegen();
+    if(!RepCount){
+        throw std::runtime_error("Invalid repeat count expression");
+    }
+    
+    Builder->CreateStore(RepCount, RC);
 
     llvm::Function *TheFunction = Builder->GetInsertBlock()->getParent();
     llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(*CodeGenContext, "loop", TheFunction);

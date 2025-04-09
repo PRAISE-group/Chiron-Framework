@@ -140,13 +140,13 @@ public:
 };
 
 class LoopExpressionAST : public ExpressionAST {
-    int repCounter;
+    std::unique_ptr<ExpressionAST> repCounter;
     std::string varname;
     std::vector<std::unique_ptr<InstrAST>> body;
 
 public:
-    LoopExpressionAST(int repCounter, std::string varname, std::vector<std::unique_ptr<InstrAST>> body) :
-        repCounter(repCounter), varname(varname), body(std::move(body)) {}
+    LoopExpressionAST(std::unique_ptr<ExpressionAST> repCounter, const std::string& varname, std::vector<std::unique_ptr<InstrAST>> body) :
+        repCounter(std::move(repCounter)), varname(varname), body(std::move(body)) {}
 
     llvm::Value* codegen() override;
 };

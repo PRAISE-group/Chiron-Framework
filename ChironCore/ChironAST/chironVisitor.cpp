@@ -122,9 +122,6 @@ public:
     any visitLoop(tlangParser::LoopContext *ctx) override {
         repeatInstrCount++;
         ExpressionAST* repeatNum = getSingleExpr(visit(ctx->value()));
-        NumberExpressionAST* rep = dynamic_cast<NumberExpressionAST*>(repeatNum);
-        if (!rep)
-            throw runtime_error("Loop count must be a number");
         
         string varname = "__rep_counter_" + to_string(repeatInstrCount);
         vector<InstrAST*> body = any_cast<vector<InstrAST*>>(visit(ctx->strict_ilist()));
@@ -132,7 +129,7 @@ public:
         repeatInstrCount--;
         return vector<InstrAST*>{
             make_unique<LoopExpressionAST>(
-                rep->getVal(),
+                unique_ptr<ExpressionAST>(repeatNum),
                 varname,
                 vector<unique_ptr<InstrAST>>{body.begin(), body.end()}
             ).release()
