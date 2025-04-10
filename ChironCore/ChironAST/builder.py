@@ -151,7 +151,6 @@ class astGenPass(tlangVisitor):
         if ctx.NUM():
             return ChironAST.Num(ctx.NUM().getText())
         elif ctx.FLOAT():
-            print("returning ", ctx.FLOAT().getText())
             return ChironAST.Num(ctx.FLOAT().getText())
         elif ctx.VAR():
             return ChironAST.Var(ctx.VAR().getText())
