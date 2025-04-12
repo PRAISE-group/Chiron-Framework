@@ -40,6 +40,7 @@ from IfElseToITE import traverse_cfg
 import csv
 from TurtleCommandsCompiler import TurtleCommandsCompiler
 from Z3Integration import Z3Solver
+from TraverseCFG import Traverse
 
 def cleanup():
     pass
@@ -435,6 +436,10 @@ if __name__ == "__main__":
 
         cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
         cfgB.dumpCFG(cfg, "control_flow_graph")
+        
+        Traverse(cfg)
+        
+        """
         irList = traverse_cfg(cfg)
         vars_map, code = rename_vars(irList)
         # print(vars_map)
@@ -515,5 +520,5 @@ if __name__ == "__main__":
         print("\n======Z3 Output:======\n", output)
         if errors:
             print("Z3 Errors:", errors)
-        
+        """
 
