@@ -438,6 +438,7 @@ if __name__ == "__main__":
         cfgB.dumpCFG(cfg, "control_flow_graph")
         
         Traverse(cfg)
+        cfgB.dumpCFG(cfg, "control_flow_graph")
         
         """
         irList = traverse_cfg(cfg)

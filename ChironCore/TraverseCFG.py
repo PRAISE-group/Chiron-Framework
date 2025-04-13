@@ -35,12 +35,13 @@ def rename_vars(ir):
         rexpr = ""
         rhs_vars = []
         lhs_vars = []
+        # print(stmt)
         if stmt[1] == 'invariant':
             invariant = stmt[0]
             invariant_vars = extract_variables_others(invariant)
-            stmt = (stmt[0], "invariant_in")
+            stmt[1] = "invariant_in"
             
-        if stmt[1] == "assign" or stmt[1] == "loop-end" or stmt[1] == "ite" or stmt[1] == "loop-init":
+        if stmt[1] == "assign" or stmt[1] == "loop-end" or stmt[1] == "loop-init":
             vars = extract_variables_assign(stmt[0])
             rhs_vars = vars[0]
             rexpr = vars[1]
@@ -48,6 +49,7 @@ def rename_vars(ir):
             lexpr = vars[3]
         else:
             vars = extract_variables_others(stmt[0])
+            # print(vars)
             rhs_vars = vars
             rexpr = stmt[0]
             lhs_vars = []
@@ -55,19 +57,12 @@ def rename_vars(ir):
         
         # print(rhs_vars, rexpr, lhs_vars, lexpr)
         for var in rhs_vars:
-            if var == "REPCOUNTER":
-                rexpr = re.sub(rf'{var}\b', '__rep_counter_1', rexpr)
-                var = "__rep_counter_1"
             if var not in rename_map:
                 rename_map[var] = 0
                 # raise ValueError(f"Variable '{var}' not initialised before first use!")
-            rexpr = re.sub(rf':{var}\b', f'{var}_{rename_map[var]}', rexpr)
+            rexpr = re.sub(rf'{var}\b', f'{var}_{rename_map[var]}', rexpr)
 
         for var in lhs_vars:
-            if var == "REPCOUNTER":
-                print("Warning: ':REPCOUNTER' is a reserved variable name for loop counter.")
-                lexpr = re.sub(rf'{var}\b', '__rep_counter_1', lexpr)
-                var = "__rep_counter_1"
             if var not in rename_map:
                 rename_map[var] = 0
             else:
@@ -83,9 +78,6 @@ def rename_vars(ir):
         if stmt[1]=='loop-end':
             invariant_out = invariant
             for var in invariant_vars:
-                if var == "REPCOUNTER":
-                    invariant_out = re.sub(rf'{var}\b', '__rep_counter_1', invariant_out)
-                    var = "__rep_counter_1"
                 if var not in rename_map:
                     rename_map[var] = 0
                     # raise ValueError(f"Variable '{var}' not initialised before first use!")
@@ -94,8 +86,7 @@ def rename_vars(ir):
     # print(updated_ir)
     return rename_map, updated_ir
 
-def process_bb(node:ChironCFG.BasicBlock):
-    curr_instrlist = node.instrlist
+def process1_bb(node:ChironCFG.BasicBlock):
     new_instrlist = []
     block_id = node.irID
 
@@ -129,16 +120,63 @@ def process_bb(node:ChironCFG.BasicBlock):
         # vars.update(stmt_vars)
         new_instrlist.append([stmt, type])
     
-    rename_map, new_instrlist = rename_vars(new_instrlist)
-    print(f"Block ID: {block_id}")
-    print(f"New Instruction List: {new_instrlist}")
+    # print(f"Block ID: {block_id}")
+    # print(f"New Instruction List: {new_instrlist}") 
+    node.instrlist = new_instrlist
+    return
+def process2_bb(node, successors):
+    new_instrlist = node.instrlist
+    block_id = node.irID
+    # print(new_instrlist)
+    for succ in successors:
+        for entry in succ.instrlist:
+            # Find all variables used in entry without assignment
+            stmt = str(entry[0])
+            # entry[1] has the type
+            if entry[1] == "assign":
+                # Extract variables from the statement
+                vars = extract_variables_assign(stmt)
+                rhs_vars = vars[0]
+                rexpr = vars[1]
+                lhs_vars = vars[2]
+                lexpr = vars[3]
+            else:
+                # Extract variables from the statement
+                vars = extract_variables_others(stmt)
+                rhs_vars = vars
+                rexpr = stmt
+                lhs_vars = []
+                lexpr = ""
+                
+            for var in rhs_vars:
+                # print(rhs_vars)
+                # remove everything after last underscore
+                # print(var.split("_"))
+                primary_var = "_".join(var.split("_")[0:-1])
+                # print(primary_var)
+                succ_block_id = succ.irID
+                new_instrlist.append([f"{primary_var}_{succ_block_id} = {primary_var}_{block_id}", "assign"])
         
-    return new_instrlist
-                     
+    rename_map, new_instrlist = rename_vars(new_instrlist)
+    node.instrlist = new_instrlist
+    return
 
 def Traverse(cfg: ChironCFG.ChironCFG):
     for node in cfg.nxgraph.nodes:
-        if(node.name == "START" or node.name == "END"):
+        if(node.name == "END"):
             continue
-        process_bb(node)
+        if(node.name == "START"):
+            node.irID = 0
+        process1_bb(node)
+    nodes_list = list(cfg.nxgraph.nodes)
+    nodes_list = nodes_list[::-1]
+    # print(nodes_list)
+    for node in nodes_list:
+        if(node.name == "END"):
+            continue
+        if(node.name == "START"):
+            node.irID = 0
+        successors = cfg.nxgraph.successors(node)
+        process2_bb(node, successors)
+    
     
