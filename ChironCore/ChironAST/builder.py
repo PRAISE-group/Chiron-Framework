@@ -179,3 +179,18 @@ class astGenPass(tlangVisitor):
         analysisCommand = ctx.analysisStatement().getText()
         analysisCondition = self.visit(ctx.condition())
         return [(ChironAST.AnalysisCommand(analysisCommand, analysisCondition), 1)]
+
+class astGenPassSMTLIB(astGenPass):
+    def __init__(self):
+        super().__init__()
+        self.repeatInstrCount = 0 # keeps count for no of 'repeat' instructions
+    
+    def visitIfConditional(self, ctx:tlangParser.IfConditionalContext):
+        condObj = ChironAST.ConditionCommand(self.visit(ctx.condition()))
+        thenInstrList = self.visit(ctx.strict_ilist())
+        boolFalse = ChironAST.ConditionCommand(ChironAST.BoolFalse())
+        elseInstrList = [(boolFalse, 1)]
+        jumpOverElseBlock = [(ChironAST.ConditionCommand(ChironAST.BoolFalse()), len(elseInstrList) + 1)]
+        return [(condObj, len(thenInstrList) + 2)] + thenInstrList + jumpOverElseBlock + elseInstrList
+    
+    

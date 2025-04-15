@@ -19,10 +19,6 @@ repeat :n[
             :z = :z - 1
             :w = :w + 1
         ]
-        else[
-            :z = :z + 1
-            :w = :w - 1
-        ]
     ]
 ]
 assert(:z > 0 && :w > 0)

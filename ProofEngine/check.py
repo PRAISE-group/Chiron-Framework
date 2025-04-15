@@ -103,3 +103,30 @@ ans 2
 # ; Check satisfiability
 # (check-sat)
 # (get-model)
+
+
+# entry[1] has the type
+            if entry[1] == "assign":
+                # Extract variables from the statement
+                vars = extract_variables_assign(stmt)
+                rhs_vars = vars[0]
+                rexpr = vars[1]
+                lhs_vars = vars[2]
+                lexpr = vars[3]
+            else:
+                # Extract variables from the statement
+                vars = extract_variables_others(stmt)
+                rhs_vars = vars
+                rexpr = stmt
+                lhs_vars = []
+                lexpr = ""
+                
+            for var in rhs_vars:
+                # print(rhs_vars)
+                # remove everything after last underscore
+                # print(var.split("_"))
+                primary_var = "_".join(var.split("_")[0:-1])
+                print(primary_var)
+                succ_block_id = succ.irID
+                new_instrlist.append([f"{primary_var}_{succ_block_id} = {primary_var}_{block_id}", "assign"])
+        

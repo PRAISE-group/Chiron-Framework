@@ -5,6 +5,8 @@ import ast
 import re
 import sys
 from ChironAST.builder import astGenPass
+from ChironAST.builder import astGenPassSMTLIB
+
 import abstractInterpretation as AI
 import dataFlowAnalysis as DFA
 from sbfl import testsuiteGenerator
@@ -252,9 +254,6 @@ if __name__ == "__main__":
 
     if args.ir:
         irHandler.pretty_print(irHandler.ir)
-        ir1 = irHandler.ir
-        for stmt in ir1:
-            print(stmt[0])
 
     if args.abstractInterpretation:
         AISub.analyzeUsingAI(irHandler)
@@ -422,104 +421,104 @@ if __name__ == "__main__":
         # for entry in irHandler.ir:
         #     print(entry[0])
         # irHandler.pretty_print(irHandler.ir)
+        
+        parseTree = getParseTree(args.progfl)
+        astgen = astGenPassSMTLIB()
+        ir = astgen.visitStart(parseTree)
 
+        irHandler.setIR(ir)
         new_irList = []
         turt_compiler = TurtleCommandsCompiler()        
         for entry in irHandler.ir:
             new_stmts = turt_compiler.compile(entry[0])
             for st in new_stmts:
                 new_irList.append((st, entry[1]))
-        new_irList = IrWithParams(args.params) + new_irList
-        # print(new_irList)
-        # irHandler.setIR(new_irList)
-        # irHandler.pretty_print(irHandler.ir)
+        # new_irList = IrWithParams(args.params) + new_irList
 
         cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
+        # cfgB.dumpCFG(cfg, "control_flow_graph")
+        
+        pre_condition_list, post_condition_list, loop_condition_list, invariant_in_list, invariant_out_list, loop_body_list, loop_false_condition_list = Traverse(cfg)
         cfgB.dumpCFG(cfg, "control_flow_graph")
         
-        Traverse(cfg)
-        cfgB.dumpCFG(cfg, "control_flow_graph")
+                
+        def list_to_smtlib_stmt(L):
+            smtlib_stmt = "(and "
+            for stmt in L:
+                stmt = Infix_To_Prefix(stmt, True)
+                smtlib_stmt += f"{stmt} "
+            smtlib_stmt += "true)\n"
+            return smtlib_stmt
         
-        """
-        irList = traverse_cfg(cfg)
-        vars_map, code = rename_vars(irList)
-        # print(vars_map)
-        print(code)
-        pre_code = []
-        pre_condition = []
-        loop_condition = ""
-        loop_code = []
-        post_condition = ""
-        invariant_in = ""
-        invariant_out = ""
-        temp = []
-        for stmt in code:
-            if stmt[1] == 'loop-init':
-                stat = Infix_To_Prefix(stmt[0], True)
-                temp.append(stat)
-                pre_condition.append(stat)
-            elif stmt[1] == 'invariant_in':
-                invariant_in = Infix_To_Prefix(stmt[0], True)
-            elif stmt[1] == 'invariant_out':
-                invariant_out = Infix_To_Prefix(stmt[0], True)
-            elif stmt[1] == 'loop-condition':
-                loop_condition = Infix_To_Prefix(stmt[0], True)
-                pre_code = temp
-                temp = []
-            elif stmt[1] == 'loop-end':
-                temp.append(Infix_To_Prefix(stmt[0], True))
-                loop_code = temp
-                temp = []
-            elif stmt[1] == 'assume':
-                pre_condition.append(Infix_To_Prefix(stmt[0], True))
-            elif stmt[1] == 'assert':
-                post_condition = Infix_To_Prefix(stmt[0], True)
-            elif stmt[1] == 'ite':
-                pattern = r"(\w+)\s*=\s*\(\((.*?)\),\s*\((.*?)\),\s*\((.*?)\)\)"
-                match = re.match(pattern, stmt[0])
-                if_var = match.group(1)
-                if_cond = match.group(2)
-                if_value = match.group(3)
-                else_value = match.group(4)
-                print(if_var)
-                print(if_cond)
-                print(if_value)
-                print(else_value)
-                stat = f"(= {if_var} (ite {Infix_To_Prefix(if_cond, True)} {Infix_To_Prefix(if_value, True)} {Infix_To_Prefix(else_value, True)}))"
-                temp.append(stat)
-            else:
-                temp.append(Infix_To_Prefix(stmt[0], True))
-
+        pre_condition = list_to_smtlib_stmt(pre_condition_list)
+        post_condition = list_to_smtlib_stmt(post_condition_list)
+        loop_condition = list_to_smtlib_stmt(loop_condition_list)
+        invariant_in = list_to_smtlib_stmt(invariant_in_list)
+        invariant_out = list_to_smtlib_stmt(invariant_out_list)
+        loop_false_condition = list_to_smtlib_stmt(loop_false_condition_list)
+        
+        loop_body = "(and "
+        for entry in loop_body_list:
+            if(entry[0] == "assign"):
+                for stmt in entry[1]:
+                    loop_body += Infix_To_Prefix(stmt, True)
+            elif(entry[0] == "if-else"):
+                condition = entry[1]
+                then_part = entry[2]              
+                else_part = entry[3]
+                then_stmt = list_to_smtlib_stmt(then_part)
+                else_stmt = list_to_smtlib_stmt(else_part)
+                cond_stmt = list_to_smtlib_stmt([condition])
+                then_stmt = f"(and ({condition}) ({then_stmt}))"
+                else_stmt = f"(and (not ({condition})) ({else_stmt}))"
+                loop_body += f"(or {then_stmt} {else_stmt})"
+        loop_body += "true)\n"
+        
+        print("Pre-condition: ", pre_condition)
+        print("Post-condition: ", post_condition)
+        print("Loop-condition: ", loop_condition)
+        print("Invariant-in: ", invariant_in)
+        print("Invariant-out: ", invariant_out)
+        print("Loop-false-condition: ", loop_false_condition)
+        print("Loop-body: ", loop_body)
+        
+        def extract_variables(expression: str):
+            # Match variable-like words that are not numbers and are not part of function calls
+            tokens = re.findall(r'[a-zA-Z_]\w*', expression)
+            
+            keywords = {"ite", "and", "or", "not", "assert", "div", "true", "false"}
+            variables = {token for token in tokens if token not in keywords and not token.isdigit()}
+            return sorted(variables)  # Sorted for consistency
+            
+        #first_check: pre_condition => invariant_in
+        #second_check: invariant_in & single_loop_body & loop_condition => invariant_out
+        #third_check: invariant_out & !loop_condition => post_condition
+        first_check = f"(=> {pre_condition} {invariant_in})"
+        second_check = f"(=> (and {invariant_in} {loop_body} {loop_condition}) {invariant_out})"
+        third_check = f"(=> (and {invariant_out} {loop_false_condition}) {post_condition})"
+        
+        all_vars = set()
+        all_vars.update(extract_variables(first_check))
+        all_vars.update(extract_variables(second_check))
+        all_vars.update(extract_variables(third_check))
+        
         smtlib_code = ""
-        for var, ct in vars_map.items():
-            for i in range(ct+1):
-                smtlib_code += f"(declare-fun {var}_{i} () Int)\n"
+        for var in all_vars:
+            smtlib_code += f"(declare-fun {var} () Int)\n"
         
-        for stat in pre_code:
-            smtlib_code += f"(assert {stat})\n"
-
-        pre_condition = f"(and {pre_condition[0]} {pre_condition[1]})"
-        single_loop_body = "(and "
-        for stat in loop_code:
-            single_loop_body += f"{stat} "
-        single_loop_body += ")\n"
-
-        #a: pre_condition => invariant_in
-        #b: invariant_in & single_loop_body & loop_condition => invariant_out
-        #c: invariant_out & !loop_condition => post_condition
         smtlib_code += "(push 1)\n"
-        smtlib_code += f"(assert (not (=> {pre_condition} {invariant_in})))\n"
+        smtlib_code += f"(assert (not {first_check}))\n"
         smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
         smtlib_code += "(push 1)\n"
-        smtlib_code += f"(assert (not (=> (and {invariant_in} {single_loop_body} {loop_condition}) {invariant_out})))\n"
+        smtlib_code += f"(assert (not {second_check}))\n"
         smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
         smtlib_code += "(push 1)\n"
-        smtlib_code += f"(assert (not (=> (and {invariant_out} (= __rep_counter_1_{vars_map["__rep_counter_1"]} 0)) {post_condition})))\n"
+        smtlib_code += f"(assert (not {third_check}))\n"
         smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
         print(smtlib_code)
         output, errors = Z3Solver(smtlib_code)
         print("\n======Z3 Output:======\n", output)
         if errors:
             print("Z3 Errors:", errors)
-        """
+        
 
