@@ -280,10 +280,10 @@ class BMC:
 
         assume_check = checker_with_assume.check()
         if assume_check == z3.unsat:
-            print("Give a larger unroll bound")
+            print("The program cannot execute within the provided bounds. Consider increasing the bounds and trying again..")
             return
         elif assume_check == z3.unknown:
-            print("Cannot determine if unroll bound is sufficient")
+            print("Cannot determine if bounds are sufficient")
             return
 
         checker_with_angles = z3.Solver()
@@ -296,7 +296,7 @@ class BMC:
             print("Angle not in angles.conf for all cases")
             return
         elif angles_check == z3.unknown:
-            print("Cannot determine if unroll bound is sufficient")
+            print("Cannot determine if angles are as per configuration file")
             return
         
         self.solver.add(z3.Not(self.assert_conditions))

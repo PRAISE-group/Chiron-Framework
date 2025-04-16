@@ -202,12 +202,11 @@ if __name__ == "__main__":
         type=bool,
     )
 
-    cmdparser.add_argument(
+    cmdparser.add_argument( # example usage: ./chiron.py <file_name> -bmc -ub 20 -aconf <angle_conf_file>
         "-bmc",
         "--bmc",
-        # type=str,
         action="store_true",
-        help="Run Bounded Model Checking on a Chiron Program.",
+        help="Run Bounded Model Checking on a Chiron Program",
     )
 
     cmdparser.add_argument(
@@ -215,15 +214,15 @@ if __name__ == "__main__":
         "--unroll-bound",
         type=int,
         default=10,
-        help="Unroll bound for the program. Default is 10.",
+        help="Unroll bound for the BMC engine. Default is 10",
     )
 
-    cmdparser.add_argument(
+    cmdparser.add_argument( # By default we take angles 0, 90, 180 and 270
         "-aconf",
         "--angle-conf",
         type=str,
         default="",
-        help="Angle configuration file for BMC.",
+        help="Angle configuration file for BMC",
     )
 
     args = cmdparser.parse_args()
@@ -446,7 +445,7 @@ if __name__ == "__main__":
         
         unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
 
-        with open("unrolled_code.tl", "w") as f:
+        with open("unrolled_code.tl", "w") as f: # Saving unrolled code to file unrolled_code.tl
             f.write(unrolled_code)
 
         try:
@@ -466,14 +465,13 @@ if __name__ == "__main__":
 
         tacGen = TACGenerator(ir) # Converting IR to TAC
         tacGen.generateTAC()
-        # tacGen.printTAC() # Printing TAC
+        # tacGen.printTAC() # for printing TAC
 
         if tacGen.assertCount == 0:
             print("No conditions found in the program. Exiting...")
             exit(1)
 
-        # cfg, line2BlockMap = cfgB.buildCFG(tacGen.tac, "control_flow_graph", False) # Building CFG
-        cfgB.dumpCFG(tacGen.tacCfg, 'tac_cfg')
+        cfgB.dumpCFG(tacGen.tacCfg, 'tac_cfg') # Saving TAC CFG to file tac_cfg.png
 
         ssa = SSABuilder(tacGen.tac) # Converting TAC to SSA
         ssaCfg = ssa.build()

@@ -41,9 +41,8 @@ If you want to cite this work, you may use this.
 ### Installing Dependencies
 
 ```bash
-pip install antlr4-python3-runtime==4.7.2 networkx z3-solver numpy 
+pip install antlr4-python3-runtime==4.7.2 networkx z3-solver numpy pygraphviz
 sudo apt-get install python3-tk
-pip install pygraphviz
 ```
 
 ### Generating the ANTLR files.
@@ -85,7 +84,7 @@ Chiron v1.0.1
 ------------
 usage: chiron.py [-h] [-p] [-r] [-gr] [-b] [-z] [-t TIMEOUT] [-d PARAMS] [-c CONSTPARAMS] [-se] [-ai] [-dfa] [-sbfl]
                  [-bg BUGGY] [-vars INPUTVARSLIST] [-nt NTESTS] [-pop POPSIZE] [-cp CXPB] [-mp MUTPB] [-ng NGEN]
-                 [-vb VERBOSE]
+                 [-vb VERBOSE] [-bmc] [-ub UNROLL_BOUND] [-aconf ANGLE_CONF]
                  progfl
 
 Program Analysis Framework for ChironLang Programs.
@@ -132,5 +131,10 @@ options:
                         number of times Genetic Algorithm iterates
   -vb VERBOSE, --verbose VERBOSE
                         To display computation to Console
+  -bmc, --bmc           Run Bounded Model Checking on a Chiron Program
+  -ub UNROLL_BOUND, --unroll-bound UNROLL_BOUND
+                        Unroll bound for the BMC engine. Default is 10
+  -aconf ANGLE_CONF, --angle-conf ANGLE_CONF
+                        Angle configuration file for BMC
 
 ```
