@@ -102,6 +102,18 @@ def process_bb1(node:ChironCFG.BasicBlock):
         #     raise ValueError(f"Unknown type of instruction: {entry[0]}")
         stmt_vars = re.findall(r':([a-zA-Z_][a-zA-Z0-9_]*)', stmt)
         for var in stmt_vars:
+            if var == "TURTLEX":
+                stmt = re.sub(rf':{var}\b', f':__turtleX', stmt)
+                var = f"__turtleX"
+            if var == "TURTLEY":
+                stmt = re.sub(rf':{var}\b', f':__turtleY', stmt)
+                var = f"__turtleY"
+            if var == "TURTLEANGLE":
+                stmt = re.sub(rf':{var}\b', f':__turtleW', stmt)
+                var = f"__turtleW"
+            if var == "TURTLEPEN":
+                stmt = re.sub(rf':{var}\b', f':__turtleZ', stmt)
+                var = f"__turtleZ"
             if var == "REPCOUNTER":
                 stmt = re.sub(rf':{var}\b', f':__rep_counter_1', stmt)
                 var = f"__rep_counter_1"
@@ -195,6 +207,7 @@ def check_cfg_format_with_loop(cfg: ChironCFG.ChironCFG):
 
         predecessors = list(cfg.predecessors(node))
         successors = list(cfg.successors(node))
+
         if len(predecessors) == 2 and len(successors) == 2:
             if predecessors[0].irID > node.irID or predecessors[1].irID > node.irID:
                 if "loop condition" in block_type_to_node.keys():

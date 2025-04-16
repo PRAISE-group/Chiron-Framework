@@ -1,10 +1,17 @@
-assume(1==1)
-if (:x > 0)[
-    :sign = 1
-] else [
-    :sign = 0
+assume(:TURTLEX == 0 && :TURTLEY == 0 && :TURTLEANGLE == 0 && :step == 1 && :TURTLEPEN == 1 && :n >= 0)
+repeat :n [
+    invariant(:TURTLEX == :REPCOUNTER-:n && :TURTLEY == :REPCOUNTER-:n && (:step == ((2*:n) + 1)-2*:REPCOUNTER) && :TURTLEANGLE == 0 && :TURTLEPEN == 1 && :step > 0)
+    pendown
+    forward :step
+    left 90
+    forward :step
+    left 90
+    :step = :step + 1
+    forward :step
+    left 90
+    forward :step
+    left 90
+    :step = :step + 1
+    penup
 ]
-if (:x < 0)[
-    :sign = -1
-]
-assert((:x > 0 && :sign == 1) || (:x < 0 && :sign < 0) || (:x == 0 && :sign == 0))
+assert(:TURTLEX<5 && :TURTLEX>-5 && :TURTLEY<(:n+1) && :TURTLEY>(-:n-1) && :TURTLEPEN == 1 && :TURTLEANGLE == 0 && :step == ((2*:n) + 1))

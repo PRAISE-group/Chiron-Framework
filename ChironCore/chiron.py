@@ -428,10 +428,12 @@ if __name__ == "__main__":
         new_irList = []
         turt_compiler = TurtleCommandsCompiler()        
         for entry in irHandler.ir:
-            new_stmts = turt_compiler.compile(entry[0])
-            for st in new_stmts:
-                new_irList.append((st, entry[1]))
-
+            new_stmt = turt_compiler.compile(entry[0])
+            for stmt in new_stmt:
+                new_irList.append((stmt, entry[1]))
+        # print("New IR List: ")
+        # for entry in new_irList:
+        #     print(entry[0], entry[1])
         cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
         # cfgB.dumpCFG(cfg, "control_flow_graph")
         
@@ -447,7 +449,7 @@ if __name__ == "__main__":
         def extract_variables(expression: str):
             # Match variable-like words that are not numbers and are not part of function calls
             tokens = re.findall(r'[a-zA-Z_]\w*', expression)
-            keywords = {"ite", "and", "or", "not", "assert", "div", "true", "false"}
+            keywords = {"ite", "and", "or", "not", "assert", "div", "true", "false", "mod"}
             variables = {token for token in tokens if token not in keywords and not token.isdigit()}
             return sorted(variables)  # Sorted for consistency
         if(num_loops > 1):
@@ -495,7 +497,7 @@ if __name__ == "__main__":
 
         elif(num_loops == 1):
             pre_condition_list, post_condition_list, loop_condition_list, invariant_in_list, invariant_out_list, loop_body_list, loop_false_condition_list = Traverse(cfg, has_loop=True)
-            # cfgB.dumpCFG(cfg, "control_flow_graph")
+            cfgB.dumpCFG(cfg, "control_flow_graph")
             
             pre_condition = list_to_smtlib_stmt(pre_condition_list)
             post_condition = list_to_smtlib_stmt(post_condition_list)
@@ -521,13 +523,13 @@ if __name__ == "__main__":
                     loop_body += f"(or {then_stmt} {else_stmt})"
             loop_body += "true)\n"
             
-            # print("Pre-condition: ", pre_condition)
-            # print("Post-condition: ", post_condition)
-            # print("Loop-condition: ", loop_condition)
-            # print("Invariant-in: ", invariant_in)
-            # print("Invariant-out: ", invariant_out)
-            # print("Loop-false-condition: ", loop_false_condition)
-            # print("Loop-body: ", loop_body)
+            print("Pre-condition: ", pre_condition)
+            print("Post-condition: ", post_condition)
+            print("Loop-condition: ", loop_condition)
+            print("Invariant-in: ", invariant_in)
+            print("Invariant-out: ", invariant_out)
+            print("Loop-false-condition: ", loop_false_condition)
+            print("Loop-body: ", loop_body)
             
             """
             first_check: pre_condition => invariant_in

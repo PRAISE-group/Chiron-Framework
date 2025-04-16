@@ -96,6 +96,8 @@ class TurtleCommandsCompiler():
     
     def compile(self, command):
         # print(command)
+        if (type(command) == ChironAST.NoOpCommand):
+            return []
         if(type(command) == ChironAST.MoveCommand):
             return self.compile_move_command(command)
         if(type(command) == ChironAST.GotoCommand):

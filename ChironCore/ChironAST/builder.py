@@ -192,5 +192,16 @@ class astGenPassSMTLIB(astGenPass):
         elseInstrList = [(boolFalse, 1)]
         jumpOverElseBlock = [(ChironAST.ConditionCommand(ChironAST.BoolFalse()), len(elseInstrList) + 1)]
         return [(condObj, len(thenInstrList) + 2)] + thenInstrList + jumpOverElseBlock + elseInstrList
+
+    def visitMoveCommand(self, ctx):
+        mvcommand = ctx.moveOp().getText()
+        mvexpr = self.visit(ctx.expression())
+        if mvcommand == "forward" or mvcommand == "backward":
+            return [(ChironAST.MoveCommand(mvcommand, mvexpr), 1), (ChironAST.NoOpCommand(), 1)]
+        else:
+            return super().visitMoveCommand(ctx)
+
+    def visitGotoCommand(self, ctx):
+        return [(super().visitGotoCommand(ctx)), (ChironAST.NoOpCommand(), 1)]
     
     
