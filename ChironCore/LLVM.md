@@ -47,6 +47,15 @@ ANTLR_LIB ?= /path/to/antlr4-runtime/lib
 ```
 Ensure these paths are correctly set before running the `make` command.
 
+## Generating the ANTLR files.
+
+The `antlr` files need to be rebuilt for CPP if any changes are made to the `tlang.g4` file.
+
+```
+$ cd ./turtparse
+$ java -cp ../extlib/antlr-4.13.2-complete.jar org.antlr.v4.Tool -Dlanguage=Cpp -visitor -no-listener tlang.g4
+```
+
 ## Building the Project
 Run the following command to compile the project:
 ```sh
