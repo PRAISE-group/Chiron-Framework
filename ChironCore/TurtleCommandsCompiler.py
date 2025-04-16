@@ -2,10 +2,10 @@ from ChironAST import ChironAST
 
 class TurtleCommandsCompiler():
     def __init__(self):
-        self.x  = ChironAST.Var(":__x")
-        self.y  = ChironAST.Var(":__y")
-        self.z  = ChironAST.Var(":__z")
-        self.w  = ChironAST.Var(":__w")
+        self.x  = ChironAST.Var(":__turtleX")
+        self.y  = ChironAST.Var(":__turtleY")
+        self.z  = ChironAST.Var(":__turtleZ")
+        self.w  = ChironAST.Var(":__turtleW")
     def compile_move_command(self, command: ChironAST.MoveCommand):
         new_command = ChironAST.NoOpCommand()
         if(command.direction == "left"):

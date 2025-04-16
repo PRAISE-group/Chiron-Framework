@@ -125,14 +125,16 @@ def process_bb2(node, successors):
         primary_var_to_id[primary_var] = id  
     # print(rename_map)
     # print()
-    if(node == block_type_to_node["loop end"]):
-        successors.append(block_type_to_node["assert"])
+
     for succ in successors:
         if(succ.irID <= block_id):
             continue
         for entry in succ.instrlist:
             # Find all variables used in entry without assignment
             stmt = str(entry[0])
+            if entry[1] == "assign":
+                vars = extract_variables_assign(stmt)
+                stmt = vars[1]
             stmt_vars = re.findall(r'(:[a-zA-Z_][a-zA-Z0-9_]*_0)', stmt)
             for var in stmt_vars:
                 primary_var = "_".join(var.split("_")[0:-2])
@@ -161,7 +163,7 @@ block_type_to_node = {}
 node_to_block_type = {}
 node_to_rename_map = {}
 
-def check_cfg_format(cfg: ChironCFG.ChironCFG):
+def check_cfg_format_with_loop(cfg: ChironCFG.ChironCFG):
     nodes_list = list(cfg.nxgraph.nodes)
     """
     Check if all are present - assume, assert, invariant, loop condition
@@ -258,7 +260,63 @@ def check_cfg_format(cfg: ChironCFG.ChironCFG):
     
     return
 
-def Traverse(cfg: ChironCFG.ChironCFG):
+def check_cfg_format_without_loop(cfg: ChironCFG.ChironCFG):
+    nodes_list = list(cfg.nxgraph.nodes)
+    """
+    Check if all are present - assume, assert
+    """
+    for node in nodes_list:
+        instrList = node.instrlist
+        
+        for entry in instrList:
+            if entry[1] == "assume":
+                if "assume" in block_type_to_node.keys():
+                    raise ValueError(f"More than one assume statement is not allowed")
+                else:
+                    block_type_to_node["assume"] = node
+                    node_to_block_type[node] = "assume"
+                    
+            elif entry[1] == "assert":
+                if "assert" in block_type_to_node.keys():
+                    raise ValueError(f"More than one assert statement is not allowed")
+                else:
+                    block_type_to_node["assert"] = node
+                    node_to_block_type[node] = "assert"
+    
+    if "assume" not in block_type_to_node.keys():
+        raise ValueError("Assume statement is missing")
+    if "assert" not in block_type_to_node.keys():
+        raise ValueError("Assert statement is missing")
+    
+    
+    """
+    Check if position of blocks in CFG  and format of individual blocks is correct
+    """
+    assume_node = block_type_to_node["assume"]
+    assert_node = block_type_to_node["assert"]
+    
+    if assume_node.irID != 0 or assume_node.instrlist[0][1] != "assume":
+        raise ValueError("Assume statement should be first statement")
+    
+    for succ in cfg.successors(assert_node):
+        if succ.irID != float('inf'):
+            raise ValueError("Assert should be last statement")
+    
+    if assert_node.instrlist[-1][1] != "assert":
+        raise ValueError("Assert statement should be last statement")
+    
+    return
+    
+
+
+def process_and_rename_nodes(sorted_nodes):
+    for node in sorted_nodes:
+        if node.name == "END":
+            continue  # Skip END node
+        node_to_rename_map[node], new_instrlist = rename_vars(node.instrlist)
+        node.instrlist = new_instrlist
+
+def Traverse(cfg: ChironCFG.ChironCFG, has_loop:bool = True):
     # Assign special irID values for START and END nodes
     for node in cfg.nxgraph.nodes:
         if node.name == "START":
@@ -274,103 +332,157 @@ def Traverse(cfg: ChironCFG.ChironCFG):
         if node.name == "END":
             continue  # Skip END node
         process_bb1(node)
-    # Check CFG format
-    check_cfg_format(cfg)
     
-    stmt1 = block_type_to_node["invariant"].instrlist[0][0]
-    stmt_vars = re.findall(r'(:[a-zA-Z_][a-zA-Z0-9_]*)', stmt1)
-    for var in stmt_vars:
-        primary_var = "_".join(var.split("_")[0:-1])
-        stmt1 = re.sub(rf'{primary_var}_{block_type_to_node["invariant"].irID}\b', f'{primary_var}_{block_type_to_node["assert"].irID}', stmt1)
+    if(has_loop):
+        # Check CFG format
+        check_cfg_format_with_loop(cfg)
 
-    stmt2 = block_type_to_node["loop condition"].instrlist[0][0]
-    stmt_vars = re.findall(r'(:[a-zA-Z_][a-zA-Z0-9_]*)', stmt2)
-    for var in stmt_vars:
-        primary_var = "_".join(var.split("_")[0:-1])
-        stmt2 = re.sub(rf'{primary_var}_{block_type_to_node["loop condition"].irID}\b', f'{primary_var}_{block_type_to_node["assert"].irID}', stmt2)
-    stmt2 = stmt2.replace(">", "==")
-    extra_stmts = [ [stmt1, "invariant_out"], [stmt2, "loop_false_condition"] ]
-    block_type_to_node["assert"].instrlist =  extra_stmts + block_type_to_node["assert"].instrlist
-    
+        stmt1 = block_type_to_node["invariant"].instrlist[0][0]
+        stmt_vars = extract_variables_others(stmt1)
+        for var in stmt_vars:
+            primary_var = "_".join(var.split("_")[0:-1])
+            stmt1 = re.sub(rf'{primary_var}_{block_type_to_node["invariant"].irID}\b', f'{primary_var}_{block_type_to_node["assert"].irID}', stmt1)
 
-    for node in sorted_nodes:
-        if node.name == "END":
-            continue  # Skip END node
-        node_to_rename_map[node], new_instrlist = rename_vars(node.instrlist)
-        node.instrlist = new_instrlist
-
-    # # Process nodes again in sorted order for further processing
-    for node in sorted_nodes[::-1]:
-        if (node.irID > block_type_to_node["loop end"].irID) or \
-            (node.irID <= block_type_to_node["loop condition"].irID):
-            continue  
-        successors = list(cfg.nxgraph.successors(node))
-        process_bb2(node, successors)
+        stmt2 = block_type_to_node["loop condition"].instrlist[0][0]
+        stmt_vars = extract_variables_others(stmt2)
+        for var in stmt_vars:
+            primary_var = "_".join(var.split("_")[0:-1])
+            stmt2 = re.sub(rf'{primary_var}_{block_type_to_node["loop condition"].irID}\b', f'{primary_var}_{block_type_to_node["assert"].irID}', stmt2)
+        stmt2 = stmt2.replace(">", "==")
         
-    process_bb2(block_type_to_node["assume"], [block_type_to_node["invariant"], block_type_to_node["loop condition"]])
-    # process_bb2(block_type_to_node["loop end"], [block_type_to_node["assert"]])
-
-    # Print the final CFG
-    # for node in sorted_nodes:
-    #     print(f"{node.irID}:")
-    #     for entry in node.instrlist:
-    #         print(f"\t{entry[0]}: {entry[1]}")
-
-    pre_condition = []
-    post_condition = []
-    loop_condition = []
-    invariant_in = []
-    invariant_out = []
-    loop_body = []
-    loop_false_condition = []
+        extra_stmts = [ [stmt1, "invariant_out"], [stmt2, "loop_false_condition"] ]
+        block_type_to_node["assert"].instrlist =  extra_stmts + block_type_to_node["assert"].instrlist
     
-    for stmt in block_type_to_node["assume"].instrlist:
-        pre_condition.append(stmt[0])
-    for stmt in block_type_to_node["assert"].instrlist:
-        if(stmt[1] == "assert"):
-            post_condition.append(stmt[0])
-    for stmt in block_type_to_node["loop condition"].instrlist:
-        loop_condition.append(stmt[0])
+    
+
+        process_and_rename_nodes(sorted_nodes)
+
+        # # Process nodes again in sorted order for further processing
+        for node in sorted_nodes[::-1]:
+            if (node.irID > block_type_to_node["loop end"].irID) or \
+                (node.irID <= block_type_to_node["loop condition"].irID):
+                continue  
+            successors = list(cfg.nxgraph.successors(node))
+            if(node == block_type_to_node["loop end"]):
+                successors.append(block_type_to_node["assert"])
+            process_bb2(node, successors)
+            
+        process_bb2(block_type_to_node["assume"], [block_type_to_node["invariant"], block_type_to_node["loop condition"]])
+
+        # # Print the final CFG
+        # for node in sorted_nodes:
+        #     print(f"{node.irID}:")
+        #     for entry in node.instrlist:
+        #         print(f"\t{entry[0]}: {entry[1]}")
+
+        pre_condition = []
+        post_condition = []
+        loop_condition = []
+        invariant_in = []
+        invariant_out = []
+        loop_body = []
+        loop_false_condition = []
         
-    invariant_in.append(block_type_to_node["invariant"].instrlist[0][0])
-
-    for stmt in block_type_to_node["assert"].instrlist:
-        if stmt[1] == "invariant_out":
-            invariant_out.append(stmt[0])
-        if stmt[1] == "loop_false_condition":
-            loop_false_condition.append(stmt[0])
-
-    node_to_stmt_list = {}
-    for node in sorted_nodes:
-        if (node.irID > block_type_to_node["loop end"].irID) or \
-            (node.irID <= block_type_to_node["loop condition"].irID):
-            continue  
-        new_instrlist, condition= process_bb3(node)
-        node_to_stmt_list[node] = [new_instrlist, condition]
-    
-    # print("Node to Statement List:")
-    # for node, (stmt_list, condition) in node_to_stmt_list.items():
-    #     print(f"Node {node.irID}:")
-    #     print(f"Statements: {stmt_list}")
-    #     print(f"Condition: {condition}")
-    
-    visited = set()
-    for node in sorted_nodes:
-        if (node.irID > block_type_to_node["loop end"].irID) or \
-            (node.irID <= block_type_to_node["loop condition"].irID) or \
-             (node in visited):
-            continue
-        instrList, condition = node_to_stmt_list[node]
-        loop_body.append(["assign", instrList])
-        visited.add(node)
-        if(condition != None):
-            successors = sorted(list(cfg.nxgraph.successors(node)), key=lambda x: x.irID)
-            instrList1 = node_to_stmt_list[successors[0]][0]
-            instrList2 = node_to_stmt_list[successors[1]][0]
-            loop_body.append(["if-else", condition, instrList1, instrList2])
-            visited.add(successors[0])
-            visited.add(successors[1])
+        for stmt in block_type_to_node["assume"].instrlist:
+            pre_condition.append(stmt[0])
+        for stmt in block_type_to_node["assert"].instrlist:
+            if(stmt[1] == "assert"):
+                post_condition.append(stmt[0])
+        for stmt in block_type_to_node["loop condition"].instrlist:
+            loop_condition.append(stmt[0])
             
-            
-    return pre_condition, post_condition, loop_condition, invariant_in, invariant_out, loop_body, loop_false_condition
+        invariant_in.append(block_type_to_node["invariant"].instrlist[0][0])
+
+        for stmt in block_type_to_node["assert"].instrlist:
+            if stmt[1] == "invariant_out":
+                invariant_out.append(stmt[0])
+            if stmt[1] == "loop_false_condition":
+                loop_false_condition.append(stmt[0])
+
+        node_to_stmt_list = {}
+        for node in sorted_nodes:
+            if (node.irID > block_type_to_node["loop end"].irID) or \
+                (node.irID <= block_type_to_node["loop condition"].irID):
+                continue  
+            new_instrlist, condition= process_bb3(node)
+            node_to_stmt_list[node] = [new_instrlist, condition]
+        
+        # print("Node to Statement List:")
+        # for node, (stmt_list, condition) in node_to_stmt_list.items():
+        #     print(f"Node {node.irID}:")
+        #     print(f"Statements: {stmt_list}")
+        #     print(f"Condition: {condition}")
+        
+        visited = set()
+        for node in sorted_nodes:
+            if (node.irID > block_type_to_node["loop end"].irID) or \
+                (node.irID <= block_type_to_node["loop condition"].irID) or \
+                (node in visited):
+                continue
+            instrList, condition = node_to_stmt_list[node]
+            loop_body.append(["assign", instrList])
+            visited.add(node)
+            if(condition != None):
+                successors = sorted(list(cfg.nxgraph.successors(node)), key=lambda x: x.irID)
+                instrList1 = node_to_stmt_list[successors[0]][0]
+                instrList2 = node_to_stmt_list[successors[1]][0]
+                loop_body.append(["if-else", condition, instrList1, instrList2])
+                visited.add(successors[0])
+                visited.add(successors[1])
+                
+                
+        return pre_condition, post_condition, loop_condition, invariant_in, invariant_out, loop_body, loop_false_condition
     
+    else:
+        # Check CFG format
+        check_cfg_format_without_loop(cfg)
+
+        process_and_rename_nodes(sorted_nodes)
+
+        # print(node_to_rename_map)
+
+
+        for node in sorted_nodes[::-1]:
+            if node.name == "END":
+                continue
+            successors = list(cfg.nxgraph.successors(node))
+            process_bb2(node, successors)
+
+        pre_condition = []
+        post_condition = []
+        code_body = []
+
+        node_to_stmt_list = {}
+        for node in sorted_nodes:
+            if node.name == "END":
+                continue
+            new_instrlist, condition= process_bb3(node)
+            node_to_stmt_list[node] = [new_instrlist, condition]
+
+        for stmt in block_type_to_node["assume"].instrlist:
+            if(stmt[1] == "assume"):
+                pre_condition.append(stmt[0])
+        for stmt in block_type_to_node["assert"].instrlist:
+            if(stmt[1] == "assert"):
+                post_condition.append(stmt[0])
+        
+        visited = set()
+        for node in sorted_nodes:
+            if node.name == "END" or (node in visited):
+                continue
+            instrList, condition = node_to_stmt_list[node]
+            code_body.append(["assign", instrList])
+            visited.add(node)
+            if(condition != None):
+                successors = sorted(list(cfg.nxgraph.successors(node)), key=lambda x: x.irID)
+                instrList1 = node_to_stmt_list[successors[0]][0]
+                instrList2 = node_to_stmt_list[successors[1]][0]
+                code_body.append(["if-else", condition, instrList1, instrList2])
+                visited.add(successors[0])
+                visited.add(successors[1])
+
+        # print(pre_condition)
+        # print(post_condition)
+        # print(code_body)
+        return pre_condition, post_condition, code_body
+

@@ -1,30 +1,17 @@
+assume(1==1)
 if (:x > :y)[
-    :x1 = :y
-] else [
-    :x1 = :x
-]
+    :t = :x
+    :x = :y
+    :y = :t
+] 
+if (:y > :z)[
+    :t = :y
+    :y = :z
+    :z = :t
+] 
 if (:x > :y)[
-    :y1 = :x
-] else [
-    :y1 = :y
+    :t = :x
+    :x = :y
+    :y = :t
 ]
-if (:y1 > :z)[
-    :y2 = :z
-] else [
-    :y2 = :y1
-]
-if (:y1 > :z)[
-    :z1 = :y1
-] else [
-    :z1 = :z
-]
-if (:x1 > :y2)[
-    :x2 = :y2
-] else [
-    :x2 = :x1
-]
-if (:x1 > :y2)[
-    :y3 = :x1
-] else [
-    :y3 = :y2
-]
+assert((:x <= :y) && (:y <= :z))

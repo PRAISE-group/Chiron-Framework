@@ -1,3 +1,4 @@
+assume(:year > 0)
 :mod4 = (:year-1) - ((:year-1)/4)*4
 :mod100 = (:year-1) - ((:year-1)/100)*100
 :mod400 = (:year-1) - ((:year-1)/400)*400
@@ -27,3 +28,4 @@ if ((:isDivby4 == 1 && :isDivby100 != 1) || (:isDivby400 == 1)) [
 ] else [
     :isLeap2 = 0
 ]
+assert(:isLeap1 == :isLeap2)

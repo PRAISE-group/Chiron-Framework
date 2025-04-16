@@ -21,36 +21,22 @@ repeat :n [
     :s = :s+:i
 ]
 assert(:s == (:n*(:n+1))/2)
-Pre-condition:  (and (and (= s_0_0 0) (= i_0_0 0)) (= __rep_counter_1_0_1 n_0_0) (= s_2_0 s_0_0) (= i_2_0 i_0_0) (= __rep_counter_1_2_0 __rep_counter_1_0_1) (= n_2_0 n_0_0) (= __rep_counter_1_1_0 __rep_counter_1_0_1) true)
-
-Post-condition:  (and (= s_7_0 (div (* n_7_0 (+ n_7_0 1)) 2)) true)
-
-Loop-condition:  (and (> __rep_counter_1_1_0 0) true)
-
-Invariant-in:  (and (and (= s_2_0 (div (* i_2_0 (+ i_2_0 1)) 2)) (= (+ __rep_counter_1_2_0 i_2_0) n_2_0)) true)
-
-Invariant-out:  (and (and (= s_7_0 (div (* i_7_0 (+ i_7_0 1)) 2)) (= (+ __rep_counter_1_7_0 i_7_0) n_7_0)) true)
-
-Loop-false-condition:  (and (= __rep_counter_1_7_0 0) true)
-
-Loop-body:  (and (= i_2_1 (+ i_2_0 1))(= s_2_1 (+ s_2_0 i_2_1))(= __rep_counter_1_2_1 (- __rep_counter_1_2_0 1))(= s_7_0 s_2_1)(= i_7_0 i_2_1)(= __rep_counter_1_7_0 __rep_counter_1_2_1)(= n_7_0 n_2_0)true)
-
-(declare-fun __rep_counter_1_2_0 () Int)
 (declare-fun s_2_0 () Int)
-(declare-fun n_7_0 () Int)
+(declare-fun n_0_0 () Int)
 (declare-fun s_2_1 () Int)
 (declare-fun __rep_counter_1_0_1 () Int)
-(declare-fun i_2_1 () Int)
-(declare-fun i_2_0 () Int)
-(declare-fun __rep_counter_1_1_0 () Int)
-(declare-fun n_2_0 () Int)
-(declare-fun __rep_counter_1_7_0 () Int)
 (declare-fun i_7_0 () Int)
-(declare-fun i_0_0 () Int)
 (declare-fun __rep_counter_1_2_1 () Int)
-(declare-fun n_0_0 () Int)
-(declare-fun s_7_0 () Int)
+(declare-fun i_2_0 () Int)
 (declare-fun s_0_0 () Int)
+(declare-fun __rep_counter_1_7_0 () Int)
+(declare-fun n_7_0 () Int)
+(declare-fun i_2_1 () Int)
+(declare-fun s_7_0 () Int)
+(declare-fun __rep_counter_1_1_0 () Int)
+(declare-fun i_0_0 () Int)
+(declare-fun __rep_counter_1_2_0 () Int)
+(declare-fun n_2_0 () Int)
 (push 1)
 (assert (not (=> (and (and (= s_0_0 0) (= i_0_0 0)) (= __rep_counter_1_0_1 n_0_0) (= s_2_0 s_0_0) (= i_2_0 i_0_0) (= __rep_counter_1_2_0 __rep_counter_1_0_1) (= n_2_0 n_0_0) (= __rep_counter_1_1_0 __rep_counter_1_0_1) true)
  (and (and (= s_2_0 (div (* i_2_0 (+ i_2_0 1)) 2)) (= (+ __rep_counter_1_2_0 i_2_0) n_2_0)) true)
