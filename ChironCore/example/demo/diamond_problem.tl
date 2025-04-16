@@ -3,7 +3,7 @@ class :Animal {
     def walk(:self)
     {
         print(:self.:walk)
-        return
+        return 0
     }
 }
 

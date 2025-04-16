@@ -10,7 +10,7 @@ class :Star(:Shape) {
             forward :self.:length
             right :angle
         ]
-        return
+        return 10
     }
 }
 
@@ -19,7 +19,7 @@ def drawSquare(:size) {
         forward :size
         right 90
     ]
-    return
+    return 10
 }
 
 :star = new :Star()

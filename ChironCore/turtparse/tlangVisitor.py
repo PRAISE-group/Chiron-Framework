@@ -119,6 +119,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#binExpr.
+    def visitBinExpr(self, ctx:tlangParser.BinExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#unaryExpr.
     def visitUnaryExpr(self, ctx:tlangParser.UnaryExprContext):
         return self.visitChildren(ctx)
@@ -126,6 +131,11 @@ class tlangVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by tlangParser#valueExpr.
     def visitValueExpr(self, ctx:tlangParser.ValueExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#notExpr.
+    def visitNotExpr(self, ctx:tlangParser.NotExprContext):
         return self.visitChildren(ctx)
 
 
@@ -139,6 +149,11 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#penExpr.
+    def visitPenExpr(self, ctx:tlangParser.PenExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#assignExpr.
     def visitAssignExpr(self, ctx:tlangParser.AssignExprContext):
         return self.visitChildren(ctx)
@@ -146,6 +161,11 @@ class tlangVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by tlangParser#parenExpr.
     def visitParenExpr(self, ctx:tlangParser.ParenExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#logExpr.
+    def visitLogExpr(self, ctx:tlangParser.LogExprContext):
         return self.visitChildren(ctx)
 
 
@@ -194,11 +214,6 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#functionCallWithReturnValues.
-    def visitFunctionCallWithReturnValues(self, ctx:tlangParser.FunctionCallWithReturnValuesContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by tlangParser#functionDeclaration.
     def visitFunctionDeclaration(self, ctx:tlangParser.FunctionDeclarationContext):
         return self.visitChildren(ctx)
@@ -214,23 +229,18 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#condition.
-    def visitCondition(self, ctx:tlangParser.ConditionContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by tlangParser#comment.
     def visitComment(self, ctx:tlangParser.CommentContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#binCondOp.
-    def visitBinCondOp(self, ctx:tlangParser.BinCondOpContext):
+    # Visit a parse tree produced by tlangParser#logicOp.
+    def visitLogicOp(self, ctx:tlangParser.LogicOpContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by tlangParser#logicOp.
-    def visitLogicOp(self, ctx:tlangParser.LogicOpContext):
+    # Visit a parse tree produced by tlangParser#binCondOp.
+    def visitBinCondOp(self, ctx:tlangParser.BinCondOpContext):
         return self.visitChildren(ctx)
 
 

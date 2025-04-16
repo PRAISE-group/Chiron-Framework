@@ -3,7 +3,7 @@ class :Shape {
     def moveForward(:self) 
     {
         forward :self.:length
-        return
+        return 0
     }
 }
 
@@ -14,11 +14,11 @@ class :Hexagon(:Shape) {
             :self.moveForward()
             right 60
         ]
-        return
+        return 0
     }
     def __moveForward(:self, :distance) {
         forward :distance
-        return
+        return 0
     }
 }
 

@@ -112,9 +112,17 @@ class ConcreteInterpreter(Interpreter):
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
+        print("###########################Intermediate Representation (IR):#############")
+        for index, instruction in enumerate(self.ir):
+            print(f"{index}: {instruction} | {instruction[0]}")
 
     def interpret(self):
         print("Program counter : ", self.pc)
+        if not self.ir:
+            return True
+      
+
+    
         stmt, tgt = self.ir[self.pc]
 
         print(stmt, stmt.__class__.__name__, tgt)
@@ -211,22 +219,38 @@ class ConcreteInterpreter(Interpreter):
 
     # Copying the return values in their respective placeholders
     def handleReturnRead(self, stmt, tgt):
-        for rval in reversed(stmt.returnValues):
-            rval = str(rval).replace(":", "")
+        
+        print(f"Read Return: {stmt.returnValues}")
+        cnt=self.call_stack.pop()
+        rval=stmt.returnValues[0]
+        rval = str(rval).replace(":", "")
+        if(cnt==1):
             exec(f"self.prg.{rval} = self.call_stack.pop()")
+        else:
+            exec(f"self.prg.{rval} = self.call_stack[-{cnt}:]")
+            self.call_stack=self.call_stack[:-cnt]
+
         return 1
 
+
     def handleFunctionReturn(self, stmt, tgt):
+
+        print(f"Function Return: {stmt}")
         # Restore the previous program context
         rval_list = []
+        cnt=0
         for rval in stmt.returnValues:
+            cnt=cnt+1
             rval_value = addContext(rval)
             exec(f"self.return_value = {rval_value}")
             rval_list.append(self.return_value)
         self.prg = self.call_stack.pop()
         self.pc = self.call_stack.pop()
         self.call_stack.extend(rval_list)
+        self.call_stack.append(cnt)
+        
         return 0
+
 
     # Copying the parameters in their respective placeholders
     def handleParametersPassing(self, stmt, tgt):

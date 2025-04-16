@@ -8,16 +8,15 @@ statement_list : declaration_list strict_ilist ;
 
 declaration_list : (declaration)* ;
 
-strict_ilist : (instruction | comment)+
+strict_ilist : (instruction | comment)*
              ;
 
 declaration : classDeclaration
 		| functionDeclaration
 		;
 
-instruction : functionCallWithReturnValues
-		| assignment
-		| printStatement
+instruction : 
+		 printStatement
 	    | conditional
 	    | loop
 	    | moveCommand
@@ -25,15 +24,16 @@ instruction : functionCallWithReturnValues
 	    | gotoCommand
 	    | pauseCommand
 		| objectInstantiation
-		| functionCall
+		| expression
 		| returnStatement
+		
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
 
-ifConditional : 'if' condition '[' strict_ilist ']' ;
+ifConditional : 'if' expression '[' strict_ilist ']' ;
 
-ifElseConditional : 'if' condition '[' strict_ilist ']' 'else' '[' strict_ilist ']' ;
+ifElseConditional : 'if' expression '[' strict_ilist ']' 'else' '[' strict_ilist ']' ;
 
 loop : 'repeat' value '[' strict_ilist ']' ;
 
@@ -54,7 +54,7 @@ assignment :
 		  lvalue  '=' expression      
 	   ;
 
-printStatement : 'print' '(' expression ')' ;
+printStatement : PRINT '(' expression ')' ;
 
 multiplicative : MUL | DIV;
 additive : PLUS | MINUS;
@@ -67,18 +67,22 @@ MUL  	 : '*' ;
 DIV      : '/' ;
 
 
-returnStatement : 'return' ( expression ( ',' expression )* )? ;
+returnStatement : RETURN ( expression ( ',' expression )* ) ;
 
 expression : 
              unaryArithOp expression               #unaryExpr
            | expression multiplicative expression  #mulExpr
 		   | expression additive expression        #addExpr
-		   | lvalue  '=' expression   #assignExpr
+		   | lvalue  '=' expression                #assignExpr
 		   | '(' expression ')'                    #parenExpr
 		   | value                                 #valueExpr
- 	   ;
+		   | NOT expression						   #notExpr
+           | expression binCondOp expression	   #binExpr
+	       | expression logicOp expression		   #logExpr
+	       | PENCOND							   #penExpr
 
 
+;
 
 classDeclaration : 'class' VAR ('(' VAR (',' (VAR)*)? ')')? '{' classBody '}' ;
 
@@ -101,7 +105,6 @@ lvalue
 functionCall : methodCaller NAME '(' arguments ')' ;
 methodCaller : ((VAR | '[' expression ']') '.')* ;
 
-functionCallWithReturnValues : lvalue ( ',' lvalue )+ '=' functionCall ;
 
 // function declaration
 functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
@@ -109,22 +112,22 @@ functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
 parameters : ( VAR  ( ',' VAR )* )? ;
 arguments : ( expression ( ',' expression )* )? ;
 
-// TODO :
-// procedure_declaration : 'to' NAME (VAR)+ strict_ilist 'end' ;
-
-condition : NOT condition
-          |expression binCondOp expression
-	  | condition logicOp condition
-	  | PENCOND
-	  | '(' condition ')'
-	  ;
 
 comment : '#' (NAME)* '#' ;
+
+logicOp : AND | OR ;
+
 
 binCondOp :  EQ | NEQ | LT | GT | LTE | GTE
 	 ;
 
-logicOp : AND | OR ;
+AND: '&&';
+OR : '||';
+
+RETURN : 'return' ;
+
+PRINT : 'print' ;
+
 
 PENCOND : 'pendown?';
 LT : '<' ;
@@ -133,8 +136,7 @@ EQ : '==';
 NEQ: '!=';
 LTE: '<=';
 GTE: '>=';
-AND: '&&';
-OR : '||';
+
 NOT: '!' ;
 
 value : NUM

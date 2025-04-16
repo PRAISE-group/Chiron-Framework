@@ -48,6 +48,8 @@ class astGenPass(tlangVisitor):
         stmtList = []
         for item in items:
             currStmtList = self.visit(item)
+            if not isinstance(currStmtList,list): 
+                currStmtList=[]
             stmtList.extend(self.subStmtList + currStmtList)
             self.subStmtList = []
             self.virtualRegCount = 0
@@ -74,28 +76,6 @@ class astGenPass(tlangVisitor):
         # 2. parameters passing - This command is used to push the parameters to the function on the call stack
         return [(ChironAST.FunctionDeclarationCommand(functionName, functionParams, functionBody), len(functionBody) + 2)] + [(ChironAST.ParametersPassingCommand(functionParams), 1)] + functionBody
 
-    def visitFunctionCall(self, ctx: tlangParser.FunctionCallContext):
-        functionName = ctx.NAME().getText()
-        # the object invoking the method, in case the function call is a method call
-        methodCaller = self.visitMethodCaller(
-            ctx.methodCaller()) if ctx.methodCaller().children is not None else None
-        functionArgs = [self.visit(arg) for arg in ctx.arguments(
-        ).expression()] if ctx.arguments() is not None else []
-        # if the function is a method call, insert the caller object as the first argument
-        if methodCaller:
-            functionArgs.insert(0, methodCaller)
-            # call private methods with mangled names
-            # eg, :self.__privateMethod() will be called as :self._className__privateMethod()
-            if len(methodCaller.access_chain) == 1 and methodCaller.access_chain[0] == ":self" and functionName.startswith("__"):
-                functionName = f"_{self.classRegister}{functionName}"
-        return [(ChironAST.FunctionCallCommand(functionName, functionArgs, methodCaller), 1)]
-
-    def visitFunctionCallWithReturnValues(self, ctx: tlangParser.FunctionCallWithReturnValuesContext):
-        functionCallStmt = self.visitFunctionCall(ctx.functionCall())
-        returnLocations = [self.visit(lvalue) for lvalue in ctx.lvalue()]
-        # read return statement is used to pop the return values from the call stack and copy them to the variables
-        readReturnCommand = ChironAST.ReadReturnCommand(returnLocations)
-        return functionCallStmt + [(readReturnCommand, 1)]
 
     def visitReturnStatement(self, ctx: tlangParser.ReturnStatementContext):
         returnValues = [self.visit(expr) for expr in ctx.expression(
@@ -121,7 +101,7 @@ class astGenPass(tlangVisitor):
                 # Handle private attributes
                 # If the access is with ":self" and the attribute is private, mangle the name 
                 if base == ":self" and i == 2 and ctx.children[i].getText().startswith(":__"):
-                    access = f":_{self.classRegister}{access.replace(":", "")}"
+                    access = f":_{self.classRegister}{access.replace(':', '')}"
                 access_chain.append(access)
             elif child.getText() == '[':
                 # Array access: Process the expression inside `[]`
@@ -234,12 +214,18 @@ class astGenPass(tlangVisitor):
         return [(ChironAST.PrintCommand(expr_value), 1)]
 
     def visitIfConditional(self, ctx: tlangParser.IfConditionalContext):
-        condObj = ChironAST.ConditionCommand(self.visit(ctx.condition()))
+        condObj = ChironAST.ConditionCommand(self.visit(ctx.expression()))
+        if self.subStmtList:
+            self.stmtList.extend(self.subStmtList)
+            self.subStmtList=[]
         thenInstrList = self.visit(ctx.strict_ilist())
         return [(condObj, len(thenInstrList) + 1)] + thenInstrList
 
     def visitIfElseConditional(self, ctx: tlangParser.IfElseConditionalContext):
-        condObj = ChironAST.ConditionCommand(self.visit(ctx.condition()))
+        condObj = ChironAST.ConditionCommand(self.visit(ctx.expression()))
+        if self.subStmtList:
+            self.stmtList.extend(self.subStmtList)
+            self.subStmtList=[]
         thenInstrList = self.visit(ctx.strict_ilist(0))
         elseInstrList = self.visit(ctx.strict_ilist(1))
         jumpOverElseBlock = [(ChironAST.ConditionCommand(
@@ -281,48 +267,43 @@ class astGenPass(tlangVisitor):
     # Visit a parse tree produced by tlangParser#parenExpr.
     def visitParenExpr(self, ctx: tlangParser.ParenExprContext):
         return self.visit(ctx.expression())
+    
+    def visitNotExpr(self, ctx: tlangParser.NotExprContext):
+        expr1 = self.visit(ctx.condition(0))
+        return ChironAST.NOT(expr1)
+    
+    def visitBinExpr(self, ctx: tlangParser.BinExprContext):
+        expr1 = self.visit(ctx.expression(0))
+        expr2 = self.visit(ctx.expression(1))
+        binOpCtx = ctx.binCondOp()
 
-    def visitCondition(self, ctx: tlangParser.ConditionContext):
-        if ctx.PENCOND():
-            return ChironAST.PenStatus()
+        if binOpCtx.LT():
+            return ChironAST.LT(expr1, expr2)
+        elif binOpCtx.GT():
+            return ChironAST.GT(expr1, expr2)
+        elif binOpCtx.EQ():
+            return ChironAST.EQ(expr1, expr2)
+        elif binOpCtx.NEQ():
+            return ChironAST.NEQ(expr1, expr2)
+        elif binOpCtx.LTE():
+            return ChironAST.LTE(expr1, expr2)
+        elif binOpCtx.GTE():
+            return ChironAST.GTE(expr1, expr2)
+    
+    def visitLogExpr(self, ctx: tlangParser.LogExprContext):
+        expr1 = self.visit(ctx.expression(0))
+        expr2 = self.visit(ctx.expression(1))
+        logicOpCtx = ctx.logicOp()
 
-        if ctx.NOT():
-            expr1 = self.visit(ctx.condition(0))
-            return ChironAST.NOT(expr1)
+        if logicOpCtx.AND():
+            return ChironAST.AND(expr1, expr2)
+        elif logicOpCtx.OR():
+            return ChironAST.OR(expr1, expr2)
+    
+    def visitPenExpr(self, ctx: tlangParser.PenExprContext):
+        return ChironAST.PenStatus()
 
-        if ctx.logicOp():
-            expr1 = self.visit(ctx.condition(0))
-            expr2 = self.visit(ctx.condition(1))
-            logicOpCtx = ctx.logicOp()
 
-            if logicOpCtx.AND():
-                return ChironAST.AND(expr1, expr2)
-            elif logicOpCtx.OR():
-                return ChironAST.OR(expr1, expr2)
-
-        if ctx.binCondOp():
-            expr1 = self.visit(ctx.expression(0))
-            expr2 = self.visit(ctx.expression(1))
-            binOpCtx = ctx.binCondOp()
-
-            if binOpCtx.LT():
-                return ChironAST.LT(expr1, expr2)
-            elif binOpCtx.GT():
-                return ChironAST.GT(expr1, expr2)
-            elif binOpCtx.EQ():
-                return ChironAST.EQ(expr1, expr2)
-            elif binOpCtx.NEQ():
-                return ChironAST.NEQ(expr1, expr2)
-            elif binOpCtx.LTE():
-                return ChironAST.LTE(expr1, expr2)
-            elif binOpCtx.GTE():
-                return ChironAST.GTE(expr1, expr2)
-
-        if ctx.condition():
-            # condition is inside paranthesis
-            return self.visit(ctx.condition(0))
-
-        return self.visitChildren(ctx)
 
     def visitLoop(self, ctx: tlangParser.LoopContext):
         # insert counter variable in IR for tracking repeat count
@@ -339,10 +320,8 @@ class astGenPass(tlangVisitor):
         counterVarDecrInstr = ChironAST.AssignmentCommand(
             counterVar, ChironAST.Diff(counterVar, constOne))
 
-        thenInstrList = []
-        for instr in ctx.strict_ilist().instruction():
-            temp = self.visit(instr)
-            thenInstrList.extend(temp)
+        thenInstrList = self.visit(ctx.strict_ilist())
+
 
         boolFalse = ChironAST.ConditionCommand(ChironAST.BoolFalse())
         return [(counterVarInitInstr, 1), (loopCond, len(thenInstrList) + 3)] + thenInstrList +\

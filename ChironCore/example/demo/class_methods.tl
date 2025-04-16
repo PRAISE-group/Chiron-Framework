@@ -7,7 +7,7 @@ class :Pentagon {
             forward :self.:length
             right :angle
         ]
-        return
+        return 0
     }
 }
 
