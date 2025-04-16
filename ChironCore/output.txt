@@ -1,3 +1,6 @@
+Results:
+
+Models:
 Chiron v5.3
 
     ░█████╗░██╗░░██╗██╗██████╗░░█████╗░███╗░░██╗
@@ -7,67 +10,232 @@ Chiron v5.3
     ╚█████╔╝██║░░██║██║██║░░██║╚█████╔╝██║░╚███║
     ░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝
     
-assume((:s==0) && (:i==0))
-repeat :n [
-    invariant(:s == (:i*(:i+1))/2 && :REPCOUNTER + :i == :n)
-    :i = :i+1
-    :s = :s+:i
+assume(:x==0)
+repeat 4 [
+    invariant(:y + :x*90 == 360)
+    :x = :x + 1
+    pendown
+    if (:x == 4) [
+        left 90
+    ]
+    else [
+        right 90
+    ]
+    forward 10
+    penup
 ]
-assert(:s == (:n*(:n+1))/2)
-assume((:s==0) && (:i==0))
-repeat :n [
-    invariant(:s == (:i*(:i+1))/2 && :REPCOUNTER + :i == :n)
-    :i = :i+1
-    :s = :s+:i
-]
-assert(:s == (:n*(:n+1))/2)
-(declare-fun s_2_0 () Int)
-(declare-fun n_0_0 () Int)
-(declare-fun s_2_1 () Int)
-(declare-fun __rep_counter_1_0_1 () Int)
-(declare-fun i_7_0 () Int)
-(declare-fun __rep_counter_1_2_1 () Int)
-(declare-fun i_2_0 () Int)
-(declare-fun s_0_0 () Int)
-(declare-fun __rep_counter_1_7_0 () Int)
-(declare-fun n_7_0 () Int)
-(declare-fun i_2_1 () Int)
-(declare-fun s_7_0 () Int)
+assert(:y == 270)
+
+Pre-condition:  (and (= x_0_0 0) (= __rep_counter_1_0_1 4) (= y_2_0 y_0_0) (= x_2_0 x_0_0) (= __turtleW_2_0 __turtleW_0_0) (= __turtleX_2_0 __turtleX_0_0) (= __turtleY_2_0 __turtleY_0_0) (= __rep_counter_1_2_0 __rep_counter_1_0_1) (= __rep_counter_1_1_0 __rep_counter_1_0_1) )
+
+Post-condition:  (= y_14_0 270)
+Loop-condition:  (> __rep_counter_1_1_0 0)
+Invariant-in:  (= (+ y_2_0 (* x_2_0 90)) 360)
+Invariant-out:  (= (+ y_14_0 (* x_14_0 90)) 360)
+Loop-false-condition:  (= __rep_counter_1_14_0 0)
+Loop-body:  (and (= x_2_1 (+ x_2_0 1))(= __turtleZ_2_1 0)(= __turtleW_6_0 __turtleW_2_0)(= __turtleX_6_0 __turtleX_2_0)(= __turtleY_6_0 __turtleY_2_0)(= __rep_counter_1_6_0 __rep_counter_1_2_0)(= y_6_0 y_2_0)(= x_6_0 x_2_1)(= __turtleW_8_0 __turtleW_2_0)(= __turtleX_8_0 __turtleX_2_0)(= __turtleY_8_0 __turtleY_2_0)(= __rep_counter_1_8_0 __rep_counter_1_2_0)(= y_8_0 y_2_0)(= x_8_0 x_2_1)(or (and (= x_2_1 4) (and (= __turtleW_6_1 (mod (+ __turtleW_6_0 90) 360)) (= __turtleX_9_0 __turtleX_6_0) (= __turtleW_9_0 __turtleW_6_1) (= __turtleY_9_0 __turtleY_6_0) (= __rep_counter_1_9_0 __rep_counter_1_6_0) (= y_9_0 y_6_0) (= x_9_0 x_6_0) )
+) (and (not (= x_2_1 4)) (and (= __turtleW_8_1 (mod (- __turtleW_8_0 90) 360)) (= __turtleX_9_0 __turtleX_8_0) (= __turtleW_9_0 __turtleW_8_1) (= __turtleY_9_0 __turtleY_8_0) (= __rep_counter_1_9_0 __rep_counter_1_8_0) (= y_9_0 y_8_0) (= x_9_0 x_8_0) )
+))(= __turtleX_9_1 (+ __turtleX_9_0 (* 10 (* (- 1 (mod (div __turtleW_9_0 90) 2)) (- 1 (* 2 (div (div __turtleW_9_0 90) 2)))))))(= __turtleY_9_1 (+ __turtleY_9_0 (* 10 (* (mod (div __turtleW_9_0 90) 2) (- 1 (* 2 (div (div __turtleW_9_0 90) 2)))))))(= __turtleZ_9_1 1)(= __rep_counter_1_9_1 (- __rep_counter_1_9_0 1))(= y_14_0 y_9_0)(= x_14_0 x_9_0)(= __rep_counter_1_14_0 __rep_counter_1_9_1)true)
+
+(declare-fun __rep_counter_1_8_0 () Int)
+(declare-fun __turtleZ_2_1 () Int)
+(declare-fun __rep_counter_1_14_0 () Int)
+(declare-fun x_2_0 () Int)
 (declare-fun __rep_counter_1_1_0 () Int)
-(declare-fun i_0_0 () Int)
+(declare-fun y_0_0 () Int)
+(declare-fun __turtleW_0_0 () Int)
+(declare-fun x_2_1 () Int)
+(declare-fun y_14_0 () Int)
+(declare-fun x_14_0 () Int)
+(declare-fun __turtleW_2_0 () Int)
+(declare-fun __rep_counter_1_9_1 () Int)
+(declare-fun __turtleX_9_1 () Int)
+(declare-fun __turtleX_8_0 () Int)
+(declare-fun __turtleW_8_1 () Int)
+(declare-fun __turtleW_8_0 () Int)
+(declare-fun __turtleX_0_0 () Int)
+(declare-fun __turtleW_6_0 () Int)
+(declare-fun __turtleY_6_0 () Int)
+(declare-fun __turtleY_2_0 () Int)
+(declare-fun x_0_0 () Int)
+(declare-fun __turtleX_2_0 () Int)
+(declare-fun __turtleZ_9_1 () Int)
+(declare-fun __turtleY_8_0 () Int)
+(declare-fun __turtleX_6_0 () Int)
+(declare-fun x_8_0 () Int)
+(declare-fun x_6_0 () Int)
+(declare-fun y_8_0 () Int)
+(declare-fun __turtleY_9_0 () Int)
+(declare-fun __rep_counter_1_6_0 () Int)
+(declare-fun __turtleW_6_1 () Int)
+(declare-fun y_2_0 () Int)
+(declare-fun x_9_0 () Int)
+(declare-fun __turtleX_9_0 () Int)
+(declare-fun y_6_0 () Int)
+(declare-fun __rep_counter_1_0_1 () Int)
+(declare-fun __turtleY_9_1 () Int)
+(declare-fun __turtleY_0_0 () Int)
+(declare-fun __rep_counter_1_9_0 () Int)
+(declare-fun y_9_0 () Int)
 (declare-fun __rep_counter_1_2_0 () Int)
-(declare-fun n_2_0 () Int)
+(declare-fun __turtleW_9_0 () Int)
 (push 1)
-(assert (not (=> (and (and (= s_0_0 0) (= i_0_0 0)) (= __rep_counter_1_0_1 n_0_0) (= s_2_0 s_0_0) (= i_2_0 i_0_0) (= __rep_counter_1_2_0 __rep_counter_1_0_1) (= n_2_0 n_0_0) (= __rep_counter_1_1_0 __rep_counter_1_0_1) true)
- (and (and (= s_2_0 (div (* i_2_0 (+ i_2_0 1)) 2)) (= (+ __rep_counter_1_2_0 i_2_0) n_2_0)) true)
-)))
+(assert (not (=> (and (= x_0_0 0) (= __rep_counter_1_0_1 4) (= y_2_0 y_0_0) (= x_2_0 x_0_0) (= __turtleW_2_0 __turtleW_0_0) (= __turtleX_2_0 __turtleX_0_0) (= __turtleY_2_0 __turtleY_0_0) (= __rep_counter_1_2_0 __rep_counter_1_0_1) (= __rep_counter_1_1_0 __rep_counter_1_0_1) )
+ (= (+ y_2_0 (* x_2_0 90)) 360))))
 (check-sat)
 (get-model)
 (pop 1)
 (push 1)
-(assert (not (=> (and (and (and (= s_2_0 (div (* i_2_0 (+ i_2_0 1)) 2)) (= (+ __rep_counter_1_2_0 i_2_0) n_2_0)) true)
- (and (= i_2_1 (+ i_2_0 1))(= s_2_1 (+ s_2_0 i_2_1))(= __rep_counter_1_2_1 (- __rep_counter_1_2_0 1))(= s_7_0 s_2_1)(= i_7_0 i_2_1)(= __rep_counter_1_7_0 __rep_counter_1_2_1)(= n_7_0 n_2_0)true)
- (and (> __rep_counter_1_1_0 0) true)
-) (and (and (= s_7_0 (div (* i_7_0 (+ i_7_0 1)) 2)) (= (+ __rep_counter_1_7_0 i_7_0) n_7_0)) true)
-)))
+(assert (not (=> (and (= (+ y_2_0 (* x_2_0 90)) 360) (and (= x_2_1 (+ x_2_0 1))(= __turtleZ_2_1 0)(= __turtleW_6_0 __turtleW_2_0)(= __turtleX_6_0 __turtleX_2_0)(= __turtleY_6_0 __turtleY_2_0)(= __rep_counter_1_6_0 __rep_counter_1_2_0)(= y_6_0 y_2_0)(= x_6_0 x_2_1)(= __turtleW_8_0 __turtleW_2_0)(= __turtleX_8_0 __turtleX_2_0)(= __turtleY_8_0 __turtleY_2_0)(= __rep_counter_1_8_0 __rep_counter_1_2_0)(= y_8_0 y_2_0)(= x_8_0 x_2_1)(or (and (= x_2_1 4) (and (= __turtleW_6_1 (mod (+ __turtleW_6_0 90) 360)) (= __turtleX_9_0 __turtleX_6_0) (= __turtleW_9_0 __turtleW_6_1) (= __turtleY_9_0 __turtleY_6_0) (= __rep_counter_1_9_0 __rep_counter_1_6_0) (= y_9_0 y_6_0) (= x_9_0 x_6_0) )
+) (and (not (= x_2_1 4)) (and (= __turtleW_8_1 (mod (- __turtleW_8_0 90) 360)) (= __turtleX_9_0 __turtleX_8_0) (= __turtleW_9_0 __turtleW_8_1) (= __turtleY_9_0 __turtleY_8_0) (= __rep_counter_1_9_0 __rep_counter_1_8_0) (= y_9_0 y_8_0) (= x_9_0 x_8_0) )
+))(= __turtleX_9_1 (+ __turtleX_9_0 (* 10 (* (- 1 (mod (div __turtleW_9_0 90) 2)) (- 1 (* 2 (div (div __turtleW_9_0 90) 2)))))))(= __turtleY_9_1 (+ __turtleY_9_0 (* 10 (* (mod (div __turtleW_9_0 90) 2) (- 1 (* 2 (div (div __turtleW_9_0 90) 2)))))))(= __turtleZ_9_1 1)(= __rep_counter_1_9_1 (- __rep_counter_1_9_0 1))(= y_14_0 y_9_0)(= x_14_0 x_9_0)(= __rep_counter_1_14_0 __rep_counter_1_9_1)true)
+ (> __rep_counter_1_1_0 0)) (= (+ y_14_0 (* x_14_0 90)) 360))))
 (check-sat)
 (get-model)
 (pop 1)
 (push 1)
-(assert (not (=> (and (and (and (= s_7_0 (div (* i_7_0 (+ i_7_0 1)) 2)) (= (+ __rep_counter_1_7_0 i_7_0) n_7_0)) true)
- (and (= __rep_counter_1_7_0 0) true)
-) (and (= s_7_0 (div (* n_7_0 (+ n_7_0 1)) 2)) true)
-)))
+(assert (not (=> (and (= (+ y_14_0 (* x_14_0 90)) 360) (= __rep_counter_1_14_0 0)) (= y_14_0 270))))
 (check-sat)
 (get-model)
 (pop 1)
 
+['sat', 'sat', 'sat'] [{'__turtleX_2_0': '5', 'y_0_0': '2', '__turtleY_0_0': '6', '__rep_counter_1_1_0': '4', '__rep_counter_1_0_1': '4', '__turtleW_2_0': '3', '__turtleX_0_0': '5', 'x_0_0': '0', '__turtleW_0_0': '3', '__rep_counter_1_2_0': '4', 'x_2_0': '0', 'y_2_0': '2', '__turtleY_2_0': '6', '__turtleY_8_0': '0', '__turtleW_9_0': '0', '__turtleX_9_1': '0', 'x_6_0': '0', '__turtleX_9_0': '0', 'x_14_0': '0', '__turtleY_9_1': '0', '__rep_counter_1_9_0': '0', '__turtleW_8_1': '0', '__turtleY_6_0': '0', '__rep_counter_1_9_1': '0', 'x_9_0': '0', '__turtleW_6_0': '0', 'y_6_0': '0', 'y_14_0': '0', '__rep_counter_1_6_0': '0', '__turtleW_8_0': '0', '__turtleZ_9_1': '0', '__turtleX_6_0': '0', 'x_2_1': '0', '__rep_counter_1_14_0': '0', '__turtleZ_2_1': '0', 'y_8_0': '0', '__turtleX_8_0': '0', 'x_8_0': '0', 'y_9_0': '0', '__turtleY_9_0': '0', '__rep_counter_1_8_0': '0', '__turtleW_6_1': '0'}, {'__rep_counter_1_9_0': '0', '__turtleX_2_0': '-10', '__rep_counter_1_8_0': '0', 'y_9_0': '450', 'x_9_0': '0', '__rep_counter_1_9_1': '-1', '__turtleX_9_1': '0', 'y_8_0': '450', 'x_2_1': '0', '__rep_counter_1_6_0': '0', 'y_14_0': '450', 'x_6_0': '0', '__turtleY_8_0': '0', '__turtleY_9_0': '0', '__turtleX_8_0': '-10', '__turtleX_9_0': '-10', '__turtleW_9_0': '0', '__rep_counter_1_2_0': '0', '__turtleY_9_1': '0', 'x_2_0': '-1', '__rep_counter_1_14_0': '-1', '__turtleW_8_0': '90', '__turtleW_6_0': '90', '__turtleW_8_1': '0', 'x_14_0': '0', '__turtleY_6_0': '0', 'x_8_0': '0', '__rep_counter_1_1_0': '1', '__turtleW_2_0': '90', 'y_6_0': '450', '__turtleZ_9_1': '1', '__turtleZ_2_1': '0', '__turtleX_6_0': '-10', 'y_2_0': '450', '__turtleY_2_0': '0', '__rep_counter_1_0_1': '0', '__turtleY_0_0': '0', '__turtleX_0_0': '0', 'y_0_0': '0', 'x_0_0': '0', '__turtleW_0_0': '0', '__turtleW_6_1': '0'}, {'y_14_0': '180', '__rep_counter_1_14_0': '0', 'x_14_0': '2', '__turtleY_8_0': '0', '__turtleW_9_0': '0', '__turtleX_2_0': '0', '__turtleX_9_1': '0', 'x_6_0': '0', '__turtleX_9_0': '0', '__rep_counter_1_0_1': '0', '__turtleY_9_1': '0', '__rep_counter_1_9_0': '0', 'x_2_0': '0', '__turtleW_8_1': '0', '__turtleY_6_0': '0', '__turtleY_2_0': '0', '__rep_counter_1_9_1': '0', 'x_9_0': '0', '__turtleW_6_0': '0', '__turtleY_0_0': '0', '__turtleX_0_0': '0', 'y_6_0': '0', '__rep_counter_1_6_0': '0', '__turtleW_8_0': '0', '__rep_counter_1_2_0': '0', '__turtleW_2_0': '0', '__turtleZ_9_1': '0', 'y_0_0': '0', '__turtleX_6_0': '0', 'y_2_0': '0', 'x_2_1': '0', '__rep_counter_1_1_0': '0', '__turtleZ_2_1': '0', 'y_8_0': '0', '__turtleX_8_0': '0', 'x_0_0': '0', 'x_8_0': '0', 'y_9_0': '0', '__turtleY_9_0': '0', '__turtleW_0_0': '0', '__rep_counter_1_8_0': '0', '__turtleW_6_1': '0'}]
 
 ======Z3 Output:======
- unsat
-(error "line 22 column 10: model is not available")
-unsat
-(error "line 31 column 10: model is not available")
-unsat
-(error "line 39 column 10: model is not available")
+ Initialization Condition verification failed :(
+Counterexample:
+__turtleX_2_0 : 5
+y_0_0 : 2
+__turtleY_0_0 : 6
+__rep_counter_1_1_0 : 4
+__rep_counter_1_0_1 : 4
+__turtleW_2_0 : 3
+__turtleX_0_0 : 5
+x_0_0 : 0
+__turtleW_0_0 : 3
+__rep_counter_1_2_0 : 4
+x_2_0 : 0
+y_2_0 : 2
+__turtleY_2_0 : 6
+__turtleY_8_0 : 0
+__turtleW_9_0 : 0
+__turtleX_9_1 : 0
+x_6_0 : 0
+__turtleX_9_0 : 0
+x_14_0 : 0
+__turtleY_9_1 : 0
+__rep_counter_1_9_0 : 0
+__turtleW_8_1 : 0
+__turtleY_6_0 : 0
+__rep_counter_1_9_1 : 0
+x_9_0 : 0
+__turtleW_6_0 : 0
+y_6_0 : 0
+y_14_0 : 0
+__rep_counter_1_6_0 : 0
+__turtleW_8_0 : 0
+__turtleZ_9_1 : 0
+__turtleX_6_0 : 0
+x_2_1 : 0
+__rep_counter_1_14_0 : 0
+__turtleZ_2_1 : 0
+y_8_0 : 0
+__turtleX_8_0 : 0
+x_8_0 : 0
+y_9_0 : 0
+__turtleY_9_0 : 0
+__rep_counter_1_8_0 : 0
+__turtleW_6_1 : 0
+
+Loop Condition verification failed :(
+Counterexample:
+__rep_counter_1_9_0 : 0
+__turtleX_2_0 : -10
+__rep_counter_1_8_0 : 0
+y_9_0 : 450
+x_9_0 : 0
+__rep_counter_1_9_1 : -1
+__turtleX_9_1 : 0
+y_8_0 : 450
+x_2_1 : 0
+__rep_counter_1_6_0 : 0
+y_14_0 : 450
+x_6_0 : 0
+__turtleY_8_0 : 0
+__turtleY_9_0 : 0
+__turtleX_8_0 : -10
+__turtleX_9_0 : -10
+__turtleW_9_0 : 0
+__rep_counter_1_2_0 : 0
+__turtleY_9_1 : 0
+x_2_0 : -1
+__rep_counter_1_14_0 : -1
+__turtleW_8_0 : 90
+__turtleW_6_0 : 90
+__turtleW_8_1 : 0
+x_14_0 : 0
+__turtleY_6_0 : 0
+x_8_0 : 0
+__rep_counter_1_1_0 : 1
+__turtleW_2_0 : 90
+y_6_0 : 450
+__turtleZ_9_1 : 1
+__turtleZ_2_1 : 0
+__turtleX_6_0 : -10
+y_2_0 : 450
+__turtleY_2_0 : 0
+__rep_counter_1_0_1 : 0
+__turtleY_0_0 : 0
+__turtleX_0_0 : 0
+y_0_0 : 0
+x_0_0 : 0
+__turtleW_0_0 : 0
+__turtleW_6_1 : 0
+
+Final Condition verification failed :(
+Counterexample:
+y_14_0 : 180
+__rep_counter_1_14_0 : 0
+x_14_0 : 2
+__turtleY_8_0 : 0
+__turtleW_9_0 : 0
+__turtleX_2_0 : 0
+__turtleX_9_1 : 0
+x_6_0 : 0
+__turtleX_9_0 : 0
+__rep_counter_1_0_1 : 0
+__turtleY_9_1 : 0
+__rep_counter_1_9_0 : 0
+x_2_0 : 0
+__turtleW_8_1 : 0
+__turtleY_6_0 : 0
+__turtleY_2_0 : 0
+__rep_counter_1_9_1 : 0
+x_9_0 : 0
+__turtleW_6_0 : 0
+__turtleY_0_0 : 0
+__turtleX_0_0 : 0
+y_6_0 : 0
+__rep_counter_1_6_0 : 0
+__turtleW_8_0 : 0
+__rep_counter_1_2_0 : 0
+__turtleW_2_0 : 0
+__turtleZ_9_1 : 0
+y_0_0 : 0
+__turtleX_6_0 : 0
+y_2_0 : 0
+x_2_1 : 0
+__rep_counter_1_1_0 : 0
+__turtleZ_2_1 : 0
+y_8_0 : 0
+__turtleX_8_0 : 0
+x_0_0 : 0
+x_8_0 : 0
+y_9_0 : 0
+__turtleY_9_0 : 0
+__turtleW_0_0 : 0
+__rep_counter_1_8_0 : 0
+__turtleW_6_1 : 0
+
+Please refer to "control_flow_graph.png" for variable names.
 

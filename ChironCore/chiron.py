@@ -560,9 +560,9 @@ if __name__ == "__main__":
             smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
     
         print(smtlib_code)    
-        output, errors = Z3Solver(smtlib_code)
-        print("\n======Z3 Output:======\n", output)
-        if errors:
-            print("Z3 Errors:", errors)
+        output= Z3Solver(smtlib_code)
+        print("\n======Z3 Output:======\n")
+        print(output)
+        
         
 

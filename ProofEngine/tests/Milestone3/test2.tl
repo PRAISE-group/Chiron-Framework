@@ -14,4 +14,4 @@ repeat :n [
     :step = :step + 1
     penup
 ]
-assert(:TURTLEX<5 && :TURTLEX>-5 && :TURTLEY<(:n+1) && :TURTLEY>(-:n-1) && :TURTLEPEN == 1 && :TURTLEANGLE == 0 && :step == ((2*:n) + 1))
+assert(:TURTLEX<:n+1 && :TURTLEX>-:n-1 && :TURTLEY<(:n+1) && :TURTLEY>(-:n-1) && :TURTLEPEN == 1 && :TURTLEANGLE == 0 && :step == ((2*:n) + 1))
