@@ -469,15 +469,17 @@ void InitializeMainFunction() {
     Builder->CreateCall(InitFunc);
 }
 
-void ConverIRtoObjectFile(){
+void ConverIRtoObjectFile(const std::string &output_filename, bool run_output, bool dump_ir, bool print_ir) {
     Builder->CreateCall(FinishFunc);
     Builder->CreateRet(Builder->getInt32(0));
     llvm::verifyModule(*CodeGenModule, &llvm::errs());
 
-    CodeGenModule->print(llvm::errs(), nullptr);
+    if(print_ir){
+        CodeGenModule->print(llvm::errs(), nullptr);
+    }
+
     std::error_code EC;
-    
-    llvm::raw_fd_ostream outFile("output.ll", EC);
+    llvm::raw_fd_ostream outFile(output_filename + ".ll", EC);
     if (EC) {
         llvm::errs() << "Error opening file: " << EC.message() << "\n";
         return;
@@ -491,7 +493,7 @@ void ConverIRtoObjectFile(){
     }
     outFile.close();
 
-    std::string llvmLinkCommand = "llvm-link output.ll ./CTurtle/CustomCTurtle.ll -S -o combined.ll";
+    std::string llvmLinkCommand = "llvm-link " + output_filename + ".ll ./CTurtle/CustomCTurtle.ll -S -o combined.ll";
     int result = system(llvmLinkCommand.c_str());
     if (result != 0) {
         llvm::errs() << "Error running llvm-link\n";
@@ -505,7 +507,7 @@ void ConverIRtoObjectFile(){
         return;
     }
     
-    std::string gccCommand = "g++ combined.o -o output -lX11";
+    std::string gccCommand = "g++ combined.o -o " + output_filename + " -lX11";
     result = system(gccCommand.c_str());
     if (result != 0) {
         llvm::errs() << "Error running gcc\n";
@@ -513,5 +515,14 @@ void ConverIRtoObjectFile(){
     }
     
     system("rm combined.ll combined.o");
-    system("./output");
+    
+    if(!dump_ir){
+        std::string rmCommand = "rm " + output_filename + ".ll";
+        result = system(rmCommand.c_str());
+    }
+
+    if(run_output){
+        std::string runCommand = "./" + output_filename;
+        result = system(runCommand.c_str());
+    }
 }
