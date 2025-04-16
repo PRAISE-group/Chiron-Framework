@@ -8,7 +8,7 @@ import sys
 
 def serializedATN():
     with StringIO() as buf:
-        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3+")
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3,")
         buf.write("\u00cd\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
         buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23\t\23")
@@ -114,7 +114,7 @@ class tlangParser ( Parser ):
                       "<INVALID>", "PLUS", "MINUS", "MUL", "DIV", "MOD", 
                       "PENCOND", "LT", "GT", "EQ", "NEQ", "LTE", "GTE", 
                       "AND", "OR", "NOT", "NUM", "FLOAT", "VAR", "NAME", 
-                      "Whitespace", "Comment" ]
+                      "Whitespace", "COMMENT_LINE", "COMMENT_BLOCK" ]
 
     RULE_start = 0
     RULE_instruction_list = 1
@@ -191,7 +191,8 @@ class tlangParser ( Parser ):
     VAR=38
     NAME=39
     Whitespace=40
-    Comment=41
+    COMMENT_LINE=41
+    COMMENT_BLOCK=42
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
