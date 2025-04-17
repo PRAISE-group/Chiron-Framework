@@ -5,7 +5,6 @@ import ast
 import re
 import sys
 from ChironAST.builder import astGenPass
-from ChironAST.builder import astGenPassSMTLIB
 
 import abstractInterpretation as AI
 import dataFlowAnalysis as DFA
@@ -28,21 +27,14 @@ import cfg.cfgBuilder as cfgB
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
-# from IrToSmtlib import IrToSmtlib
-# from CFGtoSmtlib import CFGtoSmtlib
-from RenameVars import rename_vars
-from IrWithParams import IrWithParams
-from Infix_To_Prefix import Infix_To_Prefix
-# from LoopToSmtlib import LoopToSmtlib
-# from LoopToSmtlib import replace_smtlib_variables
-# from ConstraintToSmtlib import ConstraintToSmtlib
-# from CheckOutput import CheckOutput
-# from CheckOutput import extract_variables
-from IfElseToITE import traverse_cfg
 import csv
-from TurtleCommandsCompiler import TurtleCommandsCompiler
-from Z3Integration import Z3Solver
-from TraverseCFG import Traverse
+
+from ProofEngine.Z3Integration import Z3Solver
+from ProofEngine.TraverseCFG import TraverseCFG
+from ProofEngine.Smtlib_Helper import generate_cfg_and_ir
+from ProofEngine.Smtlib_Helper import list_to_smtlib_stmt
+from ProofEngine.Smtlib_Helper import generate_smtlib_code
+from ProofEngine.Smtlib_Helper import generate_code_body
 
 def cleanup():
     pass
@@ -50,6 +42,7 @@ def cleanup():
 
 def stopTurtle():
     turtle.bye()
+
 
 
 if __name__ == "__main__":
@@ -416,153 +409,89 @@ if __name__ == "__main__":
             writer = csv.writer(file)
             writer.writerows(spectrum)
         print("DONE..")
+    
+    if args.smtlib:
+        """
+        Parse the program and generate CFG and IR
+        """
+        cfg, num_loops = generate_cfg_and_ir(parseTree, irHandler)
 
-    if args.smtlib:        
-        # parseTree = getParseTree(args.progfl)
-        astgen = astGenPassSMTLIB()
-        ir = astgen.visitStart(parseTree)
-        num_loops = astgen.repeatInstrCount
-        # print("Number of loops: ", num_loops)
-
-        irHandler.setIR(ir)
-        new_irList = []
-        turt_compiler = TurtleCommandsCompiler()        
-        for entry in irHandler.ir:
-            new_stmt = turt_compiler.compile(entry[0])
-            for stmt in new_stmt:
-                new_irList.append((stmt, entry[1]))
-        # print("New IR List: ")
-        # for entry in new_irList:
-        #     print(entry[0], entry[1])
-        cfg = cfgB.buildCFG(new_irList, "control_flow_graph", False)
-        # cfgB.dumpCFG(cfg, "control_flow_graph")
-        
-        def list_to_smtlib_stmt(L):
-            if len(L) == 1:
-                return Infix_To_Prefix(L[0], True)
-            smtlib_stmt = "(and "
-            for stmt in L:
-                stmt = Infix_To_Prefix(stmt, True)
-                smtlib_stmt += f"{stmt} "
-            smtlib_stmt += ")\n"
-            return smtlib_stmt
-        def extract_variables(expression: str):
-            # Match variable-like words that are not numbers and are not part of function calls
-            tokens = re.findall(r'[a-zA-Z_]\w*', expression)
-            keywords = {"ite", "and", "or", "not", "assert", "div", "true", "false", "mod"}
-            variables = {token for token in tokens if token not in keywords and not token.isdigit()}
-            return sorted(variables)  # Sorted for consistency
-        if(num_loops > 1):
+        """
+        Handle programs with or without loops
+        """
+        if num_loops > 1:
+            """
+            Raise an error if the program contains more than one loop.
+            This version of Chiron only supports programs with a single loop
+            when using the --smtlib/-smt flag.
+            """
             raise RuntimeError("This version of Chiron only supports programs with a single loop with --smtlib/-smt flag.")
-        
-        elif(num_loops == 0):
-            pre_condition_list, post_condition_list, code_body_list = Traverse(cfg, has_loop=False)
+        elif num_loops == 0:
+            """
+            Handle programs without loops:
+            - Traverse the CFG to extract pre-conditions, post-conditions, and the code body.
+            - Dump the CFG for visualization or debugging.
+            - Convert the extracted conditions and code body into SMT-LIB format.
+            """
+            pre_condition_list, post_condition_list, code_body_list = TraverseCFG(cfg, has_loop=False)
             cfgB.dumpCFG(cfg, "control_flow_graph")
+
+            # Convert pre-condition and post-condition lists to SMT-LIB format
             pre_condition = list_to_smtlib_stmt(pre_condition_list)
             post_condition = list_to_smtlib_stmt(post_condition_list)
 
-            code_body = "(and "
-            for entry in code_body_list:
-                if(entry[0] == "assign"):
-                    for stmt in entry[1]:
-                        code_body += Infix_To_Prefix(stmt, True)
-                elif(entry[0] == "if-else"):
-                    condition = entry[1]
-                    then_part = entry[2]              
-                    else_part = entry[3]
-                    then_stmt = list_to_smtlib_stmt(then_part)
-                    else_stmt = list_to_smtlib_stmt(else_part)
-                    cond_stmt = list_to_smtlib_stmt([condition])
-                    then_stmt = f"(and {cond_stmt} {then_stmt})"
-                    else_stmt = f"(and (not {cond_stmt}) {else_stmt})"
-                    code_body += f"(or {then_stmt} {else_stmt})"
-            code_body += "true)\n"
+            # Generate the SMT-LIB code body from the code body list
+            code_body = generate_code_body(code_body_list)
 
-            print("Pre-condition: ", pre_condition)
-            print("Post-condition: ", post_condition)
-            print("Code-body: ", code_body)
+            # Debugging prints for conditions and code body
+            # print("Pre-condition: ", pre_condition)
+            # print("Post-condition: ", post_condition)
+            # print("Code-body: ", code_body)
 
+            # Generate SMT-LIB code for the program without loops
+            smtlib_code = generate_smtlib_code(pre_condition, post_condition, loop_body=code_body)
+        
+        elif num_loops == 1:
             """
-            check: pre_condition && code_body => post_condition
+            Handle programs with a single loop:
+            - Traverse the CFG to extract pre-conditions, post-conditions, loop conditions,
+              invariants, loop body, and loop false conditions.
+            - Dump the CFG for visualization or debugging.
+            - Convert the extracted conditions and loop body into SMT-LIB format.
             """
-            check = f"(=> (and {pre_condition} {code_body}) {post_condition})"
-            all_vars = set()
-            all_vars.update(extract_variables(check))
-            smtlib_code = ""
-            for var in all_vars:
-                smtlib_code += f"(declare-fun {var} () Int)\n"
-            
-            smtlib_code += f"(assert (not {check}))\n"
-            smtlib_code += "(check-sat)\n(get-model)\n"
-
-        elif(num_loops == 1):
-            pre_condition_list, post_condition_list, loop_condition_list, invariant_in_list, invariant_out_list, loop_body_list, loop_false_condition_list = Traverse(cfg, has_loop=True)
+            pre_condition_list, post_condition_list, loop_condition_list, invariant_in_list, invariant_out_list, loop_body_list, loop_false_condition_list = TraverseCFG(cfg, has_loop=True)
             cfgB.dumpCFG(cfg, "control_flow_graph")
-            
+
+            # Convert pre-condition, post-condition, and loop-related conditions to SMT-LIB format
             pre_condition = list_to_smtlib_stmt(pre_condition_list)
             post_condition = list_to_smtlib_stmt(post_condition_list)
             loop_condition = list_to_smtlib_stmt(loop_condition_list)
             invariant_in = list_to_smtlib_stmt(invariant_in_list)
             invariant_out = list_to_smtlib_stmt(invariant_out_list)
             loop_false_condition = list_to_smtlib_stmt(loop_false_condition_list)
-            
-            loop_body = "(and "
-            for entry in loop_body_list:
-                if(entry[0] == "assign"):
-                    for stmt in entry[1]:
-                        loop_body += Infix_To_Prefix(stmt, True)
-                elif(entry[0] == "if-else"):
-                    condition = entry[1]
-                    then_part = entry[2]              
-                    else_part = entry[3]
-                    then_stmt = list_to_smtlib_stmt(then_part)
-                    else_stmt = list_to_smtlib_stmt(else_part)
-                    cond_stmt = list_to_smtlib_stmt([condition])
-                    then_stmt = f"(and {cond_stmt} {then_stmt})"
-                    else_stmt = f"(and (not {cond_stmt}) {else_stmt})"
-                    loop_body += f"(or {then_stmt} {else_stmt})"
-            loop_body += "true)\n"
-            
-            print("Pre-condition: ", pre_condition)
-            print("Post-condition: ", post_condition)
-            print("Loop-condition: ", loop_condition)
-            print("Invariant-in: ", invariant_in)
-            print("Invariant-out: ", invariant_out)
-            print("Loop-false-condition: ", loop_false_condition)
-            print("Loop-body: ", loop_body)
-            
-            """
-            first_check: pre_condition => invariant_in
-            second_check: invariant_in & single_loop_body & loop_condition => invariant_out
-            third_check: invariant_out & !loop_condition => post_condition
-            """
-            first_check = f"(=> {pre_condition} {invariant_in})"
-            second_check = f"(=> (and {invariant_in} {loop_body} {loop_condition}) {invariant_out})"
-            third_check = f"(=> (and {invariant_out} {loop_false_condition}) {post_condition})"
-        
-            all_vars = set()
-            all_vars.update(extract_variables(first_check))
-            all_vars.update(extract_variables(second_check))
-            all_vars.update(extract_variables(third_check))
-        
-            smtlib_code = ""
-            for var in all_vars:
-                smtlib_code += f"(declare-fun {var} () Int)\n"
-            
-            smtlib_code += "(push 1)\n"
-            smtlib_code += f"(assert (not {first_check}))\n"
-            smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
-            smtlib_code += "(push 1)\n"
-            smtlib_code += f"(assert (not {second_check}))\n"
-            smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
-            smtlib_code += "(push 1)\n"
-            smtlib_code += f"(assert (not {third_check}))\n"
-            smtlib_code += "(check-sat)\n(get-model)\n(pop 1)\n"
-    
-        print(smtlib_code)    
-        output= Z3Solver(smtlib_code)
+
+            # Generate the SMT-LIB loop body from the loop body list
+            loop_body = generate_code_body(loop_body_list)
+
+            # Debugging prints for conditions and loop body
+            # print("Pre-condition: ", pre_condition)
+            # print("Post-condition: ", post_condition)
+            # print("Loop-condition: ", loop_condition)
+            # print("Invariant-in: ", invariant_in)
+            # print("Invariant-out: ", invariant_out)
+            # print("Loop-false-condition: ", loop_false_condition)
+            # print("Loop-body: ", loop_body)
+
+            # Generate SMT-LIB code for the program with a loop
+            smtlib_code = generate_smtlib_code(pre_condition, post_condition, loop_condition, invariant_in, invariant_out, loop_body, loop_false_condition)
+
+        """
+        Solve the SMT-LIB code using Z3 and print the output.
+        """
+        # print(smtlib_code)  # Debugging print for the generated SMT-LIB code
+        output = Z3Solver(smtlib_code)
         print("\n======Z3 Output:======\n")
         print(output)
-        
-        
+
+
 
