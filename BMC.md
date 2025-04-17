@@ -70,14 +70,17 @@ Examples demonstrating working of the BMC engine with explaination are provided 
 where `-ub` and `-aconf` are optional arguments
 
 ## Implementation Methodology
+We have added support for `assume` statement, `assert` statement, `modulo` operator, `float` numbers, `single line comments` and `multi-line comments` to Chiron. We have also added code to convert Chiron Intermediate Representation (IR) into Three Address Code (TAC) and Static Single Assignment (SSA).
+
+The working of BMC engine is explained as follows:
 
 1. **Loop Unrolling**:  
     All the loops of the code are unrolled based on the unroll bound and the unrolled code is used for further processing.
 
-2. **Converting Chiron Intermediate Representation (IR) into Three Address Code (TAC)**:  
+2. **Converting Chiron IR into TAC**:  
     The Chiron IR of the unrolled code is generated and is transformed into TAC to simplify the representation of operations and facilitate further analysis. We show the TAC in `tac_cfg.png`.
 
-3. **Generating Static Single Assignment (SSA)**:  
+3. **Generating SSA**:  
     The TAC is converted into SSA form to simplify data flow analysis and accurately track variable dependencies and states throughout the program. We show the SSA in `ssa_cfg.png`.
 
 4. **SAT Solver Integration**:  
