@@ -1,6 +1,6 @@
-:i = 0
-repeat 8 [
-  :i = 1 + :i
-  right(90)
-  forward(:delta * :i)
-]
+:i = [1,[2,3,4],3,4]
+:i[1][0] = 30
+print(:i[0]=90)
+:j= :i[0] = :k = 6 + :i[0]
+print(:j)
+print(:i)

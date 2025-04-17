@@ -1,8 +1,6 @@
-:cnt = 0
-:i = 0
-repeat :steps [
-  :i = :cnt + :i
-  :cnt = :cnt + 1   
-  forward(1 + :cnt)
-  right(:radius)
-]
+:b = 2
+:e = 3
+:steps = (:c = :b = :e) * (:d = 4) + :e * 5
+print(:steps = 3)
+print(:steps )
+print(2*4+5+:b)

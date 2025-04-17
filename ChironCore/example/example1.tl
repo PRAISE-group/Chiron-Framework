@@ -1,5 +1,7 @@
 pendown
-
+:y = 2
+:z = 4
+:p = 10
 repeat 3 [
 
 	if (:x > :y) [
