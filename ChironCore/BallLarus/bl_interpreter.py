@@ -1,7 +1,7 @@
 from interpreter import ConcreteInterpreter, Interpreter, ProgramContext, addContext
 from ChironAST import ChironAST
 from ChironHooks import Chironhooks
-
+import os
 
 class BallLarusInterpreter(ConcreteInterpreter):
     """
@@ -85,11 +85,33 @@ class BallLarusInterpreter(ConcreteInterpreter):
 
     def handleDumpCommand(self, stmt, tgt):
         """
-        Handles a DumpCommand by writing all key-value pairs in the hashMap to hash_dump.txt.
+        Merge current self.hashMap into hash_dump.txt:
+        - For keys already in the file, add the new count.
+        - For new keys, append them.
         """
         print("  DumpCommand")
-        # Dump each key/value pair to file (e.g. hash_dump.txt)
-        with open("hash_dump.txt", "w") as f:
-            for k, v in self.hashMap.items():
-                f.write(f"{k}: {v}\n")
+        dump_file = "hash_dump.txt"
+        
+        # 1) Load existing counts from disk (if the file exists)
+        existing = {}
+
+        if os.path.exists(dump_file):
+            with open(dump_file, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    # Expect lines like "key: value"
+                    key, val = line.split(":", 1)
+                    existing[key.strip()] = existing.get(key.strip(), 0) + int(val.strip())
+
+        # 2) Merge in-memory hashMap counts
+        for k, v in self.hashMap.items():
+            existing[str(k)] = existing.get(str(k), 0) + v
+
+        # 3) Write the merged result back out
+        with open(dump_file, "w") as f:
+            for key, val in existing.items():
+                f.write(f"{key}: {val}\n")
+
         return 1

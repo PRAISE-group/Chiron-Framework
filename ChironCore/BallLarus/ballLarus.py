@@ -16,6 +16,7 @@ from interpreter import ConcreteInterpreter
 from BallLarus.bl_interpreter import BallLarusInterpreter
 import turtle
 from networkx.drawing.nx_agraph import to_agraph
+import json
 
 class BallLarusProfiler:
     """
@@ -57,6 +58,28 @@ class BallLarusProfiler:
         # # The instrumented program will be run by the ConcreteInterpreter
         # inptr = ConcreteInterpreter(self.irHandler, self.args)
         # The instrumented program will be run by the BallLarusInterpreter
+        # inptr = BallLarusInterpreter(self.irHandler, self.args)
+        # terminated = False
+        # inptr.initProgramContext(self.args.params)
+        # while True:
+        #     terminated = inptr.interpret()
+        #     if terminated:
+        #         break
+        # print("Program Ended.")
+        # print()
+        # print("Press ESCAPE to exit")
+
+        # turtle.listen()
+        # if  flag == False:
+        #     turtle.onkeypress(stopTurtle, "Escape")
+        #     turtle.mainloop()
+        # else:
+        #     turtle.ontimer(self.stopTurtle, 1000)   # Automatically close the turtle window after 1 second (1000 milliseconds)
+        # turtle.mainloop()
+    def execute(self, flag = False):
+        """
+        Execute the instrumented program.
+        """
         inptr = BallLarusInterpreter(self.irHandler, self.args)
         terminated = False
         inptr.initProgramContext(self.args.params)
@@ -69,8 +92,9 @@ class BallLarusProfiler:
         print("Press ESCAPE to exit")
 
         turtle.listen()
-        turtle.onkeypress(self.stopTurtle, "Escape")
-        turtle.mainloop()
+        if  flag == False:
+            turtle.onkeypress(stopTurtle, "Escape")
+            turtle.mainloop()
 
     def compute_edge_weights(self):
         """
@@ -185,8 +209,7 @@ class BallLarusProfiler:
                 if edge[1] == v and edge[2] == data:
                     edge[2]['chord_edge'] = False
 
-
-
+        print("---------------------------------")
         print("Chord edges:")
         for u,v,data in mst_graph.edges(data=True):
             if data['chord_edge']:
@@ -225,14 +248,14 @@ class BallLarusProfiler:
                     # print(len(mst_tree.out_edges(node)))
                     for edge in mst_tree.out_edges(node, data=True):
                         successor = edge[1]
-                        print(f"  {node.name} -> {successor.name}: {edge[2]['weight']}")
+                        # print(f"  {node.name} -> {successor.name}: {edge[2]['weight']}")
                         if dfs_path(successor, target, weight_sum + edge[2]['weight']):
                             return True
                             
                     return False
                 
                 # Start DFS from u to find a path to v
-                print(f"Finding path from {u.name} to {v.name}")
+                # print(f"Finding path from {u.name} to {v.name}")
                 path_found = dfs_path(v, u, 0)
                 if path_found == False:
                     assert False
@@ -241,7 +264,7 @@ class BallLarusProfiler:
 
                 data['weight2'] = data['weight']
                 data['weight'] += path_weight_sum
-                print(f"{u.name} ----> {v.name}: {data['weight']}")
+                # print(f"{u.name} ----> {v.name}: {data['weight']}")
         
         for u, v, data in mst_graph.edges(data=True):
             if data['chord_edge'] == False:
@@ -250,10 +273,9 @@ class BallLarusProfiler:
 
         # Remove the dummy edge from exit to entry
         mst_graph.remove_edge(self.exit_node, self.entry_node)
-        print("Chord edges:")
+        print("---------------------- New weights ----------------------")
         for u,v,data in mst_graph.edges(data=True):
-            if data['chord_edge']:
-                print(f"{u.name} -> {v.name}: {data['weight']}")
+            print(f"{u.name} -> {v.name}: {data['weight']}")
         
         self.acyclic_cfg = mst_graph
     
@@ -457,12 +479,12 @@ class BallLarusProfiler:
         # Replace IR with instrumented version
         self.irHandler.ir = new_ir
         
-        # print("--------------------------------")
-        # print("IR:")
-        # for instr, idx in self.irHandler.ir:
-        #     print(f"instr: {instr}, target: {idx}")
-        # print("--------------------------------")
-        # print("IR instrumented successfully for Ball-Larus path profiling")
+        print("--------------------------------")
+        print("IR:")
+        for instr, idx in self.irHandler.ir:
+            print(f"instr: {instr}, target: {idx}")
+        print("--------------------------------")
+        print("IR instrumented successfully for Ball-Larus path profiling")
 
     def regenerate_path(self, path_number):
         """
@@ -622,27 +644,50 @@ class BallLarusProfiler:
         A.layout('dot')
         A.draw(filename + ".png")
 
-    def stopTurtle(self):
-        turtle.bye()
+def stopTurtle():
+    turtle.bye()
 
 def run_ball_larus_profiling(irHandler, args):
     """
     Main function to run Ball-Larus path profiling.
     
-    Args:
-        irHandler: The IR handler containing the program IR and CFG
-        args: Command-line arguments
+    If args.ballLarus_op is a filename, read one JSON dict per line,
+    set args.params, and run profiling for each. Otherwise do one run.
     """
-    # Check if CFG is available
     if irHandler.cfg is None:
         print("Error: Control Flow Graph is required for Ball-Larus path profiling.")
-        print("Please run with the -cfg_gen flag to generate the CFG.")
         return
-    
-    # Create and run the profiler
-    profiler = BallLarusProfiler(irHandler,args)
-    profiler.run_profiling()
 
-    # The instrumented program will be run by the main Chiron interpreter
-    # After execution, report the results
-    profiler.report_results()
+    # Always start with an empty hash_dump.txt
+    with open("hash_dump.txt", "w") as dumpf:
+        # open in write mode to create/clear the file
+        pass
+
+    # if -bl_op was passed, args.ballLarus_op holds the inputs‐file path
+    profiler = BallLarusProfiler(irHandler, args)
+    profiler.run_profiling()
+    if args.ballLarus_op:
+        with open(args.ballLarus_op, 'r') as f:
+            for ln in f:
+                ln = ln.strip()
+                if not ln or ln.startswith("#"):
+                    continue
+                try:
+                    params = json.loads(ln)
+                except json.JSONDecodeError as e:
+                    print(f"Skipping invalid line: {ln}\n  {e}")
+                    continue
+
+                print(f"\n=== Ball-Larus run with params {params} ===")
+                args.params = params
+                turtle.clearscreen()
+                turtle.reset()
+                profiler.execute(flag=True)
+        
+        profiler.report_results()
+        turtle.onkeypress(stopTurtle, "Escape")
+        turtle.mainloop()
+    else:
+        # single‐input mode
+        profiler.execute()
+        profiler.report_results()

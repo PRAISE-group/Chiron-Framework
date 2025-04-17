@@ -203,6 +203,14 @@ if __name__ == "__main__":
         help="Run Ball-Larus path profiling on a Chiron program",
     )
 
+    cmdparser.add_argument(
+        "-bl_op",
+        "--ballLarus_op",
+        metavar="INPUTS_FILE",
+        type=str,
+        help="File containing multiple input parameter sets (one JSON dict per line) for Ball-Larus path profiling",
+    )
+
     args = cmdparser.parse_args()
     ir = ""
 
@@ -405,4 +413,12 @@ if __name__ == "__main__":
         irHandler.setCFG(cfg)
         cfgB.dumpCFG(cfg, "control_flow_graph")
         import BallLarus.ballLarus as bl
+        bl.run_ball_larus_profiling(irHandler, args)
+
+    if args.ballLarus_op:
+        cfg = cfgB.buildCFG(ir, "control_flow_graph")
+        irHandler.setCFG(cfg)
+        cfgB.dumpCFG(cfg, "control_flow_graph")
+        import BallLarus.ballLarus as bl
+        print(args)
         bl.run_ball_larus_profiling(irHandler, args)
