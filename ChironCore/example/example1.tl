@@ -36,3 +36,5 @@ repeat 3 [
 ]
 
 penup
+
+assert :turtleX > 0
