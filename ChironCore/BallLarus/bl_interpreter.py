@@ -10,11 +10,15 @@ class BallLarusInterpreter(ConcreteInterpreter):
     and DumpCommand instructions.
     """
     
-    def __init__(self, irHandler, params):
+    def __init__(self, irHandler, params,predictor_hashMap = {}, is_bl_op = False, is_training=False):
         super().__init__(irHandler, params)
         # Initialize the hashMap for path register tracking
         self.hashMap = {}
-    
+        self.predictor = predictor_hashMap
+        self.bl_op = is_bl_op
+        self.isTraining = is_training
+        self.total_cnt = 0
+        self.correct_cnt = 0
     def interpret(self):
         """
         Executes one instruction at the current program counter. Returns True when the program finishes,
@@ -29,7 +33,10 @@ class BallLarusInterpreter(ConcreteInterpreter):
         if isinstance(stmt, ChironAST.AssignmentCommand):
             ntgt = self.handleAssignment(stmt, tgt)
         elif isinstance(stmt, ChironAST.ConditionCommand):
-            ntgt = self.handleCondition(stmt, tgt)
+            if self.bl_op:
+                ntgt = self.handleCondition_bl(stmt, tgt)
+            else:
+                ntgt = self.handleCondition(stmt, tgt)
         elif isinstance(stmt, ChironAST.MoveCommand):
             ntgt = self.handleMove(stmt, tgt)
         elif isinstance(stmt, ChironAST.PenCommand):
@@ -51,12 +58,45 @@ class BallLarusInterpreter(ConcreteInterpreter):
 
         if self.pc >= len(self.ir):
             # This is the ending of the interpreter.
+            if self.bl_op and self.isTraining == False:
+                with open("predictor_accuracy.txt", "a") as f:
+                    f.write(f"Total Count: {self.total_cnt}\n")
+                    f.write(f"Correct Count: {self.correct_cnt}\n")
+                    f.write(f"Accuracy: {self.correct_cnt / self.total_cnt if self.total_cnt > 0 else 0}\n")
+                    f.write("-----------------------\n")
+
             self.trtl.write("End, Press ESC", font=("Arial", 15, "bold"))
             if self.args is not None and self.args.hooks:
                 self.chironhook.ChironEndHook(self)
             return True
         else:
             return False
+    
+    def handleCondition_bl(self, stmt, tgt):
+        print("  Branch Instruction")
+        condstr = addContext(stmt)
+        exec("self.cond_eval = %s" % (condstr))
+        exprStr = addContext(":blPathRegister")
+        path_reg_val = eval(exprStr)
+        if(self.isTraining):
+            if self.cond_eval:
+                self.predictor[(path_reg_val, self.pc)] = self.predictor.get((path_reg_val, self.pc), 0) + 1
+            else:
+                self.predictor[(path_reg_val, self.pc)] = self.predictor.get((path_reg_val, self.pc), 0) - 1
+
+        else:
+            self.total_cnt += 1
+            predictor_val = self.predictor.get((path_reg_val, self.pc), 0)
+            if predictor_val >= 0 and self.cond_eval:
+                self.correct_cnt += 1
+            elif predictor_val < 0 and not self.cond_eval:
+                self.correct_cnt += 1
+            # if (path_reg_val, self.pc) in self.predictor:
+            #     if self.cond_eval and self.predictor[(path_reg_val, self.pc)] > 0:
+            #         self.correct_cnt += 1
+            #     elif not self.cond_eval and self.predictor[(path_reg_val, self.pc)] < 0:
+            #         self.correct_cnt += 1
+        return 1 if self.cond_eval else tgt
     
     def handlePrintCommand(self, stmt, tgt):
         """

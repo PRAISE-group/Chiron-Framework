@@ -4,6 +4,7 @@
 Ball-Larus path profiling implementation for the Chiron Framework.
 """
 
+from operator import is_
 from os import path
 import sys
 from tabnanny import check
@@ -76,11 +77,11 @@ class BallLarusProfiler:
         # else:
         #     turtle.ontimer(self.stopTurtle, 1000)   # Automatically close the turtle window after 1 second (1000 milliseconds)
         # turtle.mainloop()
-    def execute(self, flag = False):
+    def execute(self, predictor_hashMap = {}, flag = False, is_training = False):
         """
         Execute the instrumented program.
         """
-        inptr = BallLarusInterpreter(self.irHandler, self.args)
+        inptr = BallLarusInterpreter(self.irHandler, self.args, predictor_hashMap, flag, is_training)
         terminated = False
         inptr.initProgramContext(self.args.params)
         while True:
@@ -544,7 +545,7 @@ class BallLarusProfiler:
                 path = self.regenerate_path(int(key))
                 #store the path: value pair in the hash_dump.txt file
                 list_of_paths.append((path, value))
-        with open("hash_dump.txt", "w") as f:
+        with open("path_profile_data.txt", "w") as f:
             for path, value in list_of_paths:
                 f.write(f"{path}: {value}")
     
@@ -662,27 +663,42 @@ def run_ball_larus_profiling(irHandler, args):
     with open("hash_dump.txt", "w") as dumpf:
         # open in write mode to create/clear the file
         pass
+    with open("predictor_accuracy.txt", "w") as dumpf:
+        # open in write mode to create/clear the file
+        pass
 
     # if -bl_op was passed, args.ballLarus_op holds the inputs‐file path
     profiler = BallLarusProfiler(irHandler, args)
     profiler.run_profiling()
+
+    predictor_hashMap = {}
     if args.ballLarus_op:
         with open(args.ballLarus_op, 'r') as f:
-            for ln in f:
-                ln = ln.strip()
-                if not ln or ln.startswith("#"):
-                    continue
-                try:
-                    params = json.loads(ln)
-                except json.JSONDecodeError as e:
-                    print(f"Skipping invalid line: {ln}\n  {e}")
-                    continue
+            lines = [ln.strip() for ln in f
+                     if ln.strip() and not ln.strip().startswith("#")]
+        
+        num_inputs = len(lines)
+        print(f"Found {num_inputs} inputs in {args.ballLarus_op}")
+        # training_input is floor of num_inputs*0.8
+        training_input = int(num_inputs * 0.8)
 
-                print(f"\n=== Ball-Larus run with params {params} ===")
-                args.params = params
-                turtle.clearscreen()
-                turtle.reset()
-                profiler.execute(flag=True)
+        # Now iterate over those lines
+        for idx, ln in enumerate(lines):
+            try:
+                params = json.loads(ln)
+            except json.JSONDecodeError as e:
+                print(f"Skipping invalid line: {ln}\n  {e}")
+                continue
+
+            args.params = params
+            turtle.clearscreen()
+            turtle.reset()
+
+            # first 80% are training runs
+            is_train = (idx < training_input)
+            print(f"\n=== Run #{idx+1}/{num_inputs} "
+                  f"{'(training)' if is_train else '(testing)'} with params {params} ===")
+            profiler.execute(predictor_hashMap,flag=True, is_training=is_train)
         
         profiler.report_results()
         turtle.onkeypress(stopTurtle, "Escape")
