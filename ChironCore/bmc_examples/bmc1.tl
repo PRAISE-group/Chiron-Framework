@@ -1,7 +1,13 @@
-// inputs: :x, :y, :z
-
-:t = :x + 2*:y + 3*:z + :x * :w * :u
-:z = :x + :w
+:y = :x * :x
+assert :y >= 0
 
 
-assert (:x + 100 < :y) && (:x + 200 > :y) && !(:x >= 0) && (:x * :y < -:x) && (:t > 0)
+/*
+Explaination:
+
+Run this program by:
+./chiron.py bmc_examples/bmc1.tl -bmc
+
+In this program :x is the free input variable. Since :y is square of :x, :y is positive hence the BMC engine outputs that consition is always satified.
+If we change the assert statement to :y >= 1, then the BMC gives us a counter example of :x such that :y < 1. Eg: :x = 0 is a counter example.
+*/

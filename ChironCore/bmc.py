@@ -306,7 +306,7 @@ class BMC:
         sat = self.solver.check()
 
         if sat == z3.sat:
-            print("Condition not satisfied! Bug found for the following input:")
+            print("Condition not satisfied!")
             model = self.solver.model()
 
             solution = {}
@@ -314,7 +314,9 @@ class BMC:
                 varname, index = str(var).split("$")
                 if varname in inputVars and index == "0":
                     solution[varname] = model[var]
-            for var in solution:
+            if len(solution) > 0:
+                print("Bug found for the following input:")
+                for var in solution:
                     print(var + " = " + str(solution[var]))
 
         elif sat == z3.unsat:

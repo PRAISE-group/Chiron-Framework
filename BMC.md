@@ -62,7 +62,7 @@ The variable `:turtlePen` is used to maintain the up/down state of pen.
 At the start of the program, pen is in pendown state.
 
 ## Examples
-Examples for working of the BMC engine are provided in the `/ChironCore/bmc_examples/` directory. To run the BMC engine on these test cases, navigate to the `ChironCore` directory and execute the following command:
+Examples demonstrating working of the BMC engine with explaination are provided in the `/ChironCore/bmc_examples/` directory. To run the BMC engine on these test cases, navigate to the `ChironCore` directory and execute the following command:
 
 ```bash
 ./chiron.py <path_to_test_file> -bmc -ub <UNROLL_BOUND> -aconf <ANGLE_CONF_FILE>
@@ -75,10 +75,10 @@ where `-ub` and `-aconf` are optional arguments
     All the loops of the code are unrolled based on the unroll bound and the unrolled code is used for further processing.
 
 2. **Converting Chiron Intermediate Representation (IR) into Three Address Code (TAC)**:  
-    The Chiron IR of the unrolled code is generated and is transformed into TAC to simplify the representation of operations and facilitate further analysis.
+    The Chiron IR of the unrolled code is generated and is transformed into TAC to simplify the representation of operations and facilitate further analysis. We show the TAC in `tac_cfg.png`.
 
 3. **Generating Static Single Assignment (SSA)**:  
-    The TAC is converted into SSA form to simplify data flow analysis and accurately track variable dependencies and states throughout the program.
+    The TAC is converted into SSA form to simplify data flow analysis and accurately track variable dependencies and states throughout the program. We show the SSA in `ssa_cfg.png`.
 
 4. **SAT Solver Integration**:  
     The SSA form is translated into SMT-LIB statements. This process encodes the constraints, conditions, and properties into a series of logical assertions and declarations to accurately represent the program's semantics. These statements are then checked for satisfiability using the Z3 solver.
