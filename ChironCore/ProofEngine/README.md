@@ -8,5 +8,4 @@ All the changes are pushed on our forked branch of the original Chiron repositor
 
 Authors : 
 - Dhruv Gupta (220361)
-- Kundan Kumar (220568)
 - Pragati Agrawal (220779)
