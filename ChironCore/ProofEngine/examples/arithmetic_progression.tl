@@ -1,7 +1,7 @@
-assume((:s==0) && (:i==0))
+assume(:s==0 && :i==:a)
 repeat :n [
-    invariant(:s == (:i*(:i+1))/2 && :REPCOUNTER + :i == :n)
-    :i = :i+1
-    :s = :s+:i
+    invariant(:s == (((:n-:REPCOUNTER)*(2*:a + (:n-:REPCOUNTER-1)*:d))/2) && (:i == :a + (:n-:REPCOUNTER)*:d) )
+    :s = :s + :i
+    :i = :i + :d
 ]
-assert(:s == (:n*(:n+1))/2)
+assert(:s == ((:n*(2*:a + (:n-1)*:d))/2))

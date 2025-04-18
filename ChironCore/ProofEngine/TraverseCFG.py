@@ -644,6 +644,10 @@ def TraverseCFG(cfg: ChironCFG.ChironCFG, has_loop: bool = True):
         extra_stmts = [[stmt1, "invariant_out"], [stmt2, "loop_false_condition"]]
         block_type_to_node["assert"].instrlist = extra_stmts + block_type_to_node["assert"].instrlist
 
+        stmt = block_type_to_node["loop condition"].instrlist[0][0]
+        stmt = extract_and_replace_variables(stmt, "loop condition", "invariant")
+        block_type_to_node["loop condition"].instrlist[0][0] = stmt  # Update the loop condition statement
+
         # Rename variables in nodes
         process_and_rename_nodes(sorted_nodes)
 
