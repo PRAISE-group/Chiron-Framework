@@ -17,6 +17,7 @@ instruction : assignment
 	    | penCommand
 	    | gotoCommand
 	    | pauseCommand
+		| analysisCommand
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -39,6 +40,9 @@ penCommand : 'penup' | 'pendown' ;
 
 pauseCommand : 'pause' ;
 
+analysisCommand : analysisStatement '(' condition ')' ;
+analysisStatement : 'assert' | 'invariant' | 'assume' ;
+
 expression : 
              unaryArithOp expression               #unaryExpr
            | expression multiplicative expression  #mulExpr
@@ -47,7 +51,7 @@ expression :
 		   | '(' expression ')'                    #parenExpr
  	   ;
 
-multiplicative : MUL | DIV;
+multiplicative : MUL | DIV | MOD;
 additive : PLUS | MINUS;
 
 unaryArithOp : MINUS ;
@@ -56,6 +60,7 @@ PLUS     : '+' ;
 MINUS    : '-' ;
 MUL  	 : '*' ;
 DIV      : '/' ;
+MOD      : '%' ;
 
 
 // TODO :

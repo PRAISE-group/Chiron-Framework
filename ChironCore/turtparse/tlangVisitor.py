@@ -79,6 +79,16 @@ class tlangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by tlangParser#analysisCommand.
+    def visitAnalysisCommand(self, ctx:tlangParser.AnalysisCommandContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by tlangParser#analysisStatement.
+    def visitAnalysisStatement(self, ctx:tlangParser.AnalysisStatementContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by tlangParser#unaryExpr.
     def visitUnaryExpr(self, ctx:tlangParser.UnaryExprContext):
         return self.visitChildren(ctx)
