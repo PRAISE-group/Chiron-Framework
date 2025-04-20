@@ -51,7 +51,7 @@ def drawRangoli(:size)
     left 45
     :size = sqroot((:size * :size ) / 2)
     if :size > 10
-     [ :f = drawRangoli(:size) ]
+     [ drawRangoli(:size) ]
     return 100
 }
 
@@ -63,4 +63,4 @@ penup
 :point = new :Point()
 goto (:point.:x, :point.:y)
 :size=200
-:f= drawRangoli(:size)
+drawRangoli(:size)

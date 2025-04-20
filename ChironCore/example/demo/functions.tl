@@ -11,6 +11,6 @@ def drawSide(:length,:righti) {
 
 :length = 250
 :righti = 45
-:f= drawSide(:length)
-:f= drawSide(:length,:righti)
-:f= drawSide(:length)
+drawSide(:length)
+drawSide(:length,:righti)
+drawSide(:length)

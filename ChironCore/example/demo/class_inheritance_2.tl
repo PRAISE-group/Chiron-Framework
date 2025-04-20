@@ -11,7 +11,7 @@ class :Hexagon(:Shape) {
     :sides = 6
     def drawHex(:self) {
         repeat :self.:sides [
-           :f=  :self.moveForward()
+           :self.moveForward()
             right 60
         ]
         return 0
@@ -23,6 +23,6 @@ class :Hexagon(:Shape) {
 }
 
 :hex = new :Hexagon()
-:f= :hex.drawHex()
+:hex.drawHex()
 # This does not work #
-:f= :hex.__moveForward(100) 
+:hex.__moveForward(100) 

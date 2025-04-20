@@ -51,9 +51,9 @@ def factorial(:n)
     if :n == 1 [
         return 1
     ]
-    return :n * (:f=factorial(:n - 1))
+    return :n * factorial(:n - 1)
 }
 
-:f= drawRectangle(50, 50)
-:a= drawCircle()
+drawRectangle(50, 50)
+drawCircle()
 print(factorial(6))

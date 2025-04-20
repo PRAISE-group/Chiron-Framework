@@ -22,4 +22,4 @@ class :Liger(:Lion, :Tiger)
 
 :liger = new :Liger()
 :liger.:walk = 2
-:f= :liger.walk()
+:liger.walk()

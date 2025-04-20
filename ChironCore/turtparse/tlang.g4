@@ -16,7 +16,7 @@ declaration : classDeclaration
 		;
 
 instruction : 
-		assignment
+		  assignment
 		 | printStatement
 	    | conditional
 	    | loop
@@ -26,6 +26,7 @@ instruction :
 	    | pauseCommand
 		| objectInstantiation
 		| returnStatement
+		| functionCall
 		
 	    ;
 
