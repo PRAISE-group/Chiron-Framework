@@ -195,6 +195,12 @@ if __name__ == "__main__":
         default=True,
         type=bool,
     )
+    cmdparser.add_argument(
+        "-ch",
+        "--class_hierarchy",
+        help="To visualize class inheritance and methods",
+        action="store_true",
+    )
 
     args = cmdparser.parse_args()
     ir = ""

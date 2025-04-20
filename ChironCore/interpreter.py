@@ -1,8 +1,10 @@
-
 from ChironAST import ChironAST
 from ChironHooks import Chironhooks
 import turtle
 import re
+from graphviz import Digraph
+import tkinter as tk
+from PIL import Image, ImageTk
 Release = "Chiron v5.3"
 
 
@@ -74,7 +76,7 @@ class Interpreter:
     def interpret(self):
         pass
 
-    def initProgramContext(self, params):
+    def initProgramContext(params):
         pass
 
 
@@ -108,21 +110,17 @@ class ConcreteInterpreter(Interpreter):
         super().__init__(irHandler, params)
         self.prg = ProgramContext()
         self.class_list = ClassList()
+        self.class_hierarchy =  {}
+        self.class_methods = {}
+        self.class_attributes = {}  # Store attributes with defining class
+        self.class_colors = {}
         # Hooks Object:
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
-        print("###########################Intermediate Representation (IR):#############")
-        for index, instruction in enumerate(self.ir):
-            print(f"{index}: {instruction} | {instruction[0]}")
 
     def interpret(self):
         print("Program counter : ", self.pc)
-        if not self.ir:
-            return True
-      
-
-    
         stmt, tgt = self.ir[self.pc]
 
         print(stmt, stmt.__class__.__name__, tgt)
@@ -167,6 +165,8 @@ class ConcreteInterpreter(Interpreter):
 
         if self.pc >= len(self.ir):
             # This is the ending of the interpreter.
+            if self.args.class_hierarchy:
+                self.print_class_hierarchy()
             self.trtl.write("End, Press ESC", font=("Arial", 15, "bold"))
             if self.args is not None and self.args.hooks:
                 self.chironhook.ChironEndHook(self)
@@ -192,6 +192,16 @@ class ConcreteInterpreter(Interpreter):
             function_name = stmt.name
 
         self.function_addresses[function_name + "_" + str(len(stmt.params))] = self.pc + 1 # body of the function starts from next instruction
+
+        # Record method in class_methods if it's a class method
+        if "@" in stmt.name:
+            class_name, method_name = stmt.name.split("@")
+            class_name = class_name.replace(":", "")
+            arity = len(stmt.params)
+            if class_name not in self.class_methods:
+                self.class_methods[class_name] = []
+            self.class_methods[class_name].append((method_name, arity))
+
         return tgt
 
     def handleFunctionCall(self, stmt, tgt):
@@ -219,38 +229,22 @@ class ConcreteInterpreter(Interpreter):
 
     # Copying the return values in their respective placeholders
     def handleReturnRead(self, stmt, tgt):
-        
-        print(f"Read Return: {stmt.returnValues}")
-        cnt=self.call_stack.pop()
-        rval=stmt.returnValues[0]
-        rval = str(rval).replace(":", "")
-        if(cnt==1):
+        for rval in reversed(stmt.returnValues):
+            rval = str(rval).replace(":", "")
             exec(f"self.prg.{rval} = self.call_stack.pop()")
-        else:
-            exec(f"self.prg.{rval} = self.call_stack[-{cnt}:]")
-            self.call_stack=self.call_stack[:-cnt]
-
         return 1
 
-
     def handleFunctionReturn(self, stmt, tgt):
-
-        print(f"Function Return: {stmt}")
         # Restore the previous program context
         rval_list = []
-        cnt=0
         for rval in stmt.returnValues:
-            cnt=cnt+1
             rval_value = addContext(rval)
             exec(f"self.return_value = {rval_value}")
             rval_list.append(self.return_value)
         self.prg = self.call_stack.pop()
         self.pc = self.call_stack.pop()
         self.call_stack.extend(rval_list)
-        self.call_stack.append(cnt)
-        
         return 0
-
 
     # Copying the parameters in their respective placeholders
     def handleParametersPassing(self, stmt, tgt):
@@ -263,33 +257,48 @@ class ConcreteInterpreter(Interpreter):
     def handleClassDeclaration(self, stmt, tgt):
         className = stmt.className.replace(":", "")
         attributes = stmt.attributes  # List of attribute assignments
+
         # Handle inheritance if base classes exist
         if hasattr(stmt, "baseClasses") and stmt.baseClasses:
-            base_classes = [getattr(self.class_list, str(
-                b).replace(":", "")) for b in stmt.baseClasses]
-            base_str = ", ".join([b.__name__ for b in base_classes])
+            base_classes = [base.replace(":", "") for base in stmt.baseClasses]
+            self.class_hierarchy[className] = base_classes
+            base_classes_for_def = [getattr(self.class_list, str(b).replace(":", "")) for b in stmt.baseClasses]
+            base_str = ", ".join([b.__name__ for b in base_classes_for_def])
             class_header = f"class {className}({base_str}):\n"
         else:
+            self.class_hierarchy[className] = []
             class_header = f"class {className}:\n"
+
         class_def = class_header
         init_method = "    def __init__(self"  # Start of __init__
         init_body = "        super().__init__()\n"
+
         # Handle normal attributes (non-object attributes)
         for attr in attributes:
             attr, target = attr
             attr_name = str(attr.lvar).replace(":", "")
             attr_value = addContext(attr.rexpr) if attr.rexpr else "None"
             init_body += f"        self.{attr_name} = {attr_value}\n"
+            if className not in self.class_attributes:
+                self.class_attributes[className] = []
+            self.class_attributes[className].append((attr_name, attr_value, className))
+
         # Handle object attributes
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
             init_body += f"        self.{lhs} = None\n"
+            if className not in self.class_attributes:
+                self.class_attributes[className] = []
+            self.class_attributes[className].append((lhs, "None", className))
+
         init_method += "):\n"  # Close the __init__ method signature
         class_def += init_method
         class_def += init_body 
+
         # Step 1: Execute the class definition (store it inside self.class_list)
         exec(class_def, globals(), self.class_list.__dict__)
+
         # Step 2: Assign object attributes after class creation
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
@@ -297,6 +306,7 @@ class ConcreteInterpreter(Interpreter):
             rhs = addContext(objectAttr.class_name).replace(
                 "self.prg.", "self.class_list.")
             exec(f"self.class_list.{className}.{lhs} = {rhs}()")
+
         # Inherit methods from base classes 
         inherited_function_addresses = {}
         if stmt.baseClasses:
@@ -306,6 +316,7 @@ class ConcreteInterpreter(Interpreter):
                     new_function_name = f"{stmt.className}@{method_name}"
                     inherited_function_addresses[new_function_name] = address
             self.function_addresses.update(inherited_function_addresses)
+
         return 1
 
     def handleObjectInstantiation(self, stmt, tgt):
@@ -357,3 +368,76 @@ class ConcreteInterpreter(Interpreter):
         ycor = addContext(stmt.ycor)
         exec("self.trtl.goto(%s, %s)" % (xcor, ycor))
         return 1
+
+    def get_all_methods(self, class_name):
+        if class_name not in self.class_hierarchy:
+            return {}
+        methods = {}
+        # Add methods defined in this class first (they override inherited ones)
+        if class_name in self.class_methods:
+            for method, arity in self.class_methods[class_name]:
+                methods[(method, arity)] = class_name
+        # Add inherited methods from base classes, in order
+        for base in self.class_hierarchy[class_name]:
+            base_methods = self.get_all_methods(base)
+            for (method, arity), defining_class in base_methods.items():
+                if (method, arity) not in methods:
+                    methods[(method, arity)] = defining_class
+        return methods
+
+    def get_all_attributes(self, class_name):
+        if class_name not in self.class_hierarchy:
+            return []
+        attributes = self.class_attributes.get(class_name, [])
+        # Add inherited attributes from base classes, avoiding duplicates
+        for base in self.class_hierarchy[class_name]:
+            base_attributes = self.get_all_attributes(base)
+            for attr_name, attr_value, defining_class in base_attributes:
+                if not any(a[0] == attr_name for a in attributes):
+                    attributes.append((attr_name, attr_value, defining_class))
+        return attributes
+
+    def print_class_hierarchy(self):
+        dot = Digraph(comment='Class Hierarchy')
+        dot.attr(rankdir='BT')
+
+        # Generate random colors for each class
+        import random
+        for class_name in self.class_hierarchy:
+            if class_name not in self.class_colors:
+                self.class_colors[class_name] = "#{:06x}".format(random.randint(0, 0xFFFFFF))
+
+        for class_name in self.class_hierarchy:
+            methods = self.get_all_methods(class_name)
+            attributes = self.get_all_attributes(class_name)
+            label = f"<{class_name}<BR/>"  # Newline after class name
+            # Methods first
+            for (method, arity), defining_class in sorted(methods.items()):
+                class_color = self.class_colors.get(defining_class, "#000000")
+                label += f"<FONT COLOR='{class_color}'>{method}({arity})</FONT><BR/>"
+            # Blank line
+            label += "<BR/> <BR/>"
+            # Attributes next
+            for attr_name, attr_value, defining_class in attributes:
+                class_color = self.class_colors.get(defining_class, "#000000")
+                label += f"<FONT COLOR='{class_color}'>{attr_name} = {attr_value}</FONT><BR/>"
+            label += ">"
+            dot.node(class_name, label=label, shape='record', color=self.class_colors[class_name], style="solid")
+
+        for class_name, bases in self.class_hierarchy.items():
+            for base in bases:
+                dot.edge(base, class_name)
+
+        dot.render('class_hierarchy', format='png', cleanup=True)
+        self.display_graph('class_hierarchy.png')
+
+    def display_graph(self, image_path):
+        screen = self.t_screen
+        root = screen._root
+        top = tk.Toplevel(root)
+        top.title("Class Hierarchy Diagram")
+        img = Image.open(image_path)
+        photo = ImageTk.PhotoImage(img)
+        panel = tk.Label(top, image=photo)
+        panel.pack(side="bottom", fill="both", expand="yes")
+        panel.image = photo
