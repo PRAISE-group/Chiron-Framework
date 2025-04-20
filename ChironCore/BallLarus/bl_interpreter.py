@@ -65,6 +65,10 @@ class BallLarusInterpreter(ConcreteInterpreter):
                     f.write(f"Accuracy: {self.correct_cnt / self.total_cnt if self.total_cnt > 0 else 0}\n")
                     f.write("-----------------------\n")
 
+                with open("predictions_pc.txt", "a") as f:
+                    f.write("-------------------------\n")
+                    f.write("\n")
+
             self.trtl.write("End, Press ESC", font=("Arial", 15, "bold"))
             if self.args is not None and self.args.hooks:
                 self.chironhook.ChironEndHook(self)
@@ -83,19 +87,20 @@ class BallLarusInterpreter(ConcreteInterpreter):
                 self.predictor[(path_reg_val, self.pc)] = self.predictor.get((path_reg_val, self.pc), 0) + 1
             else:
                 self.predictor[(path_reg_val, self.pc)] = self.predictor.get((path_reg_val, self.pc), 0) - 1
-
         else:
             self.total_cnt += 1
             predictor_val = self.predictor.get((path_reg_val, self.pc), 0)
+            prediction = "Taken" if predictor_val >= 0 else "Not Taken"
+            actual = "Taken" if self.cond_eval else "Not Taken"
+            is_correct = False
             if predictor_val >= 0 and self.cond_eval:
                 self.correct_cnt += 1
+                is_correct = True
             elif predictor_val < 0 and not self.cond_eval:
                 self.correct_cnt += 1
-            # if (path_reg_val, self.pc) in self.predictor:
-            #     if self.cond_eval and self.predictor[(path_reg_val, self.pc)] > 0:
-            #         self.correct_cnt += 1
-            #     elif not self.cond_eval and self.predictor[(path_reg_val, self.pc)] < 0:
-            #         self.correct_cnt += 1
+                is_correct = True
+            with open("predictions_pc.txt","a") as f:
+                f.write(f"PC: {self.pc}, Prediction: {prediction}, Actual: {actual}, Correct: {is_correct}\n")
         return 1 if self.cond_eval else tgt
     
     def handlePrintCommand(self, stmt, tgt):

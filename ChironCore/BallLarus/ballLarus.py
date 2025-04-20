@@ -56,27 +56,6 @@ class BallLarusProfiler:
         # Instrument the IR
         self.instrument_ir()
 
-        # # The instrumented program will be run by the ConcreteInterpreter
-        # inptr = ConcreteInterpreter(self.irHandler, self.args)
-        # The instrumented program will be run by the BallLarusInterpreter
-        # inptr = BallLarusInterpreter(self.irHandler, self.args)
-        # terminated = False
-        # inptr.initProgramContext(self.args.params)
-        # while True:
-        #     terminated = inptr.interpret()
-        #     if terminated:
-        #         break
-        # print("Program Ended.")
-        # print()
-        # print("Press ESCAPE to exit")
-
-        # turtle.listen()
-        # if  flag == False:
-        #     turtle.onkeypress(stopTurtle, "Escape")
-        #     turtle.mainloop()
-        # else:
-        #     turtle.ontimer(self.stopTurtle, 1000)   # Automatically close the turtle window after 1 second (1000 milliseconds)
-        # turtle.mainloop()
     def execute(self, predictor_hashMap = {}, flag = False, is_training = False):
         """
         Execute the instrumented program.
@@ -149,13 +128,12 @@ class BallLarusProfiler:
             assert val == num_paths[node]
 
         # DEBUG: Print the acyclic CFG with edge weights
-        print("Edge weights computed successfully")
-        for node in self.acyclic_cfg.nodes():
-            for edge in self.acyclic_cfg.out_edges(node, data=True):
-                print(f"{node.name} -> {edge[1].name}: {edge[2]['weight']}")
+        # print("Edge weights computed successfully")
+        # for node in self.acyclic_cfg.nodes():
+        #     for edge in self.acyclic_cfg.out_edges(node, data=True):
+        #         print(f"{node.name} -> {edge[1].name}: {edge[2]['weight']}")
 
         self.efficient_event_counting()
-        # TODO: Implement efficient event counting algorithm
         # Now we will use the efficient event counting algorithm to compute the edge weights
 
     def efficient_event_counting(self):
@@ -210,11 +188,11 @@ class BallLarusProfiler:
                 if edge[1] == v and edge[2] == data:
                     edge[2]['chord_edge'] = False
 
-        print("---------------------------------")
-        print("Chord edges:")
-        for u,v,data in mst_graph.edges(data=True):
-            if data['chord_edge']:
-                print(f"{u.name} -> {v.name}: {data['weight']}")
+        # print("---------------------------------")
+        # print("Chord edges:")
+        # for u,v,data in mst_graph.edges(data=True):
+        #     if data['chord_edge']:
+        #         print(f"{u.name} -> {v.name}: {data['weight']}")
 
         # mst_tree will be an undirected graph
         mst_tree = nx.DiGraph()
@@ -222,7 +200,7 @@ class BallLarusProfiler:
             if(data['chord_edge'] == False):
                 weight = data['weight']
                 if(u == self.exit_node and v == self.entry_node):
-                    print("Dummy edge from exit to entry")
+                    # print("Dummy edge from exit to entry")
                     weight = 0
                 # mst_tree.add_edge(u,v,weight)
                 mst_tree.add_edge(u,v,weight=weight)
@@ -274,9 +252,9 @@ class BallLarusProfiler:
 
         # Remove the dummy edge from exit to entry
         mst_graph.remove_edge(self.exit_node, self.entry_node)
-        print("---------------------- New weights ----------------------")
-        for u,v,data in mst_graph.edges(data=True):
-            print(f"{u.name} -> {v.name}: {data['weight']}")
+        # print("---------------------- New weights ----------------------")
+        # for u,v,data in mst_graph.edges(data=True):
+        #     print(f"{u.name} -> {v.name}: {data['weight']}")
         
         self.acyclic_cfg = mst_graph
     
@@ -368,7 +346,8 @@ class BallLarusProfiler:
                 if edge[1] == target and edge[2].get('new_edge') is None:
                     weight = edge[2]['weight']
                     break
-            
+            if weight == 0:
+                continue
             # Create the update instruction: path_register = path_register + weight
             update_instr = ChironAST.AssignmentCommand(
                 path_register_var,
@@ -598,9 +577,9 @@ class BallLarusProfiler:
         dfs(entry_node)
         self.entry_node = entry_node
 
-        print(f"Identified {len(back_edges)} back edges in the CFG")
-        for source, target in back_edges:
-            print(f"  {source.name} -> {target.name}")
+        # print(f"Identified {len(back_edges)} back edges in the CFG")
+        # for source, target in back_edges:
+        #     print(f"  {source.name} -> {target.name}")
         return back_edges
 
     def create_acyclic_cfg(self):
@@ -666,6 +645,9 @@ def run_ball_larus_profiling(irHandler, args):
     with open("predictor_accuracy.txt", "w") as dumpf:
         # open in write mode to create/clear the file
         pass
+    with open("predictions_pc.txt", "w") as dumpf:
+        # open in write mode to create/clear the file
+        pass
 
     # if -bl_op was passed, args.ballLarus_op holds the inputs‐file path
     profiler = BallLarusProfiler(irHandler, args)
@@ -678,7 +660,7 @@ def run_ball_larus_profiling(irHandler, args):
                      if ln.strip() and not ln.strip().startswith("#")]
         
         num_inputs = len(lines)
-        print(f"Found {num_inputs} inputs in {args.ballLarus_op}")
+        #print(f"Found {num_inputs} inputs in {args.ballLarus_op}")
         # training_input is floor of num_inputs*0.8
         training_input = int(num_inputs * 0.8)
 

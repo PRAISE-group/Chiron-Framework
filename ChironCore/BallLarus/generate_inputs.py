@@ -2,6 +2,9 @@ import json
 import random
 import argparse
 
+
+# Usage - python generate_inputs.py -n 20 -o inputs.txt --min 1 --max 50 -v :x :y :z :p
+# Generates 20 random input lines for exampl1.tl
 def main():
     p = argparse.ArgumentParser(
         description="Generate N random input‐dict lines for Ball‑Larus profiling"
