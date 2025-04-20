@@ -1,0 +1,8 @@
+Total Count: 88
+Correct Count: 81
+Accuracy: 0.9204545454545454
+-----------------------
+Total Count: 107
+Correct Count: 100
+Accuracy: 0.9345794392523364
+-----------------------
