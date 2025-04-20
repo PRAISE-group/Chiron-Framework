@@ -16,6 +16,11 @@
 #include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Utils/Mem2Reg.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar/Reassociate.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 #include "MyCustomPass.cpp"
 const char MINUS = '-';
 const char PLUS = '+';
@@ -89,7 +94,7 @@ llvm::Value* BinArithExpressionAST::codegen() {
             throw std::runtime_error("Invalid right-hand side expression");
         }
 
-        llvm::Value* formatStr = Builder->CreateGlobalStringPtr("%d\n", "fmt");
+        // llvm::Value* formatStr = Builder->CreateGlobalStringPtr("%d\n", "fmt");
         // Builder->CreateCall(printfFunc, {formatStr, R}, "prnt");
         
         return Builder->CreateStore(R, V);
@@ -402,9 +407,15 @@ void IntializeModule() {
     TheMAM = std::make_unique<llvm::ModuleAnalysisManager>();
     ThePIC = std::make_unique<llvm::PassInstrumentationCallbacks>();
     TheSI = std::make_unique<llvm::StandardInstrumentations>(*CodeGenContext,
-                                                        /*DebugLogging*/ true);
-    TheFPM->addPass(llvm::PromotePass());
-    if(optim) TheFPM->addPass(DeadCodeEliminationPass());
+                                                            /*DebugLogging*/ true);
+    if(optim){                                                
+        TheFPM->addPass(llvm::PromotePass());
+        TheFPM->addPass(DeadCodeEliminationPass());
+        TheFPM->addPass(llvm::InstCombinePass());
+        TheFPM->addPass(llvm::ReassociatePass());
+        TheFPM->addPass(llvm::GVNPass());
+        TheFPM->addPass(llvm::SimplifyCFGPass());
+    }
     llvm::PassBuilder PB;
     PB.registerModuleAnalyses(*TheMAM);
     PB.registerFunctionAnalyses(*TheFAM);
