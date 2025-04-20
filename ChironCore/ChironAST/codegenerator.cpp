@@ -12,7 +12,11 @@
 #include <llvm/IR/Type.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Verifier.h>
-
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/StandardInstrumentations.h"
+#include "llvm/Transforms/Utils.h"
+#include "llvm/Transforms/Utils/Mem2Reg.h"
+#include "MyCustomPass.cpp"
 const char MINUS = '-';
 const char PLUS = '+';
 const char MUL = '*';
@@ -29,12 +33,18 @@ const std::string GTE = ">=";
 
 const std::string AND = "&&";
 const std::string OR = "||";
-
+bool optim = false;
 static std::unique_ptr<llvm::LLVMContext> CodeGenContext;
 static std::unique_ptr<llvm::Module> CodeGenModule;
 static std::unique_ptr<llvm::IRBuilder<>> Builder;
 static std::map<std::string, llvm::AllocaInst*> SymbolTable;
-
+static std::unique_ptr<llvm::FunctionPassManager> TheFPM;
+static std::unique_ptr<llvm::LoopAnalysisManager> TheLAM;
+static std::unique_ptr<llvm::FunctionAnalysisManager> TheFAM;
+static std::unique_ptr<llvm::CGSCCAnalysisManager> TheCGAM;
+static std::unique_ptr<llvm::ModuleAnalysisManager> TheMAM;
+static std::unique_ptr<llvm::PassInstrumentationCallbacks> ThePIC;
+static std::unique_ptr<llvm::StandardInstrumentations> TheSI;
 static llvm::Function* printfFunc;
 
 static llvm::Function* InitFunc;
@@ -80,7 +90,7 @@ llvm::Value* BinArithExpressionAST::codegen() {
         }
 
         llvm::Value* formatStr = Builder->CreateGlobalStringPtr("%d\n", "fmt");
-        Builder->CreateCall(printfFunc, {formatStr, R}, "prnt");
+        // Builder->CreateCall(printfFunc, {formatStr, R}, "prnt");
         
         return Builder->CreateStore(R, V);
     }
@@ -373,6 +383,7 @@ llvm::Value *FunctionAST::codegen() {
     }
 
     llvm::verifyFunction(*TheFunction, &llvm::errs());
+    TheFPM->run(*TheFunction, *TheFAM);
     SymbolTable = StoredTable;
 
     Builder->SetInsertPoint(&CodeGenModule->getFunction("main")->getEntryBlock());
@@ -384,7 +395,20 @@ void IntializeModule() {
     CodeGenContext = std::make_unique<llvm::LLVMContext>();
     CodeGenModule = std::make_unique<llvm::Module>("Chiron Module", *CodeGenContext);
     Builder = std::make_unique<llvm::IRBuilder<>>(*CodeGenContext);
-    
+    TheFPM = std::make_unique<llvm::FunctionPassManager>();
+    TheLAM = std::make_unique<llvm::LoopAnalysisManager>();
+    TheFAM = std::make_unique<llvm::FunctionAnalysisManager>();
+    TheCGAM = std::make_unique<llvm::CGSCCAnalysisManager>();
+    TheMAM = std::make_unique<llvm::ModuleAnalysisManager>();
+    ThePIC = std::make_unique<llvm::PassInstrumentationCallbacks>();
+    TheSI = std::make_unique<llvm::StandardInstrumentations>(*CodeGenContext,
+                                                        /*DebugLogging*/ true);
+    TheFPM->addPass(llvm::PromotePass());
+    if(optim) TheFPM->addPass(DeadCodeEliminationPass());
+    llvm::PassBuilder PB;
+    PB.registerModuleAnalyses(*TheMAM);
+    PB.registerFunctionAnalyses(*TheFAM);
+    PB.crossRegisterProxies(*TheLAM, *TheFAM, *TheCGAM, *TheMAM);
     printfFunc = llvm::Function::Create(
         llvm::FunctionType::get(
             Builder->getInt32Ty(),
@@ -473,7 +497,19 @@ void ConverIRtoObjectFile(const std::string &output_filename, bool run_output, b
     Builder->CreateCall(FinishFunc);
     Builder->CreateRet(Builder->getInt32(0));
     llvm::verifyModule(*CodeGenModule, &llvm::errs());
-
+    llvm::Function *MainFunc = CodeGenModule->getFunction("main");
+    if (MainFunc) {
+        // Finalize the main function's basic block (e.g., add a return instruction)
+        // Ensure a return instruction is present; if not, add it:
+        if (!MainFunc->getEntryBlock().getTerminator()) {
+            // Builder->CreateRet(llvm::ConstantInt::get(*CodeGenContext, llvm::APInt(32, 0)));
+            Builder->CreateRet(Builder->getInt32(0));
+        }
+    
+        // Verify and optimize the main function
+        llvm::verifyFunction(*MainFunc, &llvm::errs());
+        TheFPM->run(*MainFunc, *TheFAM);
+    }
     if(print_ir){
         CodeGenModule->print(llvm::errs(), nullptr);
     }

@@ -14,10 +14,11 @@
 extern tlangVisitor* createChironVisitor();
 extern void IntializeModule();
 extern void InitializeMainFunction();
+extern bool optim;
 extern void ConverIRtoObjectFile(const std::string& output_filename, bool run_output, bool dump_ir, bool print_ir);
 
 int main(int argc, char *argv[]) {
-    if (argc < 6) {
+    if (argc < 7) {
         std::cerr << "Usage: " << argv[0] << " <input file> <output file> <run output> <dump ir> <print ir> [<var name> <var value>]...\n";
         return -1;
     }
@@ -27,8 +28,9 @@ int main(int argc, char *argv[]) {
     bool run_output = argv[3][0] == '1';
     bool dump_ir = argv[4][0] == '1';
     bool print_ir = argv[5][0] == '1';
+    optim = argv[6][0] == '1';
     std::vector<std::pair<std::string, int>> initialized_values;
-    for(int i=6;i<argc;i+=2){
+    for(int i=7;i<argc;i+=2){
         if(i+1 >= argc){
             std::cerr << "Error: Missing value for variable " << argv[i] << "\n";
             return -1;
@@ -86,7 +88,6 @@ int main(int argc, char *argv[]) {
         for (auto instr : instructions) {
             llvm::Value* val = instr->codegen();
         }
-
         ConverIRtoObjectFile(output_filename, run_output, dump_ir, print_ir);
         
         for (auto instr : instructions) {

@@ -205,6 +205,12 @@ if __name__ == "__main__":
     cmdparser.add_argument(
         "-o", "--llvm_output", help="LLVM IR output file name.", type=str
     )
+    cmdparser.add_argument(
+        "-opt",
+        "--optimise",
+        action="store_true",
+        help="optimise the LLVM IR using LLVM pass.",
+    )
 
     args = cmdparser.parse_args()
     ir = ""
@@ -236,6 +242,7 @@ if __name__ == "__main__":
             str(int(args.run)),
             str(int(args.dump_ir)),
             str(int(args.ir)),
+            str(int(args.optimise)),
         ]
         for key, value in args.params.items():
             command.append(key)

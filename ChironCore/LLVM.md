@@ -96,4 +96,5 @@ To generate LLVM IR and an executable, the `-l` or `--llvm` flag must be provide
 - `-dump`/ `--dump_ir`: Dumps the LLVM IR to output_filename.ll
 - `-p` / `--ir`: Pretty-prints the intermediate representation (IR) of the Chiron program to the terminal.
 - `-r` / `--run`: Executes the Chiron program using the generated LLVM binary.
+- `-opt` / `--optimise` : Optimises the program by performing basic dead code elimination.
 - `-d` / `--params`: Passes input parameters to the Chiron program in dictionary format.
