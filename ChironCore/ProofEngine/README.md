@@ -1,6 +1,22 @@
 # Description
 ProofEngine is tool for program verification built upon the chiron framework. It allows the user to add analysis statements in the source code for deductive verification. It takes the analysis source code as input and generates a SMTLIB code, which is then checked for satisfiabilty using an integrated Z3 Solver. 
 
+# How to Run
+Ensure you have Python Z3 solver installed.
+
+```bash
+pip install z3-solver 
+```
+Open the folder in the main directory. 
+```bash
+cd ChironCore
+```
+Use `-smt/--smtlib` flag for running ProofEngine.
+```bash
+python3 chiron.py -smt <path-to-src-program-file> 
+python3 chiron.py --smtlib <path-to-src-program-file>
+```
+
 # Examples
 ## Example1
 Consider a toy program which checks if the cubic identity \((a-b)<sup>3</sup> = a<sup>3</sup> - 3a<sup>2</sup>b + 3ab<sup>2</sup> - b<sup>3</sup>\) is correct (`./examples/cube.tl`)
@@ -11,11 +27,10 @@ assume(1==1)
 :c2 = (:a-:b)*(:a-:b)*(:a-:b)
 assert(:c1 == :c2)
 ```
-Use the `-smt\--smtlib` flag for running ProofEngine
+
 
 ```bash
 python3 chiron.py -smt ./examples/cube.tl
-python3 chiron.py --smtlib ./examples/cube.tl
 ```
 The output should looks like this
 ```stdout
@@ -36,7 +51,6 @@ Use the `-smt\--smtlib` flag for running ProofEngine
 
 ```bash
 python3 chiron.py -smt ./examples/cube_buggy.tl
-python3 chiron.py --smtlib ./examples/cube_buggy.tl
 ```
 The output should looks like this
 ```stdout
@@ -77,7 +91,6 @@ This test case is present in `./examples/arithmetic_progression.tl`.
 
 ```bash
 python3 chiron.py -smt ./examples/arithmetic_progression.tl
-python3 chiron.py --smtlib ./examples/arithmetic_progression.tl
 ```
 The output should looks like this
 ```stdout
@@ -105,8 +118,6 @@ Counterexample:
 ## Example3
 We can also use it for more complicated programs which use the turtle commands. For example, we can prove iff the turtle starts in the inner box, it will not step outside the outer box (see `home.tl` for analysis code and `home_src.tl` for source code)-
 
-<!-- Add Screenshots here -->
-<!-- ![Alt text](./examples/run_images/home_in.png "Optional title") -->
 <div style="width: 500px; height: 500px; overflow: hidden;">
   <img src="./examples/run_images/home_in.png" 
        style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
@@ -126,6 +137,7 @@ We can also use it for more complicated programs which use the turtle commands. 
 2. **Finding bugs :** If a program is incorrect, we can find a counterexample to prove that the program is incorrect.
 3. **Proving two programs are equivalent :** We can write the analysis code suitably to prove that two programs always behave the same. See `./examples/leapyear.tl` for example testcase.
 4. **Proving correctness for unbounded loops :** Since ProofEngine utilizes __invariant__, we can do deductive verification and prove correctness for unbounded loops, i.e.,conditions like P is true &forall; n can be proven.
+5. **Path Feasibility :** We can check if a certain execution path in the program is feasible.
 
 # Other Details
 For writing the constraints on the turtle's state, following variables are reserved, which the user can use - 

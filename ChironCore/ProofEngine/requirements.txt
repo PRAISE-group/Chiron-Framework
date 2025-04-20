@@ -1,5 +1,1 @@
-antlr4-python3-runtime==4.7.2
-astpretty==3.0.0
-networkx==3.4.2
-numpy==2.2.2
 z3-solver==4.13.4.0
