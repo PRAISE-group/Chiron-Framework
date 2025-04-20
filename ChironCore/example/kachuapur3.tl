@@ -27,6 +27,6 @@ print(:point.:x)
 print(:circle.:point.:x)
 print(:circle1.:point.:x)
 
-:circle.:point.draw()
+:f= :circle.:point.draw()
 
-:circle1.:point.drawy()
+:f = :circle1.:point.drawy()

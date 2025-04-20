@@ -12,4 +12,4 @@ class :Pentagon {
 }
 
 :pent = new :Pentagon()
-:pent.drawShape()
+:f= :pent.drawShape()

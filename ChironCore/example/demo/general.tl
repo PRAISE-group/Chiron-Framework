@@ -23,9 +23,9 @@ def drawSquare(:size) {
 }
 
 :star = new :Star()
-:star.drawStar()
+:f= :star.drawStar()
 penup
 goto(-25, 100)
 pendown
 :size = 300
-drawSquare(:size)
+:f= drawSquare(:size)
