@@ -36,6 +36,13 @@ class AssertCommand(Instruction):
     def __str__(self):
         return self.cond.__str__()
 
+class AnalysisCommand(Instruction):
+    def __init__(self, statement, condition):
+        self.stmt = statement
+        self.cond = condition
+    def __str__(self):
+        return self.stmt + " (" + self.cond.__str__() + ")"
+
 class MoveCommand(Instruction):
     def __init__(self, motion, expr):
         self.direction = motion
@@ -125,6 +132,10 @@ class Mult(BinArithOp):
 class Div(BinArithOp):
     def __init__(self, lexpr, rexpr):
         super().__init__(lexpr, rexpr, "/")
+
+class Mod(BinArithOp):
+    def __init__(self, lexpr, rexpr):
+        super().__init__(lexpr, rexpr, "%")
 
 
 # --Boolean Expressions-----------------------------------------------

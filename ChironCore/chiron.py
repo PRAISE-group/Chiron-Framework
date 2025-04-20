@@ -2,13 +2,16 @@
 Release = "Chiron v1.0.4"
 
 import ast
+import re
 import sys
 from ChironAST.builder import astGenPass
+
 import abstractInterpretation as AI
 import dataFlowAnalysis as DFA
 from sbfl import testsuiteGenerator
 
 sys.path.insert(0, "../Submission/")
+sys.path.insert(0, "../ProofEngine/")
 sys.path.insert(0, "ChironAST/")
 sys.path.insert(0, "cfg/")
 
@@ -26,6 +29,12 @@ import submissionAI as AISub
 from sbflSubmission import computeRanks
 import csv
 
+from ProofEngine.Z3Integration import Z3Solver
+from ProofEngine.TraverseCFG import TraverseCFG
+from ProofEngine.Smtlib_Helper import generate_cfg_and_ir
+from ProofEngine.Smtlib_Helper import list_to_smtlib_stmt
+from ProofEngine.Smtlib_Helper import generate_smtlib_code
+from ProofEngine.Smtlib_Helper import generate_code_body
 
 def cleanup():
     pass
@@ -33,6 +42,7 @@ def cleanup():
 
 def stopTurtle():
     turtle.bye()
+
 
 
 if __name__ == "__main__":
@@ -195,6 +205,13 @@ if __name__ == "__main__":
         default=True,
         type=bool,
     )
+    cmdparser.add_argument(
+        "-smt",
+        "--smtlib",
+        help="Generate code for SMT-LIB generation",
+        action="store_true"
+    )
+
 
     args = cmdparser.parse_args()
     ir = ""
@@ -219,7 +236,7 @@ if __name__ == "__main__":
 
     # generate control_flow_graph from IR statements.
     if args.control_flow:
-        cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+        cfg = cfgB.buildCFG(ir, "control_flow_graph", False)
         irHandler.setCFG(cfg)
     else:
         irHandler.setCFG(None)
@@ -392,3 +409,89 @@ if __name__ == "__main__":
             writer = csv.writer(file)
             writer.writerows(spectrum)
         print("DONE..")
+    
+    if args.smtlib:
+        """
+        Parse the program and generate CFG and IR
+        """
+        cfg, num_loops = generate_cfg_and_ir(parseTree, irHandler)
+
+        """
+        Handle programs with or without loops
+        """
+        if num_loops > 1:
+            """
+            Raise an error if the program contains more than one loop.
+            This version of Chiron only supports programs with a single loop
+            when using the --smtlib/-smt flag.
+            """
+            raise RuntimeError("This version of Chiron only supports programs with a single loop with --smtlib/-smt flag.")
+        elif num_loops == 0:
+            """
+            Handle programs without loops:
+            - Traverse the CFG to extract pre-conditions, post-conditions, and the code body.
+            - Dump the CFG for visualization or debugging.
+            - Convert the extracted conditions and code body into SMT-LIB format.
+            """
+            pre_condition_list, post_condition_list, code_body_list = TraverseCFG(cfg, has_loop=False)
+            cfgB.dumpCFG(cfg, "control_flow_graph")
+
+            # Convert pre-condition and post-condition lists to SMT-LIB format
+            pre_condition = list_to_smtlib_stmt(pre_condition_list)
+            post_condition = list_to_smtlib_stmt(post_condition_list)
+
+            # Generate the SMT-LIB code body from the code body list
+            code_body = generate_code_body(code_body_list)
+
+            # Debugging prints for conditions and code body
+            # print("Pre-condition: ", pre_condition)
+            # print("Post-condition: ", post_condition)
+            # print("Code-body: ", code_body)
+
+            # Generate SMT-LIB code for the program without loops
+            smtlib_code = generate_smtlib_code(pre_condition, post_condition, loop_body=code_body)
+        
+        elif num_loops == 1:
+            """
+            Handle programs with a single loop:
+            - Traverse the CFG to extract pre-conditions, post-conditions, loop conditions,
+              invariants, loop body, and loop false conditions.
+            - Dump the CFG for visualization or debugging.
+            - Convert the extracted conditions and loop body into SMT-LIB format.
+            """
+            pre_condition_list, post_condition_list, loop_condition_list, invariant_in_list, invariant_out_list, loop_body_list, loop_false_condition_list = TraverseCFG(cfg, has_loop=True)
+            cfgB.dumpCFG(cfg, "control_flow_graph")
+
+            # Convert pre-condition, post-condition, and loop-related conditions to SMT-LIB format
+            pre_condition = list_to_smtlib_stmt(pre_condition_list)
+            post_condition = list_to_smtlib_stmt(post_condition_list)
+            loop_condition = list_to_smtlib_stmt(loop_condition_list)
+            invariant_in = list_to_smtlib_stmt(invariant_in_list)
+            invariant_out = list_to_smtlib_stmt(invariant_out_list)
+            loop_false_condition = list_to_smtlib_stmt(loop_false_condition_list)
+
+            # Generate the SMT-LIB loop body from the loop body list
+            loop_body = generate_code_body(loop_body_list)
+
+            # Debugging prints for conditions and loop body
+            # print("Pre-condition: ", pre_condition)
+            # print("Post-condition: ", post_condition)
+            # print("Loop-condition: ", loop_condition)
+            # print("Invariant-in: ", invariant_in)
+            # print("Invariant-out: ", invariant_out)
+            # print("Loop-false-condition: ", loop_false_condition)
+            # print("Loop-body: ", loop_body)
+
+            # Generate SMT-LIB code for the program with a loop
+            smtlib_code = generate_smtlib_code(pre_condition, post_condition, loop_condition, invariant_in, invariant_out, loop_body, loop_false_condition)
+
+        """
+        Solve the SMT-LIB code using Z3 and print the output.
+        """
+        # print(smtlib_code)  # Debugging print for the generated SMT-LIB code
+        output = Z3Solver(smtlib_code)
+        print("\n======Z3 Output:======\n")
+        print(output)
+
+
+
