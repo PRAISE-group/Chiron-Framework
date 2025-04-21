@@ -4,7 +4,7 @@
 4. Setting objects to N0ne in declaration is not done yet
 5. instruction_list can contain both function declaration and classDeclaration this can cause problems
 6. Multiple class inheritance is not yet supported! [fixed]
-7. return is compulsory in function declaration 
+7. return is compulsory in function declaration with at least one return value
 8. Solution to Avoid Unexpected Changes in Mutable Class Variables: use __init__ method during class declaration [fixed]
 9. Writing self is compulsory in methods of class parameters
 10. class must have at least one assignment statement [fixed]
@@ -16,6 +16,7 @@
 16. commenting now supported [fixed]
 17. first all the declaration will be processed and then the instructions!
 18. Strictly enforce the keywords like return and def to not be used as function of class names
+19. There should be at least one instruction apart from function and class definitions in the program
 
 
 
