@@ -63,7 +63,8 @@ The following output is generated:
 ```
 ![CFG Output for testcase0](https://raw.githubusercontent.com/SamyakSinghania/Ball-Larus-PathProfiling/master/ChironCore/path_profiling_tests/cfg0.png)
 
-**`Explanation:`** From the code and the cfg, we can clearly verify that the path profile generated for the execution is indeed correct.
+**`Explanation:`** From the code and the cfg, we can clearly verify that the path profile generated for the execution is indeed correct.\
+ Since, `:var1 = 15` and `:var2 = 30`, the path `START->4->5->8->10->END` is taken. The path profile data is generated based on the execution of the program.
 
 On running:
 
@@ -97,7 +98,7 @@ Accuracy: 0.8571428571428571
 
 ![CFG Output for testcase6](https://raw.githubusercontent.com/SamyakSinghania/Ball-Larus-PathProfiling/master/ChironCore/path_profiling_op_tests/cfg6.png)
 
-**`Explanation:`** The values of x,y,z,p were randomly generated based on which a specific path will be taken in the double diamond CFG. Based on the path profile and execution of branch instructions of the training inputs, a static branch predictor was learned which gives the predictions for the branch instructions of the test inputs.
+**`Explanation:`** The values of x,y,z,p were randomly generated based on which a specific path will be taken in the double diamond CFG. These inputs are present in the file `./BallLarus/inputs.txt`. Based on the path profile and execution of branch instructions of the training inputs, a static branch predictor was learned which gives the predictions for the branch instructions of the test inputs. The accuracy of the predictor is also shown in the file **`predictor_accuracy.txt`**. The accuracy is calculated based on the number of correct predictions made by the predictor.
 
 On running:
 
