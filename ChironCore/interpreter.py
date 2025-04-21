@@ -76,7 +76,7 @@ class Interpreter:
     def interpret(self):
         pass
 
-    def initProgramContext(self, params):
+    def initProgramContext(params):
         pass
 
 
@@ -112,22 +112,15 @@ class ConcreteInterpreter(Interpreter):
         self.class_list = ClassList()
         self.class_hierarchy =  {}
         self.class_methods = {}
+        self.class_attributes = {}  # Store attributes with defining class
         self.class_colors = {}
         # Hooks Object:
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
-        print("###########################Intermediate Representation (IR):#############")
-        for index, instruction in enumerate(self.ir):
-            print(f"{index}: {instruction} | {instruction[0]}")
 
     def interpret(self):
         print("Program counter : ", self.pc)
-        if not self.ir:
-            return True
-      
-
-    
         stmt, tgt = self.ir[self.pc]
 
         print(stmt, stmt.__class__.__name__, tgt)
@@ -268,7 +261,6 @@ class ConcreteInterpreter(Interpreter):
         
         return 0
 
-
     # Copying the parameters in their respective placeholders
     def handleParametersPassing(self, stmt, tgt):
         for param in reversed(stmt.params):
@@ -302,29 +294,34 @@ class ConcreteInterpreter(Interpreter):
             attr_name = str(attr.lvar).replace(":", "")
             attr_value = addContext(attr.rexpr) if attr.rexpr else "None"
             init_body += f"        self.{attr_name} = {attr_value}\n"
+            if className not in self.class_attributes:
+                self.class_attributes[className] = []
+            self.class_attributes[className].append((attr_name, attr_value, className))
 
         # Handle object attributes
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
-            init_body += f"        self.{lhs} = None\n"
+            rhs_classname = addContext(objectAttr.class_name).replace("self.prg.", "")
+
+            init_body += f"        self.{lhs} = class_list.{rhs_classname}()\n"
+            if className not in self.class_attributes:
+                self.class_attributes[className] = []
+            self.class_attributes[className].append((lhs, f"{rhs_classname}()", className))
+
+            # init_body += f"        self.{lhs} = None\n"
 
         init_method += "):\n"  # Close the __init__ method signature
         class_def += init_method
         class_def += init_body 
 
         # Step 1: Execute the class definition (store it inside self.class_list)
-        exec(class_def, globals(), self.class_list.__dict__)
+        context = globals().copy()
+        context["class_list"] = self.class_list
+        exec(class_def, context,self.class_list.__dict__)
 
-        # Step 2: Assign object attributes after class creation
-        for objectAttr in stmt.objectAttributes:
-            objectAttr, target = objectAttr
-            lhs = str(objectAttr.target).replace(":", "")
-            rhs = addContext(objectAttr.class_name).replace(
-                "self.prg.", "self.class_list.")
-            exec(f"self.class_list.{className}.{lhs} = {rhs}()")
-
-        # Inherit methods from base classes 
+        # self.class_list.__dict__[className] = context[className]
+    
         inherited_function_addresses = {}
         if stmt.baseClasses:
             for function_name, address in self.function_addresses.items():
@@ -402,6 +399,18 @@ class ConcreteInterpreter(Interpreter):
                     methods[(method, arity)] = defining_class
         return methods
 
+    def get_all_attributes(self, class_name):
+        if class_name not in self.class_hierarchy:
+            return []
+        attributes = self.class_attributes.get(class_name, [])
+        # Add inherited attributes from base classes, avoiding duplicates
+        for base in self.class_hierarchy[class_name]:
+            base_attributes = self.get_all_attributes(base)
+            for attr_name, attr_value, defining_class in base_attributes:
+                if not any(a[0] == attr_name for a in attributes):
+                    attributes.append((attr_name, attr_value, defining_class))
+        return attributes
+
     def print_class_hierarchy(self):
         dot = Digraph(comment='Class Hierarchy')
         dot.attr(rankdir='BT')
@@ -414,10 +423,18 @@ class ConcreteInterpreter(Interpreter):
 
         for class_name in self.class_hierarchy:
             methods = self.get_all_methods(class_name)
+            attributes = self.get_all_attributes(class_name)
             label = f"<{class_name}<BR/>"  # Newline after class name
+            # Methods first
             for (method, arity), defining_class in sorted(methods.items()):
-                class_color = self.class_colors.get(defining_class, "#000000")  # Default to black if not found
+                class_color = self.class_colors.get(defining_class, "#000000")
                 label += f"<FONT COLOR='{class_color}'>{method}({arity})</FONT><BR/>"
+            # Blank line
+            label += "<BR/> <BR/>"
+            # Attributes next
+            for attr_name, attr_value, defining_class in attributes:
+                class_color = self.class_colors.get(defining_class, "#000000")
+                label += f"<FONT COLOR='{class_color}'>{attr_name} = {attr_value}</FONT><BR/>"
             label += ">"
             dot.node(class_name, label=label, shape='record', color=self.class_colors[class_name], style="solid")
 

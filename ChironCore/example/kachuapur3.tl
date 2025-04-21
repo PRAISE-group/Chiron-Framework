@@ -4,12 +4,12 @@ class :Point {
     def draw(:self)
     {
         print(:self.:x)
-        return
+        return 0
     }
     def drawy(:self)
     {
         print(:self.:y)
-        return
+        return 0
     }
 }
 

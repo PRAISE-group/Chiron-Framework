@@ -178,6 +178,7 @@ class astGenPass(tlangVisitor):
             return self.visitDataLocationAccess(ctx.dataLocationAccess())
         elif ctx.functionCall():
             return self.visitFunctionCallExpr(ctx.functionCall())
+    
 
     def visitFunctionCallExpr(self, ctx: tlangParser.FunctionCallContext):
         # TODO: Refactoring, this function has similar body as visitFunctionCall
@@ -200,6 +201,10 @@ class astGenPass(tlangVisitor):
         self.subStmtList.extend([(ChironAST.FunctionCallCommand(functionName, functionArgs,
                          methodCaller), 1)] + [(ChironAST.ReadReturnCommand([returnLocation]), 1)])
         return returnLocation
+    
+    def visitFunctionCall(self, ctx:tlangParser.FunctionCallContext):
+        return self.visitFunctionCallExpr(ctx)
+
     
     def visitAssignExpr(self, ctx: tlangParser.AssignExprContext):
         lval = self.visit(ctx.lvalue())

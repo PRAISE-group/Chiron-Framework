@@ -12,7 +12,7 @@ def drawRectangle(:l, :b)
     right 90
     forward :b
     penup
-    return
+    return 0
 }
 
 def drawCircle()
@@ -55,5 +55,5 @@ def factorial(:n)
 }
 
 drawRectangle(50, 50)
-:a, :b = drawCircle()
+drawCircle()
 print(factorial(6))

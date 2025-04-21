@@ -16,7 +16,8 @@ declaration : classDeclaration
 		;
 
 instruction : 
-		 printStatement
+		  assignment
+		 | printStatement
 	    | conditional
 	    | loop
 	    | moveCommand
@@ -24,8 +25,8 @@ instruction :
 	    | gotoCommand
 	    | pauseCommand
 		| objectInstantiation
-		| expression
 		| returnStatement
+		| functionCall
 		
 	    ;
 
@@ -61,10 +62,6 @@ additive : PLUS | MINUS;
 
 unaryArithOp : MINUS ;
 
-PLUS     : '+' ;
-MINUS    : '-' ;
-MUL  	 : '*' ;
-DIV      : '/' ;
 
 
 returnStatement : RETURN ( expression ( ',' expression )* ) ;
@@ -120,6 +117,12 @@ logicOp : AND | OR ;
 
 binCondOp :  EQ | NEQ | LT | GT | LTE | GTE
 	 ;
+
+
+PLUS     : '+' ;
+MINUS    : '-' ;
+MUL  	 : '*' ;
+DIV      : '/' ;
 
 AND: '&&';
 OR : '||';
