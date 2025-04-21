@@ -60,7 +60,7 @@ The following output is generated:
 ```
 ['START', '4', '5', '8', '10', 'END']: 1
 ```
-![CFG Output for testcase0](https://github.com/SamyakSinghania/Ball-Larus-PathProfiling/blob/master/ChironCore/path_profiling_tests/cfg0.png)
+![CFG Output for testcase0](https://raw.githubusercontent.com/SamyakSinghania/Ball-Larus-PathProfiling/master/ChironCore/path_profiling_tests/cfg0.png)
 
 **`Explanation:`** From the code and the cfg, we can clearly verify that the path profile generated for the execution is indeed correct.
 
@@ -94,7 +94,7 @@ Accuracy: 0.8571428571428571
 ['START', '2', '7', '8', '13', 'END']:  3
 ```
 
-![CFG Output for testcase0](https://github.com/SamyakSinghania/Ball-Larus-PathProfiling/blob/master/ChironCore/path_profiling_op_tests/cfg6.png)
+![CFG Output for testcase6](https://raw.githubusercontent.com/SamyakSinghania/Ball-Larus-PathProfiling/master/ChironCore/path_profiling_op_tests/cfg6.png)
 
 **`Explanation:`** The values of x,y,z,p were randomly generated based on which a specific path will be taken in the double diamond CFG. Based on the path profile and execution of branch instructions of the training inputs, a static branch predictor was learned which gives the predictions for the branch instructions of the test inputs.
 
