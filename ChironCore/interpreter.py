@@ -200,7 +200,8 @@ class ConcreteInterpreter(Interpreter):
             arity = len(stmt.params)
             if class_name not in self.class_methods:
                 self.class_methods[class_name] = []
-            self.class_methods[class_name].append((method_name, arity))
+            is_private = method_name.startswith("__")
+            self.class_methods[class_name].append((method_name, arity, is_private))
 
         return tgt
 
@@ -296,7 +297,8 @@ class ConcreteInterpreter(Interpreter):
             init_body += f"        self.{attr_name} = {attr_value}\n"
             if className not in self.class_attributes:
                 self.class_attributes[className] = []
-            self.class_attributes[className].append((attr_name, attr_value, className))
+            is_private = attr_name.startswith("__")
+            self.class_attributes[className].append((attr_name, attr_value, className, is_private))
 
         # Handle object attributes
         for objectAttr in stmt.objectAttributes:
@@ -307,7 +309,8 @@ class ConcreteInterpreter(Interpreter):
             init_body += f"        self.{lhs} = class_list.{rhs_classname}()\n"
             if className not in self.class_attributes:
                 self.class_attributes[className] = []
-            self.class_attributes[className].append((lhs, f"{rhs_classname}()", className))
+            is_private = lhs.startswith("__")
+            self.class_attributes[className].append((lhs, f"{rhs_classname}()", className, is_private))    
 
             # init_body += f"        self.{lhs} = None\n"
 
@@ -389,26 +392,38 @@ class ConcreteInterpreter(Interpreter):
         methods = {}
         # Add methods defined in this class first (they override inherited ones)
         if class_name in self.class_methods:
-            for method, arity in self.class_methods[class_name]:
-                methods[(method, arity)] = class_name
-        # Add inherited methods from base classes, in order
+         for method, arity, is_private in self.class_methods[class_name]:
+
+                methods[(method, arity)] = (class_name, is_private)
+
+        # Add inherited methods from base classes, only for non-private methods
+
         for base in self.class_hierarchy[class_name]:
+
             base_methods = self.get_all_methods(base)
-            for (method, arity), defining_class in base_methods.items():
-                if (method, arity) not in methods:
-                    methods[(method, arity)] = defining_class
+
+            for (method, arity), (defining_class, is_private) in base_methods.items():
+
+                if not is_private and (method, arity) not in methods:
+
+                    methods[(method, arity)] = (defining_class, is_private)
         return methods
 
     def get_all_attributes(self, class_name):
         if class_name not in self.class_hierarchy:
             return []
         attributes = self.class_attributes.get(class_name, [])
-        # Add inherited attributes from base classes, avoiding duplicates
+           # Add inherited attributes from base classes, avoiding duplicates, only for public attributes
+
         for base in self.class_hierarchy[class_name]:
+
             base_attributes = self.get_all_attributes(base)
-            for attr_name, attr_value, defining_class in base_attributes:
-                if not any(a[0] == attr_name for a in attributes):
-                    attributes.append((attr_name, attr_value, defining_class))
+
+            for attr_name, attr_value, defining_class, is_private in base_attributes:
+
+                if not is_private and not any(a[0] == attr_name for a in attributes):
+
+                    attributes.append((attr_name, attr_value, defining_class, is_private))
         return attributes
 
     def print_class_hierarchy(self):
@@ -422,17 +437,32 @@ class ConcreteInterpreter(Interpreter):
                 self.class_colors[class_name] = "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
         for class_name in self.class_hierarchy:
+
             methods = self.get_all_methods(class_name)
+
             attributes = self.get_all_attributes(class_name)
+
+            # Include all attributes (public and private) defined in this class
+
+            all_attributes = self.class_attributes.get(class_name, [])
+
             label = f"<{class_name}<BR/>"  # Newline after class name
+
             # Methods first
-            for (method, arity), defining_class in sorted(methods.items()):
+
+            for (method, arity), (defining_class, is_private) in sorted(methods.items()):
+
                 class_color = self.class_colors.get(defining_class, "#000000")
+
                 label += f"<FONT COLOR='{class_color}'>{method}({arity})</FONT><BR/>"
+
             # Blank line
+
             label += "<BR/> <BR/>"
-            # Attributes next
-            for attr_name, attr_value, defining_class in attributes:
+
+            # Attributes next (including private from this class)
+
+            for attr_name, attr_value, defining_class, is_private in all_attributes:
                 class_color = self.class_colors.get(defining_class, "#000000")
                 label += f"<FONT COLOR='{class_color}'>{attr_name} = {attr_value}</FONT><BR/>"
             label += ">"

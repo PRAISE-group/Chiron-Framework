@@ -20,6 +20,16 @@ class :BankAccount {
             return -1
         ]
     }
+    def __withdraw(:self, :amt, :minBalance, :fee) {
+        :total = :amt + :fee
+        if :self.:balance - :total >= :minBalance [
+            :self.:balance = :self.:balance - :total
+            return 0
+        ]
+        else [
+            return -1
+        ]
+    }
 }
 
 
