@@ -108,7 +108,7 @@ class astGenPass(tlangVisitor):
                 i += 1  # Move to expression inside brackets
                 # Visit and evaluate expression
                 expr = self.visit(ctx.children[i])
-                access_chain.append([expr.val])  # Store index as a list
+                access_chain.append([expr])  # Store index as a list
                 i += 1  # Skip closing ']'
             i += 1  # Move to the next child
         return ChironAST.DataLocationAccess(base, access_chain)
