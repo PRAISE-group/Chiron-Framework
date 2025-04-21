@@ -89,9 +89,9 @@ classAttributeDeclaration : assignment | objectInstantiation ;
 
 objectInstantiation : lvalue '=' 'new' VAR '(' ')' ;
 
-dataLocationAccess : baseVar ('.' VAR | '[' expression ']')+ ;
+dataLocationAccess : baseVar ('.' VAR | '[' expression ']')+  ;
 
-baseVar : VAR ;
+baseVar : VAR  ;
 
 lvalue
     : VAR
@@ -100,7 +100,7 @@ lvalue
 
 // function call
 functionCall : methodCaller NAME '(' arguments ')' ;
-methodCaller : ((VAR | '[' expression ']') '.')* ;
+methodCaller : (( VAR | dataLocationAccess )  '.')? ;
 
 
 // function declaration

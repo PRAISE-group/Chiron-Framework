@@ -88,7 +88,11 @@ class astGenPass(tlangVisitor):
         return [(ChironAST.AssignmentCommand(lval, rval), 1)]
 
     def visitDataLocationAccess(self, ctx: tlangParser.DataLocationAccessContext):
-        base = ctx.baseVar().VAR().getText()
+
+        
+
+        base=ctx.baseVar().VAR().getText()
+       
         # Traverse through the nested access ('.' for attributes, '[]' for indices)
         access_chain = []
         i = 1  # Start from second child (skip baseVar)
@@ -114,23 +118,31 @@ class astGenPass(tlangVisitor):
         return ChironAST.DataLocationAccess(base, access_chain)
 
     def visitMethodCaller(self, ctx: tlangParser.MethodCallerContext):
-        access_chain = []
-        i = 0
-        while i < len(ctx.children):
-            child = ctx.children[i]
-            if isinstance(child, TerminalNodeImpl):
-                # Current child must be a VAR (attribute access)
-                access_chain.append(ctx.children[i].getText())
-                i += 1  # skip '.'
-            elif child.getText() == '[':
-                # Array access: Process the expression inside `[]`
-                i += 1  # Move to expression inside brackets
-                # Visit and evaluate expression
-                expr = self.visit(ctx.children[i])
-                access_chain.append([expr.val])  # Store index as a list
-                i += 2  # Skip closing ']'
-            i += 1  # Move to the next child
-        return ChironAST.MethodCaller(access_chain)
+
+        if ctx.dataLocationAccess():
+            return self.visit(ctx.dataLocationAccess())
+        if ctx.VAR():
+            var=ctx.VAR().getText()
+            return ChironAST.DataLocationAccess(var, [])
+        return None 
+        # access_chain = []
+        # i = 0
+        # while i < len(ctx.children):
+        #     child = ctx.children[i]
+        #     if isinstance(child, TerminalNodeImpl):
+        #         # Current child must be a VAR (attribute access)
+        #         access_chain.append(ctx.children[i].getText())
+        #         i += 1  # skip '.'
+        #     elif child.getText() == '[':
+        #         # Array access: Process the expression inside `[]`
+        #         i += 1  # Move to expression inside brackets
+        #         # Visit and evaluate expression
+        #         expr = self.visit(ctx.children[i])
+        #         access_chain.append([expr.val])  # Store index as a list
+        #         i += 2  # Skip closing ']'
+        #     i += 1  # Move to the next child
+        # return ChironAST.MethodCaller(access_chain)
+
 
     def visitObjectInstantiation(self, ctx: tlangParser.ObjectInstantiationContext):
         # Extract the left-hand side (target variable or object access)
@@ -182,24 +194,31 @@ class astGenPass(tlangVisitor):
 
     def visitFunctionCallExpr(self, ctx: tlangParser.FunctionCallContext):
         # TODO: Refactoring, this function has similar body as visitFunctionCall
+
         functionName = ctx.NAME().getText()
+
         # the object invoking the method, in case the function call is a method call
         methodCaller = self.visitMethodCaller(
             ctx.methodCaller()) if ctx.methodCaller().children is not None else None
+
+        
         functionArgs = [self.visit(arg) for arg in ctx.arguments(
         ).expression()] if ctx.arguments() is not None else []
-        # if the function is a method call, insert the caller object as the first argument
+        # if the function is a method call, insert the caller object as the first argument (self)
         if methodCaller:
             functionArgs.insert(0, methodCaller)
             # call private methods with mangled names
             # eg, :self.__privateMethod() will be called as :self._className__privateMethod()
-            if len(methodCaller.access_chain) == 1 and methodCaller.access_chain[0] == ":self" and functionName.startswith("__"):
+            # if len(methodCaller.access_chain) == 1 and methodCaller.access_chain[0] == ":self" and functionName.startswith("__"):
+            #     functionName = f"_{self.classRegister}{functionName}"
+            if  methodCaller.var == ":self" and functionName.startswith("__"):
                 functionName = f"_{self.classRegister}{functionName}"
         # create a virtual register to store the return value
         returnLocation = ChironAST.Var(":__reg_" + str(self.virtualRegCount))
         self.virtualRegCount += 1
         self.subStmtList.extend([(ChironAST.FunctionCallCommand(functionName, functionArgs,
                          methodCaller), 1)] + [(ChironAST.ReadReturnCommand([returnLocation]), 1)])
+  
         return returnLocation
     
     def visitFunctionCall(self, ctx:tlangParser.FunctionCallContext):

@@ -344,7 +344,7 @@ class DataLocationAccess(Value):
         self.access_chain = access_chain  # List of attribute names or indices
 
     def __str__(self):
-        result = self.var
+        result = str(self.var)
         for access in self.access_chain:
             if isinstance(access, list):  # Array indexing
                 indices_str = "".join(f"[{idx}]" for idx in access)
