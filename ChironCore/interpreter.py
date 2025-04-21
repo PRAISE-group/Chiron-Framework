@@ -284,20 +284,21 @@ class ConcreteInterpreter(Interpreter):
         for objectAttr in stmt.objectAttributes:
             objectAttr, target = objectAttr
             lhs = str(objectAttr.target).replace(":", "")
-            init_body += f"        self.{lhs} = None\n"
+            rhs_classname = addContext(objectAttr.class_name).replace("self.prg.", "")
+
+            init_body += f"        self.{lhs} = class_list.{rhs_classname}()\n"
+            # init_body += f"        self.{lhs} = None\n"
+
         init_method += "):\n"  # Close the __init__ method signature
         class_def += init_method
         class_def += init_body 
         # Step 1: Execute the class definition (store it inside self.class_list)
-        exec(class_def, globals(), self.class_list.__dict__)
-        # Step 2: Assign object attributes after class creation
-        for objectAttr in stmt.objectAttributes:
-            objectAttr, target = objectAttr
-            lhs = str(objectAttr.target).replace(":", "")
-            rhs = addContext(objectAttr.class_name).replace(
-                "self.prg.", "self.class_list.")
-            exec(f"self.class_list.{className}.{lhs} = {rhs}()")
-        # Inherit methods from base classes 
+        context = globals().copy()
+        context["class_list"] = self.class_list
+        exec(class_def, context,self.class_list.__dict__)
+
+        # self.class_list.__dict__[className] = context[className]
+    
         inherited_function_addresses = {}
         if stmt.baseClasses:
             for function_name, address in self.function_addresses.items():
