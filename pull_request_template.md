@@ -40,7 +40,8 @@ To generate profiling data along with branch prediction optimization:
 ./chiron.py -bl_op ./BallLarus/inputs.txt ./example/example1.tl
 ```
 
-The directory `path_profiling_tests` contains testcases including if-else, loops, nested loops, and other control flow constructs. These tests can be used for the `-bl` flag.
+The directory `path_profiling_tests` contains testcases including if-else, loops, nested loops, and other control flow constructs. These tests can be used for the `-bl` flag.\
+The `inputs.txt` file contains the input parameters for the program, and these parameters can be generated using the `generate_inputs.py` script.
 
 The directory `path_profiling_op_tests` contains testcases for the `-bl_op` flag.
 
