@@ -2,7 +2,18 @@
 
 ## Brief description feature
 
-Provide the details of the feature, explain it's functionality.
+The path profiling is being done as discussed in the Ball Larus Path Profiling paper.
+
+This involves:
+1. Saving the original IR
+2. Identifying paths in the CFG
+3. Computing edge weights
+4. Instrumenting the IR
+5. Running the instrumented program
+6. Reporting the results
+
+The static branch predictor is build by indexing the predictor table with the (path id, program counter) \
+On running any program, the control flow graph is generated in the file **`control_flow_graph.png`** using which we can track down the paths shown in the file **`path_profile_data.txt`**
 
 We have added **two new flags** in our project:
 
@@ -49,6 +60,43 @@ The following output is generated:
 ```
 ['START', '4', '5', '8', '10', 'END']: 1
 ```
+![CFG Output for testcase0](https://github.com/SamyakSinghania/Ball-Larus-PathProfiling/blob/master/ChironCore/path_profiling_tests/cfg0.png)
+
+**`Explanation:`** From the code and the cfg, we can clearly verify that the path profile generated for the execution is indeed correct.
+
+On running:
+
+```bash
+./chiron.py -bl_op ./BallLarus/inputs.txt ./path_profiling_op_tests/testcase6.tl
+```
+
+The following output is generated:
+
+\*\*File: \*\***`predictor_accuracy.txt`**
+
+```
+Total Count: 7
+Correct Count: 6
+Accuracy: 0.8571428571428571
+-----------------------
+Total Count: 7
+Correct Count: 6
+Accuracy: 0.8571428571428571
+-----------------------
+```
+
+\*\*File: \*\***`path_profile_data.txt`**
+
+```
+['START', '2', '7', '11', '13', 'END']:  5
+['START', '5', '7', '11', '13', 'END']:  1
+['START', '5', '7', '8', '13', 'END']:  1
+['START', '2', '7', '8', '13', 'END']:  3
+```
+
+![CFG Output for testcase0](https://github.com/SamyakSinghania/Ball-Larus-PathProfiling/blob/master/ChironCore/path_profiling_op_tests/cfg6.png)
+
+**`Explanation:`** The values of x,y,z,p were randomly generated based on which a specific path will be taken in the double diamond CFG. Based on the path profile and execution of branch instructions of the training inputs, a static branch predictor was learned which gives the predictions for the branch instructions of the test inputs.
 
 On running:
 
