@@ -1,14 +1,18 @@
 pendown
 if(:x > :y)[
-    forward 5
+    forward 50
+    left 60
 ]
 else[
-    left 90
+    backward 50
+    right 60
 ]
 if(:z < :p)[
-    forward 10
+    backward 100
+    left 90
 ]
 else[
+    forward 100
     right 90
 ]
 penup
