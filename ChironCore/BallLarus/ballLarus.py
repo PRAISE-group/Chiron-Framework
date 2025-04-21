@@ -346,8 +346,8 @@ class BallLarusProfiler:
                 if edge[1] == target and edge[2].get('new_edge') is None:
                     weight = edge[2]['weight']
                     break
-            if weight == 0:
-                continue
+            # if weight == 0:
+            #     continue
             # Create the update instruction: path_register = path_register + weight
             update_instr = ChironAST.AssignmentCommand(
                 path_register_var,
