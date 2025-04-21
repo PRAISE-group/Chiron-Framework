@@ -28,6 +28,7 @@ class Interpreter:
         self.pc = 0
         self.t_screen = turtle.getscreen()
         self.trtl = turtle.Turtle()
+        self.trtl.speed(0)
         self.trtl.shape("turtle")
         self.trtl.color("blue", "yellow")
         self.trtl.fillcolor("green")
@@ -217,6 +218,7 @@ class ConcreteInterpreter(Interpreter):
         # Save the arguments on the call stack
         for arg in stmt.args:
             arg_value = addContext(arg)
+            print(arg_value)
             exec(f"self.argument = {arg_value}")
             self.call_stack.append(self.argument)
         # Jump to the function address
@@ -340,19 +342,22 @@ class ConcreteInterpreter(Interpreter):
         return 1
 
     def handleObjectInstantiation(self, stmt, tgt):
-        lhs = str(stmt.target).replace(":", "")
+        # lhs = str(stmt.target).replace(":", "")
+        lhs=addContext(str(stmt.target))
         rhs = addContext(stmt.class_name).replace(
             "self.prg.", "self.class_list.")
-        exec(f"self.prg.{lhs} = {rhs}()")
+        exec(f"{lhs} = {rhs}()")
         return 1
 
     def handleAssignment(self, stmt, tgt):
         print("  Assignment Statement")
-        lhs = str(stmt.lvar).replace(":", "")
+        # lhs = str(stmt.lvar).replace(":", "")
+        lhs = addContext(str(stmt.lvar))
+
         rhs = addContext(stmt.rexpr)
         print(lhs, rhs, "Assignment")
         # exec("setattr(self.prg,\"%s\",%s)" % (lhs,rhs))
-        exec(f"self.prg.{lhs} = {rhs}")
+        exec(f"{lhs} = {rhs}")
         return 1
 
     def handlePrint(self, stmt, tgt):
