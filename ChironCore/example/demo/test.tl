@@ -1,6 +1,9 @@
-if  :x=2 [
-    print(2)
+if  :x=0 == :y=:z=3 [
+    print(:y)
 ]
 else [
-    print(4)
-]
+    print(:x)
+    repeat 4 [
+        forward 100
+        right 90
+    ]]
