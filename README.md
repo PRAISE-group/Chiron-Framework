@@ -41,8 +41,8 @@ If you want to cite this work, you may use this.
 ### Installing Dependencies
 
 ```bash
-$ pip install antlr4-python3-runtime==4.7.2 networkx z3-solver numpy 
-$ sudo apt-get install python3-tk
+pip install antlr4-python3-runtime==4.7.2 networkx z3-solver numpy pygraphviz
+sudo apt-get install python3-tk
 ```
 
 ### Generating the ANTLR files.
@@ -51,8 +51,8 @@ The `antlr` files need to be rebuilt if any changes are made to the `tlang.g4` f
 We use a visitor pattern to generate the AST from parsing. 
 
 ```
-$ cd ChironCore/turtparse
-$ java -cp ../extlib/antlr-4.7.2-complete.jar org.antlr.v4.Tool \
+cd ChironCore/turtparse
+java -cp ../extlib/antlr-4.7.2-complete.jar org.antlr.v4.Tool \
   -Dlanguage=Python3 -visitor -no-listener tlang.g4
 ```
 
@@ -62,8 +62,8 @@ The main directory for source files is `ChironCore`. We have examples of the tur
 To pass parameters (input params) for running a turtle program, use the `-d` flag. Pass the parameters as a python dictionary. 
 
 ```bash
-$ cd ChironCore
-$ ./chiron.py -r ./example/example1.tl -d '{":x": 20, "y": 30, ":z": 20, ":p": 40}'
+cd ChironCore
+./chiron.py -r ./example/example1.tl -d '{":x": 20, "y": 30, ":z": 20, ":p": 40}'
 ```
 
 ### See help for other command line options
@@ -84,7 +84,7 @@ Chiron v1.0.1
 ------------
 usage: chiron.py [-h] [-p] [-r] [-gr] [-b] [-z] [-t TIMEOUT] [-d PARAMS] [-c CONSTPARAMS] [-se] [-ai] [-dfa] [-sbfl]
                  [-bg BUGGY] [-vars INPUTVARSLIST] [-nt NTESTS] [-pop POPSIZE] [-cp CXPB] [-mp MUTPB] [-ng NGEN]
-                 [-vb VERBOSE]
+                 [-vb VERBOSE] [-bmc] [-ub UNROLL_BOUND] [-aconf ANGLE_CONF]
                  progfl
 
 Program Analysis Framework for ChironLang Programs.
@@ -131,5 +131,10 @@ options:
                         number of times Genetic Algorithm iterates
   -vb VERBOSE, --verbose VERBOSE
                         To display computation to Console
+  -bmc, --bmc           Run Bounded Model Checking on a Chiron Program
+  -ub UNROLL_BOUND, --unroll-bound UNROLL_BOUND
+                        Unroll bound for the BMC engine. Default is 10
+  -aconf ANGLE_CONF, --angle-conf ANGLE_CONF
+                        Angle configuration file for BMC
 
 ```

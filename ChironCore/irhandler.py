@@ -10,7 +10,7 @@ from ChironAST import ChironAST
 
 def getParseTree(progfl):
     input_stream = antlr4.FileStream(progfl)
-    print(input_stream)
+    # print(input_stream)
     try:
         lexer = tlangLexer(input_stream)
         stream = antlr4.CommonTokenStream(lexer)
@@ -114,7 +114,7 @@ class IRHandler:
             print("[Skip] Instruction Type not supported for removal. \n")
             return
 
-        if "__rep_counter_" in str(stmtList[pos][0]):
+        if ":__rep_counter_" in str(stmtList[pos][0]):
             print("[Skip] Instruction affecting loop counter. \n")
             return
 
@@ -123,10 +123,14 @@ class IRHandler:
 
     def pretty_print(self, irList):
         """
-            We pass a IR list and print it here.
+        We pass a IR list and print it here.
         """
         print("\n========== Chiron IR ==========\n")
-        print("The first label before the opcode name represents the IR index or label \non the control flow graph for that node.\n")
-        print("The number after the opcode name represents the jump offset \nrelative to that statement.\n")
+        print(
+            "The first label before the opcode name represents the IR index or label \non the control flow graph for that node.\n"
+        )
+        print(
+            "The number after the opcode name represents the jump offset \nrelative to that statement.\n"
+        )
         for idx, item in enumerate(irList):
             print(f"[L{idx}]".rjust(5), item[0], f"[{item[1]}]")

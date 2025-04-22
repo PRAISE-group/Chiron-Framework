@@ -3,6 +3,8 @@ Release = "Chiron v1.0.4"
 
 import ast
 import sys
+
+from antlr4 import InputStream
 from ChironAST.builder import astGenPass
 import abstractInterpretation as AI
 import dataFlowAnalysis as DFA
@@ -21,6 +23,10 @@ from irhandler import *
 from fuzzer import *
 import sExecution as se
 import cfg.cfgBuilder as cfgB
+import bmc as bmc
+import unroll as unroll
+from ChironTAC.builder import *
+from ChironSSA.builder import *
 import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
@@ -196,11 +202,35 @@ if __name__ == "__main__":
         type=bool,
     )
 
+    cmdparser.add_argument( # example usage: ./chiron.py <file_name> -bmc -ub 20 -aconf <angle_conf_file>
+        "-bmc",
+        "--bmc",
+        action="store_true",
+        help="Run Bounded Model Checking on a Chiron Program",
+    )
+
+    cmdparser.add_argument(
+        "-ub",
+        "--unroll-bound",
+        type=int,
+        default=10,
+        help="Unroll bound for the BMC engine. Default is 10",
+    )
+
+    cmdparser.add_argument( # By default we take angles 0, 90, 180 and 270
+        "-aconf",
+        "--angle-conf",
+        type=str,
+        default="",
+        help="Angle configuration file for BMC",
+    )
+
     args = cmdparser.parse_args()
     ir = ""
 
     if not (type(args.params) is dict):
         raise ValueError("Wrong type for command line arguement '-d' or '--params'.")
+
 
     # Instantiate the irHandler
     # this object is passed around everywhere.
@@ -392,3 +422,64 @@ if __name__ == "__main__":
             writer = csv.writer(file)
             writer.writerows(spectrum)
         print("DONE..")
+
+    if args.bmc:
+        print("\nBounded Model Checking...")
+        unroll_bound = args.unroll_bound
+
+        angle_conf = [[0, 1, 0], [90, 0, 1], [180, -1, 0], [270, 0, -1]]
+        if args.angle_conf:
+            with open(args.angle_conf, "r") as f:
+                angle_conf = f.read()
+                # csv format (angle,cos,sin)
+                angle_conf = [x.split(",") for x in angle_conf.split("\n") if x]
+                angle_conf = [
+                    (int(x[0]), float(x[1]), float(x[2])) for x in angle_conf
+                ]
+            
+        print("Valid angles: ", angle_conf)
+
+        if unroll_bound < 1:
+            print("Invalid unroll bound. Exiting...")
+            exit(1)
+        
+        unrolled_code = unroll.UnrollLoops(unroll_bound).visitStart(getParseTree(args.progfl))
+
+        with open("unrolled_code.tl", "w") as f: # Saving unrolled code to file unrolled_code.tl
+            f.write(unrolled_code)
+
+        try:
+            lexer = tlangLexer(InputStream(unrolled_code))
+            stream = antlr4.CommonTokenStream(lexer)
+            lexer._listeners = [SyntaxErrorListener()]
+            tparser = tlangParser(stream)
+            tparser._listeners = [SyntaxErrorListener()]
+            parseTree = tparser.start()
+        except Exception as e:
+            print("\033[91m\n====================")
+            print(e.__str__() + "\033[0m\n")
+            exit(1)
+
+        astgen = astGenPass()
+        ir = astgen.visitStart(parseTree)
+
+        tacGen = TACGenerator(ir) # Converting IR to TAC
+        tacGen.generateTAC()
+        # tacGen.printTAC() # for printing TAC
+
+        if tacGen.assertCount == 0:
+            print("No conditions found in the program. Exiting...")
+            exit(1)
+
+        cfgB.dumpCFG(tacGen.tacCfg, 'tac_cfg') # Saving TAC CFG to file tac_cfg.png
+
+        ssa = SSABuilder(tacGen.tac) # Converting TAC to SSA
+        ssaCfg = ssa.build()
+
+        cfgB.dumpCFG(ssaCfg, 'ssa_cfg') # Saving SSA Form of the program to file ssa_cfg.png
+
+        print("\nConverting program to SMT-LIB format...\n")
+        smt = bmc.BMC(ssaCfg, angle_conf)
+        smt.convertSSAtoSMT()
+        smt.solve(tacGen.getFreeVariables())
+        print("DONE...")

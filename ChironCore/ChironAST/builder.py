@@ -88,6 +88,14 @@ class astGenPass(tlangVisitor):
             return ChironAST.Mult(left, right)
         elif ctx.multiplicative().DIV():
             return ChironAST.Div(left, right)
+    
+
+    # Visit a parse tree produced by tlangParser#valueExpr.
+    def visitModExpr(self, ctx:tlangParser.ModExprContext):
+        left = self.visit(ctx.expression(0))
+        right = self.visit(ctx.expression(1))
+        if ctx.modulo().MOD():
+            return ChironAST.Mod(left, right)
 
 
     # Visit a parse tree produced by tlangParser#parenExpr.
@@ -142,6 +150,8 @@ class astGenPass(tlangVisitor):
     def visitValue(self, ctx:tlangParser.ValueContext):
         if ctx.NUM():
             return ChironAST.Num(ctx.NUM().getText())
+        elif ctx.FLOAT():
+            return ChironAST.Num(ctx.FLOAT().getText())
         elif ctx.VAR():
             return ChironAST.Var(ctx.VAR().getText())
 
@@ -172,3 +182,10 @@ class astGenPass(tlangVisitor):
 
     def visitPenCommand(self, ctx:tlangParser.PenCommandContext):
         return [(ChironAST.PenCommand(ctx.getText()), 1)]
+
+    def visitAssertionCommand(self, ctx:tlangParser.AssertionCommandContext):
+        return [(ChironAST.AssertCommand(self.visit(ctx.condition())), 1)]
+
+    def visitAssumeCommand(self, ctx:tlangParser.AssumeCommandContext):
+        return [(ChironAST.AssumeCommand(self.visit(ctx.condition())), 1)]
+

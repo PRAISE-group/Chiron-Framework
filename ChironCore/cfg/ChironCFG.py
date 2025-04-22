@@ -1,11 +1,14 @@
 #!/usr/bin/python3.8
 
 import networkx as nx
+import z3
+import collections 
 
 class BasicBlock:
     def __init__(self, bbname):
         self.name = bbname
         self.instrlist = []
+        self.condition = z3.BoolVal(False)
         if bbname == "START" or bbname == "END":
             self.irID = bbname
         else:
@@ -20,9 +23,15 @@ class BasicBlock:
     def extend(self, instructions):
         self.instrlist.extend(instructions)
 
+    def set_condition(self, condition):
+        self.condition = condition
+
+    def get_condition(self):
+        return self.condition
+
     def label(self):
         if len(self.instrlist):
-            return '\n'.join(str(instr[0])+'; L'+ str(instr[1]) for instr in self.instrlist)
+            return self.name + '\n' + '\n'.join(str(instr[0])+'; L'+ str(instr[1]) for instr in self.instrlist)
         else:
             return self.name
 
@@ -38,6 +47,9 @@ class ChironCFG:
         self.nxgraph = nx.DiGraph(name=gname)
         self.entry = "0"
         self.exit = "END"
+        self.df = None
+        self.idom = None
+        self.dominator_tree = collections.defaultdict(list)
 
     def __iter__(self):
         return self.nxgraph.__iter__()
@@ -86,4 +98,24 @@ class ChironCFG:
         edata = self.nxgraph.get_edge_data(u,v)
         return edata['label'] if len(edata) else 'T'
 
+    def compute_dominance(self):
+        entry = None
+        for node in self.nxgraph.nodes():
+            if node.name == "START":
+                entry = node
+                break
+
+        if entry is None:
+            raise ValueError("CFG does not have an entry node")
+
+        self.idom = nx.immediate_dominators(self.nxgraph, entry)
+        self.df = nx.dominance_frontiers(self.nxgraph, entry)
+
+        # build the dominator tree
+        for i in self.nodes():
+            if i != entry:
+                self.dominator_tree[self.idom[i]].append(i)
+
+    def get_topological_order(self):
+        return list(nx.topological_sort(self.nxgraph))
     # TODO: add more methods to expose other methods of the Networkx.DiGraph
