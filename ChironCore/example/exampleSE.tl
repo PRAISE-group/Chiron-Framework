@@ -4,7 +4,14 @@ class :__Node {
 }
 
 
-
+def drawV(:__x, :__y, :__r) {
+    penup
+    goto(:__x - :__r, :__y + :__r)
+    pendown
+    goto(:__x, :__y - :__r)
+    goto(:__x + :__r, :__y + :__r)
+    return 0
+}
 
 def drawSquare(:__x, :__y, :__r) {
     penup
@@ -59,7 +66,7 @@ def drawTree(:__x, :__y, :__r, :__depth, :__spread, :__allNodes,:cnt) {
 }
 
 def dfsmark(:node, :__allNodes, :target) {
-    if :node >= 7 [  
+    if :node >=7 [  
         return 0
     ]
 
@@ -70,18 +77,18 @@ def dfsmark(:node, :__allNodes, :target) {
         return 1
     ]
 
-    crossNode(:cur.:x, :cur.:y, 20)
+    drawV(:cur.:x, :cur.:y, 20)
 
     :lhs = 2 * :node + 1
     :rhs = 2 * :node + 2
+    
 
-    :l=dfsmark(:lhs, :__allNodes, :target)
-    :r=dfsmark(:rhs, :__allNodes, :target)
 
-    if :l == 1 [
+    if dfsmark(:lhs, :__allNodes, :target) == 1 [
         return 1
     ]
-    if  :r== 1 [
+   
+    if  dfsmark(:rhs, :__allNodes, :target)== 1 [
         return 1
     ]
 
@@ -99,8 +106,8 @@ drawTree(0, 250, 20, 3, 240,:__allNodes,:cnt)
 
 :target = new :__Node()
 
-:target.:x=:__allNodes[4].:x
-:target.:y=:__allNodes[4].:y
+:target.:x=:__allNodes[3].:x
+:target.:y=:__allNodes[3].:y
 
 
 :r= dfsmark(0,:__allNodes,:target)

@@ -119,12 +119,15 @@ class ConcreteInterpreter(Interpreter):
         if self.args is not None and self.args.hooks:
             self.chironhook = Chironhooks.ConcreteChironHooks()
         self.pc = 0
+        # print("###########################Intermediate Representation (IR):#############")
+        # for index, instruction in enumerate(self.ir):
+        #     print(f"{index}: {instruction} | {instruction[0]}")
 
     def interpret(self):
-        print("Program counter : ", self.pc)
+        # print("Program counter : ", self.pc)
         stmt, tgt = self.ir[self.pc]
 
-        print(stmt, stmt.__class__.__name__, tgt)
+        # print(stmt, stmt.__class__.__name__, tgt)
 
         self.sanityCheck(self.ir[self.pc])
 
@@ -218,7 +221,6 @@ class ConcreteInterpreter(Interpreter):
         # Save the arguments on the call stack
         for arg in stmt.args:
             arg_value = addContext(arg)
-            print(arg_value)
             exec(f"self.argument = {arg_value}")
             self.call_stack.append(self.argument)
         # Jump to the function address
@@ -236,7 +238,7 @@ class ConcreteInterpreter(Interpreter):
     # Copying the return values in their respective placeholders
     def handleReturnRead(self, stmt, tgt):
         
-        print(f"Read Return: {stmt.returnValues}")
+        # print(f"Read Return: {stmt.returnValues}")
         cnt=self.call_stack.pop()
         rval=stmt.returnValues[0]
         rval = str(rval).replace(":", "")
@@ -251,7 +253,7 @@ class ConcreteInterpreter(Interpreter):
 
     def handleFunctionReturn(self, stmt, tgt):
 
-        print(f"Function Return: {stmt}")
+        # print(f"Function Return: {stmt}")
         # Restore the previous program context
         rval_list = []
         cnt=0
@@ -350,45 +352,45 @@ class ConcreteInterpreter(Interpreter):
         return 1
 
     def handleAssignment(self, stmt, tgt):
-        print("  Assignment Statement")
+        # print("  Assignment Statement")
         # lhs = str(stmt.lvar).replace(":", "")
         lhs = addContext(str(stmt.lvar))
 
         rhs = addContext(stmt.rexpr)
-        print(lhs, rhs, "Assignment")
+        print(lhs, rhs, "Assignment Statement")
         # exec("setattr(self.prg,\"%s\",%s)" % (lhs,rhs))
         exec(f"{lhs} = {rhs}")
         return 1
 
     def handlePrint(self, stmt, tgt):
-        print(" PrintCommand")
+        # print(" PrintCommand")
         expr = addContext(stmt.expr)
         print("Executing print with expression:", expr)
         exec("print(%s)" % expr)
         return 1
 
     def handleCondition(self, stmt, tgt):
-        print("  Branch Instruction")
+        # print("  Branch Instruction")
         condstr = addContext(stmt)
         exec("self.cond_eval = %s" % (condstr))
         return 1 if self.cond_eval else tgt
 
     def handleMove(self, stmt, tgt):
-        print("  MoveCommand")
+        # print("  MoveCommand")
         exec("self.trtl.%s(%s)" % (stmt.direction, addContext(stmt.expr)))
         return 1
 
     def handleNoOpCommand(self, stmt, tgt):
-        print("  No-Op Command")
+        # print("  No-Op Command")
         return 1
 
     def handlePen(self, stmt, tgt):
-        print("  PenCommand")
+        # print("  PenCommand")
         exec("self.trtl.%s()" % (stmt.status))
         return 1
 
     def handleGotoCommand(self, stmt, tgt):
-        print(" GotoCommand")
+        # print(" GotoCommand")
         xcor = addContext(stmt.xcor)
         ycor = addContext(stmt.ycor)
         exec("self.trtl.goto(%s, %s)" % (xcor, ycor))

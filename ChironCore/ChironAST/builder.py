@@ -45,15 +45,15 @@ class astGenPass(tlangVisitor):
         Shared utility for processing declaration or instruction blocks.
         Appends the resulting instructions and sub-statements to the main statement list.
         """
-        stmtList = []
+        stmtListi = []
         for item in items:
             currStmtList = self.visit(item)
             if not isinstance(currStmtList,list): 
                 currStmtList=[]
-            stmtList.extend(self.subStmtList + currStmtList)
+            stmtListi.extend(self.subStmtList + currStmtList)
             self.subStmtList = []
             self.virtualRegCount = 0
-        return stmtList
+        return stmtListi
 
     def visitDeclaration_list(self, ctx: tlangParser.Declaration_listContext):
         return self.processInstructionBlock(ctx.declaration())
@@ -239,11 +239,13 @@ class astGenPass(tlangVisitor):
 
     def visitIfConditional(self, ctx: tlangParser.IfConditionalContext):
         condObj = ChironAST.ConditionCommand(self.visit(ctx.expression()))
+        a=[]
         if self.subStmtList:
-            self.stmtList.extend(self.subStmtList)
+            a.extend(self.subStmtList)
             self.subStmtList=[]
         thenInstrList = self.visit(ctx.strict_ilist())
-        return [(condObj, len(thenInstrList) + 1)] + thenInstrList
+        x= a+[(condObj, len(thenInstrList) + 1)] + thenInstrList
+        return x
 
     def visitIfElseConditional(self, ctx: tlangParser.IfElseConditionalContext):
         condObj = ChironAST.ConditionCommand(self.visit(ctx.expression()))
