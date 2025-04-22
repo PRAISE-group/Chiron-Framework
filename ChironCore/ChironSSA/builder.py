@@ -1,3 +1,4 @@
+
 from numpy import format_float_scientific
 from ChironSSA import ChironSSA
 from cfg import cfgBuilder
@@ -21,15 +22,23 @@ class SSABuilder:
         self.cfg.compute_dominance()
         self.insert_phi_nodes()
         self.rename_variables()
-        self.remove_empty_phi()
+        self.remove_empty_and_duplicate_phi()
 
         return self.cfg
     
-    def remove_empty_phi(self):
+    def remove_empty_and_duplicate_phi(self):
         for block in self.cfg.nodes():
             for instr, _ in block.instrlist:
-                if isinstance(instr, ChironSSA.PhiCommand) and len(instr.rvars) == 0:
-                    block.instrlist.remove((instr, None))
+                if isinstance(instr, ChironSSA.PhiCommand):
+                    if len(instr.rvars) == 0:
+                        block.instrlist.remove((instr, None))
+                    else:
+                        rvars = [[int(rvar.name.split('$')[-1]), rvar.name] for rvar in instr.rvars]
+                        rvars.sort(key=lambda x: x[0])
+                        instr.rvars = [ChironSSA.Var(rvars[0][1])]
+                        for i in range(1, len(rvars)):
+                            if rvars[i][1] != rvars[i-1][1]:
+                                instr.rvars.append(ChironSSA.Var(rvars[i][1]))
 
     def rename_variables(self):
         for var in self.globals:
@@ -102,6 +111,9 @@ class SSABuilder:
                     if instr.lvar.name == var:
                         instr.rvars.append(ChironSSA.Var(instr.lvar.name + "$" + str(self.stack[instr.lvar.name][-1])))
                         flag = True
+                if isinstance(instr, ChironSSA.AssignmentCommand):
+                    if instr.lvar.name == var:
+                        flag = True
 
             if not flag:
                 for next in self.cfg.successors(curr):
@@ -111,6 +123,7 @@ class SSABuilder:
 
         for next in self.cfg.successors(block):
             for var in temp:
+                visited.clear()
                 phi_dfs(next, var)
 
         for next in self.cfg.dominator_tree[block]:
@@ -233,4 +246,6 @@ class SSABuilder:
 
             elif isinstance(instr, ChironTAC.NoOpCommand):
                 ir[ir.index((instr, tgt))] = (ChironSSA.NoOpCommand(), tgt)
+
+
 
