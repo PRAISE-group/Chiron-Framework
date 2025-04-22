@@ -1,36 +1,44 @@
 
 grammar tlang;
 
-start : instruction_list EOF
+start : statement_list EOF
       ;
 
-instruction_list : (instruction)*
-		 ;
+statement_list : declaration_list strict_ilist ;
 
-strict_ilist : (instruction)+
+declaration_list : (declaration)* ;
+
+strict_ilist : (instruction | comment)*
              ;
 
-instruction : assignment
+declaration : classDeclaration
+		| functionDeclaration
+		;
+
+instruction : 
+		  assignment
+		 | printStatement
 	    | conditional
 	    | loop
 	    | moveCommand
 	    | penCommand
 	    | gotoCommand
 	    | pauseCommand
+		| objectInstantiation
+		| returnStatement
+		| functionCall
+		
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
 
-ifConditional : 'if' condition '[' strict_ilist ']' ;
+ifConditional : 'if' expression '[' strict_ilist ']' ;
 
-ifElseConditional : 'if' condition '[' strict_ilist ']' 'else' '[' strict_ilist ']' ;
+ifElseConditional : 'if' expression '[' strict_ilist ']' 'else' '[' strict_ilist ']' ;
 
 loop : 'repeat' value '[' strict_ilist ']' ;
 
 gotoCommand : 'goto' '(' expression ',' expression ')';
-
-assignment : VAR '=' expression
-	   ;
 
 moveCommand : moveOp expression ;
 moveOp : 'forward' | 'backward' | 'left' | 'right' ;
@@ -39,40 +47,90 @@ penCommand : 'penup' | 'pendown' ;
 
 pauseCommand : 'pause' ;
 
-expression : 
-             unaryArithOp expression               #unaryExpr
-           | expression multiplicative expression  #mulExpr
-		   | expression additive expression        #addExpr
-		   | value                                 #valueExpr
-		   | '(' expression ')'                    #parenExpr
- 	   ;
+array
+ : '[' ( expression ( ',' expression )* )? ']'
+ ;
+
+assignment : 
+		  lvalue  '=' expression      
+	   ;
+
+printStatement : PRINT '(' expression ')' ;
 
 multiplicative : MUL | DIV;
 additive : PLUS | MINUS;
 
 unaryArithOp : MINUS ;
 
-PLUS     : '+' ;
-MINUS    : '-' ;
-MUL  	 : '*' ;
-DIV      : '/' ;
 
 
-// TODO :
-// procedure_declaration : 'to' NAME (VAR)+ strict_ilist 'end' ;
+returnStatement : RETURN ( expression ( ',' expression )* ) ;
 
-condition : NOT condition
-          |expression binCondOp expression
-	  | condition logicOp condition
-	  | PENCOND
-	  | '(' condition ')'
-	  ;
+expression : 
+             unaryArithOp expression               #unaryExpr
+           | expression multiplicative expression  #mulExpr
+		   | expression additive expression        #addExpr
+		   | lvalue  '=' expression                #assignExpr
+		   | '(' expression ')'                    #parenExpr
+		   | value                                 #valueExpr
+		   | NOT expression						   #notExpr
+           | expression binCondOp expression	   #binExpr
+	       | expression logicOp expression		   #logExpr
+	       | PENCOND							   #penExpr
+
+
+;
+
+classDeclaration : 'class' VAR ('(' VAR (',' (VAR)*)? ')')? '{' classBody '}' ;
+
+classBody : (classAttributeDeclaration)* (functionDeclaration)*;
+
+classAttributeDeclaration : assignment | objectInstantiation ;
+
+objectInstantiation : lvalue '=' 'new' VAR '(' ')' ;
+
+dataLocationAccess : baseVar ('.' VAR | '[' expression ']')+  ;
+
+baseVar : VAR  ;
+
+lvalue
+    : VAR
+    | dataLocationAccess
+    ;
+
+// function call
+functionCall : methodCaller NAME '(' arguments ')' ;
+methodCaller : (( VAR | dataLocationAccess )  '.')? ;
+
+
+// function declaration
+functionDeclaration : 'def' NAME '(' parameters ')' '{' strict_ilist '}' ;
+
+parameters : ( VAR  ( ',' VAR )* )? ;
+arguments : ( expression ( ',' expression )* )? ;
+
+
+comment : '#' (NAME)* '#' ;
+
+logicOp : AND | OR ;
 
 
 binCondOp :  EQ | NEQ | LT | GT | LTE | GTE
 	 ;
 
-logicOp : AND | OR ;
+
+PLUS     : '+' ;
+MINUS    : '-' ;
+MUL  	 : '*' ;
+DIV      : '/' ;
+
+AND: '&&';
+OR : '||';
+
+RETURN : 'return' ;
+
+PRINT : 'print' ;
+
 
 PENCOND : 'pendown?';
 LT : '<' ;
@@ -81,18 +139,21 @@ EQ : '==';
 NEQ: '!=';
 LTE: '<=';
 GTE: '>=';
-AND: '&&';
-OR : '||';
+
 NOT: '!' ;
 
 value : NUM
       | VAR
+	  | array
+	  | dataLocationAccess
+	  | functionCall 							
+	  | REAL
       ;
 
 NUM  : [0-9]+        ;
+REAL : [0-9]+('.'[0-9]+)?;
+VAR  : ':''__'?[a-zA-Z_] [a-zA-Z0-9]* ;
 
-VAR  : ':'[a-zA-Z_] [a-zA-Z0-9]* ;
-
-NAME : [a-zA-Z]+     ;
+NAME : '__'?[a-zA-Z]+     ;
 
 Whitespace: [ \t\n\r]+ -> skip;

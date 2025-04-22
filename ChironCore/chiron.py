@@ -195,6 +195,12 @@ if __name__ == "__main__":
         default=True,
         type=bool,
     )
+    cmdparser.add_argument(
+        "-ch",
+        "--class_hierarchy",
+        help="To visualize class inheritance and methods",
+        action="store_true",
+    )
 
     args = cmdparser.parse_args()
     ir = ""
@@ -210,7 +216,8 @@ if __name__ == "__main__":
     if args.bin:
         ir = irHandler.loadIR(args.progfl)
     else:
-        parseTree = getParseTree(args.progfl)
+        parseTree,parser = getParseTree(args.progfl)
+        print(parseTree.toStringTree(recog=parser))
         astgen = astGenPass()
         ir = astgen.visitStart(parseTree)
 
