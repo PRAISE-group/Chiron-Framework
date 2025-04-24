@@ -6,7 +6,13 @@ import sys
 from ChironAST.builder import astGenPass
 import abstractInterpretation as AI
 import dataFlowAnalysis as DFA
+import ssa.SSATransformation as SSA
+import ssa.outOfSSA as OutSSA
+import ssa.SSCP as SSCP
 from sbfl import testsuiteGenerator
+from ChironAST.ChironAST import (
+    Instruction, PhiCommand, AssignmentCommand, ConditionCommand, BoolExpr, BoolFalse, Var as VarExpr, Num
+)
 
 sys.path.insert(0, "../Submission/")
 sys.path.insert(0, "ChironAST/")
@@ -134,6 +140,29 @@ if __name__ == "__main__":
         help="Run data flow analysis using worklist algorithm on a Chiron Program.",
     )
 
+    #added by Sarthak Motwani
+    cmdparser.add_argument(
+        "-ssa",
+        "--ssa_transformation",
+        action="store_true",
+        help="Run SSA Transformation",
+    )
+
+    cmdparser.add_argument(
+        "-outssa",
+        "--out_of_ssa",
+        action="store_true",
+        help="Run Out of SSA Transformation",
+    )
+
+    cmdparser.add_argument(
+        "-sscp",
+        "--sparse_simple_const_prop",
+        action="store_true",
+        help="Perform SSCP optimization",
+    )
+
+    # adding ends here
     cmdparser.add_argument(
         "-sbfl",
         "--SBFL",
@@ -219,14 +248,48 @@ if __name__ == "__main__":
 
     # generate control_flow_graph from IR statements.
     if args.control_flow:
-        cfg = cfgB.buildCFG(ir, "control_flow_graph", True)
+        cfg = cfgB.buildCFG(ir, "control_flow_graph")
         irHandler.setCFG(cfg)
     else:
         irHandler.setCFG(None)
 
     if args.dump_cfg:
-        cfgB.dumpCFG(cfg, "control_flow_graph")
+        cfgB.dumpCFG(cfg, "cfg0_simple")
         # set the cfg of the program.
+
+    #Added by Sarthak Motwani for SSA Transformation + Out-of-SSA + SSCP
+    if args.ssa_transformation:
+        # Handling parameters
+        if args.params:
+            for var in args.params.keys():
+                if not isinstance(args.params[var], (int, float)):
+                    raise ValueError(f"{args.params[var]} is not a number")
+                rhs_val = Num(args.params[var])
+                if not var.startswith(':'):
+                    var = ':'+ var
+                # print(var, args.params[var])
+                lhs_var = VarExpr(var)
+                assignment = AssignmentCommand(lhs_var, rhs_val)
+                ir.insert(0, (assignment, 1))
+            args.params = {}
+
+        cfg = cfgB.buildCFG(ir, "control_flow_graph")
+        irHandler.setCFG(cfg)
+        ssa_cfg = SSA.build_ssa(ir, cfg)
+        sscp_cfg = ssa_cfg
+        result_sscp = None
+        
+        if args.sparse_simple_const_prop:
+            sscp_obj = SSCP.SSCP(ssa_cfg)
+            result_sscp = sscp_obj.get_results()
+            SSCP.optimize_ir(ssa_cfg, sscp_obj, ir, result_sscp)
+            sscp_cfg = cfgB.buildCFG(ir, "cfg_sscp")
+            cfgB.dumpCFG(sscp_cfg, "cfg6_new_sscp")
+            
+        if args.out_of_ssa:
+            OutSSA.out_of_ssa(ir, sscp_cfg, result_sscp)
+
+    #Adding ends
 
     if args.ir:
         irHandler.pretty_print(irHandler.ir)

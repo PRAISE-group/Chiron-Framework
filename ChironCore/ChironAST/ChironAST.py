@@ -221,7 +221,7 @@ class Value(Expression):
 
 class Num(Value):
     def __init__(self, v):
-        self.val = int(v)
+        self.val = float(v)
 
     def __str__(self):
         return str(self.val)
@@ -233,3 +233,24 @@ class Var(Value):
 
     def __str__(self):
         return self.varname
+
+
+class PhiCommand(Instruction):
+    def __init__(self, var: str, operands: list):
+        """
+        Represents a φ-function in SSA form
+        :param var: Variable being assigned (e.g., ":x")
+        :param operands: List of operand versions from predecessors (e.g., [":x_0", ":x_1"])
+        """
+        self.var = var
+        self.operands = operands  # Ordered list matching predecessors
+
+    def __str__(self):
+        return f"{self.var} = φ({', '.join(self.operands)})"
+
+    def __repr__(self):
+        return f"PhiCommand(var={self.var}, operands={self.operands})"
+
+    def add_operand(self, value: str):
+        """Add an operand from a predecessor block"""
+        self.operands.append(value)
