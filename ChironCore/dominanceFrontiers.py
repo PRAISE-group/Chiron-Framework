@@ -51,7 +51,7 @@ def compute_dominator_tree(dominators: Dict) -> Dict[BasicBlock, List[BasicBlock
         # Find the immediate dominator (IDOM)
         idom = None
         for candidate in candidates:
-            # Check if this candidate dominates all other candidates
+            # Check if this candidate is dominated by all other candidates
             if all(other in dominators[candidate] for other in candidates if other != candidate):
                 idom = candidate
                 break
