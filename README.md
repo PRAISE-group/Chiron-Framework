@@ -58,12 +58,40 @@ $ java -cp ../extlib/antlr-4.7.2-complete.jar org.antlr.v4.Tool \
 
 ### Running an example
 
-The main directory for source files is `ChironCore`. We have examples of the turtle programs in `examples` folder.
-To pass parameters (input params) for running a turtle program, use the `-d` flag. Pass the parameters as a python dictionary. 
+Note: Use the  `--ir ` flag to see the new IR printed in the terminal. Also, use the  `-cfg_gen`  and  `-cfg_dump` flags to dump the CFG for the original IR. 
+
+- To perform SSA transformation, use the  `-ssa ` flag. (Note: If you are using the  `-r ` flag (also runs the program), the program may throw an error
+ at a phi-instruction since it cannot be interpreted. So, you can run the program without  `-r ` flag).
+
+- To perform out-of-SSA transformation (after SSA transformation), use  `-outssa ` flag with the  `-ssa ` flag.
+
+- To perform SSCP optimization (after SSA transformation), use  `-ssa` `-sscp` and `-outssa` flags.
+
+The testcases are present in the `demo_testcases` directory within ChironCore. More examples are present in the `example` directory.
+
+### Testing SSA Transformation
+- The new IR will be printed on the terminal.
+- `cfg0.png` shows the CFG before transformation.
+- `cfg2_old_after_rename.png` shows the CFG after SSA renaming (before IR updates).
+- `cfg3_new_post_ssa.png` shows the CFG rebuilt from the SSA-transformed IR.
+
+### Testing Out-of-SSA Tranformation
+- The new IR will be printed on the terminal. 
+- `cfg4_old_out_of_ssa.png` shows the CFG after Out-of-SSA transformation (before IR updates).
+- `cfg5_new_out_of_ssa.png` shows the CFG rebuilt from the Out-of-SSA transformed IR.
+- All other CFGs have the same description as in SSA transformation
+
+### Testing SSCP Optimization
+- The new IR (with variables replaced by corresponding constants) is printed on the terminal.
+- Lattice Values of all variables are printed on the terminal
+- `cfg6_new_sscp.png` shows the CFG after SSCP optimization
+- All other CFGs have the same description as in SSA and out of SSA transformation
+
+Running the program with (SSA + out-of-SSA + with or without SSCP) and without any transformation should produce identical outputs.
 
 ```bash
 $ cd ChironCore
-$ ./chiron.py -r ./example/example1.tl -d '{":x": 20, "y": 30, ":z": 20, ":p": 40}'
+$ ./chiron.py -r ./demo_testcases/1_straightline.tl -cfg_gen -cfg_dump --ir -ssa -outssa -sscp
 ```
 
 ### See help for other command line options

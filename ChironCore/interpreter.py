@@ -26,7 +26,7 @@ class Interpreter:
         self.trtl.fillcolor("green")
         self.trtl.begin_fill()
         self.trtl.pensize(4)
-        self.trtl.speed(1) # TODO: Make it user friendly
+        self.trtl.speed(10) # TODO: Make it user friendly
 
         if params is not None:
             self.args = params
