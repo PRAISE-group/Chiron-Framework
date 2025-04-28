@@ -25,7 +25,7 @@ import submissionDFA as DFASub
 import submissionAI as AISub
 from sbflSubmission import computeRanks
 import csv
-
+import subprocess
 
 def cleanup():
     pass
@@ -196,11 +196,73 @@ if __name__ == "__main__":
         type=bool,
     )
 
+    cmdparser.add_argument(
+        "-l",
+        "--llvm",
+        action="store_true",
+        help="Generate LLVM IR from the Chiron program.",
+    )
+    cmdparser.add_argument(
+        "-o", "--llvm_output", help="LLVM IR output file name.", type=str
+    )
+    cmdparser.add_argument(
+        "-opt",
+        "--optimise",
+        action="store_true",
+        help="optimise the LLVM IR using LLVM pass.",
+    )
+
     args = cmdparser.parse_args()
     ir = ""
 
     if not (type(args.params) is dict):
         raise ValueError("Wrong type for command line arguement '-d' or '--params'.")
+    
+    if args.llvm:
+        # only -o, -dump, -p, -r and -d can be set, check if any other than this args are set
+        if args.fuzzer_gen_rand or args.bin or args.fuzz or args.constparams or args.symbolicExecution or args.abstractInterpretation or args.dataFlowAnalysis or args.SBFL or args.buggy or args.inputVarsList or args.control_flow or args.dump_cfg or args.hooks:
+            raise RuntimeError("Only -o, -dump, -p, -r and -d can be set for LLVM IR generation.")
+        
+        # check if the output file name is set
+        if args.llvm_output is None:
+            raise RuntimeError("Output file name for LLVM IR generation is not set.")
+        
+        # check if the input file is set
+        if args.progfl is None:
+            raise RuntimeError("Input file name is not set.")
+        
+        # check if the input file is a valid Chiron program
+        if not args.progfl.endswith(".tl"):
+            raise RuntimeError("Input file is not a valid Chiron program.")
+
+        command = [
+            "./main",
+            args.progfl,
+            args.llvm_output,
+            str(int(args.run)),
+            str(int(args.dump_ir)),
+            str(int(args.ir)),
+            str(int(args.optimise)),
+        ]
+        for key, value in args.params.items():
+            command.append(key)
+            command.append(str(value))
+
+        # print the command
+        print(f"Executing command: {command}")
+
+        # execute command
+        result = subprocess.run(command)
+
+        # check is result not zero
+        if result.returncode != 0:
+            print(f"Error: {result.stderr}")
+            sys.exit(1)
+        else:
+            print("LLVM IR generation completed successfully.")
+            sys.exit(0)
+
+
 
     # Instantiate the irHandler
     # this object is passed around everywhere.

@@ -1,7 +1,7 @@
 
 grammar tlang;
 
-start : instruction_list EOF
+start : function_list instruction_list EOF
       ;
 
 instruction_list : (instruction)*
@@ -10,6 +10,32 @@ instruction_list : (instruction)*
 strict_ilist : (instruction)+
              ;
 
+function_list: (function_declaration)*
+        ;
+
+function_declaration : voidFunction
+        | valueFunction
+        ;
+		
+voidFunction : 'voidfunc' NAME parametersDeclaration '{' instruction_list voidReturn '}' ;
+
+valueFunction : 'valuefunc' NAME parametersDeclaration '{' instruction_list valueReturn '}' ;
+
+voidReturn: 'voidreturn' ;
+
+valueReturn: 'valuereturn' expression ;
+
+parametersDeclaration: '(' ')'
+        | '(' VAR (',' VAR)* ')'
+        ;
+
+parameterCall: '(' ')'
+        | '(' expression (',' expression)* ')'
+        ;
+voidFuncCall: 'procedure' NAME parameterCall;
+
+valueFuncCall: 'get' NAME parameterCall;
+
 instruction : assignment
 	    | conditional
 	    | loop
@@ -17,6 +43,7 @@ instruction : assignment
 	    | penCommand
 	    | gotoCommand
 	    | pauseCommand
+		| voidFuncCall
 	    ;
 
 conditional : ifConditional | ifElseConditional ;
@@ -45,6 +72,7 @@ expression :
 		   | expression additive expression        #addExpr
 		   | value                                 #valueExpr
 		   | '(' expression ')'                    #parenExpr
+		   | valueFuncCall						   #funcExpr
  	   ;
 
 multiplicative : MUL | DIV;

@@ -66,6 +66,14 @@ $ cd ChironCore
 $ ./chiron.py -r ./example/example1.tl -d '{":x": 20, "y": 30, ":z": 20, ":p": 40}'
 ```
 
+### LLVM IR Generation
+
+There is a custom compiler that translates input turtle file to LLVM Intermediate Representation (IR), then compiles it into a binary using `llc` and `g++`.  
+For detailed commands, setup, and usage instructions, refer to the document below:
+
+[Click here](./ChironCore/LLVM.md)
+
+
 ### See help for other command line options
 
 ```bash
@@ -84,7 +92,7 @@ Chiron v1.0.1
 ------------
 usage: chiron.py [-h] [-p] [-r] [-gr] [-b] [-z] [-t TIMEOUT] [-d PARAMS] [-c CONSTPARAMS] [-se] [-ai] [-dfa] [-sbfl]
                  [-bg BUGGY] [-vars INPUTVARSLIST] [-nt NTESTS] [-pop POPSIZE] [-cp CXPB] [-mp MUTPB] [-ng NGEN]
-                 [-vb VERBOSE]
+                 [-vb VERBOSE] [-l] [-o OUTPUT]
                  progfl
 
 Program Analysis Framework for ChironLang Programs.
@@ -131,5 +139,8 @@ options:
                         number of times Genetic Algorithm iterates
   -vb VERBOSE, --verbose VERBOSE
                         To display computation to Console
+  -l, --llvm            Generate LLVM IR and executable
+  -o OUTPUT, --llvm_output OUTPUT
+                        name of output file for LLVM IR and executable 
 
 ```
