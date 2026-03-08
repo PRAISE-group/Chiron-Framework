@@ -135,6 +135,32 @@ if __name__ == "__main__":
     )
 
     cmdparser.add_argument(
+        "--opt-constfold",
+        action="store_true",
+        help="Run constant folding optimization.",
+    )
+    cmdparser.add_argument(
+        "--opt-algsimp",
+        action="store_true",
+        help="Run algebraic simplification optimization.",
+    )
+    cmdparser.add_argument(
+        "--opt-constprop",
+        action="store_true",
+        help="Run constant propagation optimization.",
+    )
+    cmdparser.add_argument(
+        "--opt-dce",
+        action="store_true",
+        help="Run dead code elimination optimization.",
+    )
+    cmdparser.add_argument(
+        "--opt-all",
+        action="store_true",
+        help="Run all optimizations.",
+    )
+
+    cmdparser.add_argument(
         "-sbfl",
         "--SBFL",
         action="store_true",
@@ -235,8 +261,9 @@ if __name__ == "__main__":
         AISub.analyzeUsingAI(irHandler)
         print("== Abstract Interpretation ==")
 
-    if args.dataFlowAnalysis:
-        irOpt = DFASub.optimizeUsingDFA(irHandler)
+    if args.dataFlowAnalysis or args.opt_constfold or args.opt_algsimp or args.opt_constprop or args.opt_dce or args.opt_all:
+        irOpt = DFASub.optimize(irHandler, args)
+        irHandler.setIR(irOpt)
         print("== Optimized IR ==")
         irHandler.pretty_print(irHandler.ir)
 

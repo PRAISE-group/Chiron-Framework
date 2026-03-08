@@ -125,3 +125,133 @@ def optimizeUsingDFA(irHandler):
     # TODO: Return the optimized IR in optIR
     optIR = irHandler.ir
     return optIR
+
+# Milestone 1: Constant Folding and Algebraic Simplification
+
+def simplify_expr(expr, do_fold=True, do_simp=True):
+    if isinstance(expr, ChironAST.Sum):
+        lexpr = simplify_expr(expr.lexpr, do_fold, do_simp)
+        rexpr = simplify_expr(expr.rexpr, do_fold, do_simp)
+        
+        if do_fold and isinstance(lexpr, ChironAST.Num) and isinstance(rexpr, ChironAST.Num):
+            return ChironAST.Num(lexpr.val + rexpr.val)
+            
+        if do_simp:
+            if isinstance(lexpr, ChironAST.Num) and lexpr.val == 0:
+                return rexpr
+            if isinstance(rexpr, ChironAST.Num) and rexpr.val == 0:
+                return lexpr
+        
+        return ChironAST.Sum(lexpr, rexpr)
+        
+    elif isinstance(expr, ChironAST.Diff):
+        lexpr = simplify_expr(expr.lexpr, do_fold, do_simp)
+        rexpr = simplify_expr(expr.rexpr, do_fold, do_simp)
+        
+        if do_fold and isinstance(lexpr, ChironAST.Num) and isinstance(rexpr, ChironAST.Num):
+            return ChironAST.Num(lexpr.val - rexpr.val)
+            
+        if do_simp:
+            if isinstance(rexpr, ChironAST.Num) and rexpr.val == 0:
+                return lexpr
+            if str(lexpr) == str(rexpr): # Basic check for :x - :x
+                return ChironAST.Num(0)
+                
+        return ChironAST.Diff(lexpr, rexpr)
+        
+    elif isinstance(expr, ChironAST.Mult):
+        lexpr = simplify_expr(expr.lexpr, do_fold, do_simp)
+        rexpr = simplify_expr(expr.rexpr, do_fold, do_simp)
+        
+        if do_fold and isinstance(lexpr, ChironAST.Num) and isinstance(rexpr, ChironAST.Num):
+            return ChironAST.Num(lexpr.val * rexpr.val)
+            
+        if do_simp:
+            if (isinstance(lexpr, ChironAST.Num) and lexpr.val == 0) or \
+               (isinstance(rexpr, ChironAST.Num) and rexpr.val == 0):
+                return ChironAST.Num(0)
+            if isinstance(lexpr, ChironAST.Num) and lexpr.val == 1:
+                return rexpr
+            if isinstance(rexpr, ChironAST.Num) and rexpr.val == 1:
+                return lexpr
+                
+        return ChironAST.Mult(lexpr, rexpr)
+    
+    elif isinstance(expr, ChironAST.Div):
+        lexpr = simplify_expr(expr.lexpr, do_fold, do_simp)
+        rexpr = simplify_expr(expr.rexpr, do_fold, do_simp)
+        
+        if do_fold and isinstance(lexpr, ChironAST.Num) and isinstance(rexpr, ChironAST.Num):
+            if rexpr.val != 0:
+                return ChironAST.Num(lexpr.val // rexpr.val)
+        
+        if do_simp:
+            if isinstance(rexpr, ChironAST.Num) and rexpr.val == 1:
+                return lexpr
+            if str(lexpr) == str(rexpr):
+                return ChironAST.Num(1)
+
+        return ChironAST.Div(lexpr, rexpr)
+        
+    elif isinstance(expr, ChironAST.UMinus):
+        uexpr = simplify_expr(expr.expr, do_fold, do_simp)
+        if do_fold and isinstance(uexpr, ChironAST.Num):
+            return ChironAST.Num(-uexpr.val)
+        return ChironAST.UMinus(uexpr)
+    
+    elif isinstance(expr, (ChironAST.LT, ChironAST.GT, ChironAST.LTE, ChironAST.GTE, ChironAST.EQ, ChironAST.NEQ, ChironAST.AND, ChironAST.OR)):
+        lexpr = simplify_expr(expr.lexpr, do_fold, do_simp)
+        rexpr = simplify_expr(expr.rexpr, do_fold, do_simp)
+        return type(expr)(lexpr, rexpr)
+    
+    elif isinstance(expr, ChironAST.NOT):
+        uexpr = simplify_expr(expr.expr, do_fold, do_simp)
+        return ChironAST.NOT(uexpr)
+        
+    return expr
+
+def optimize(irHandler, args):
+    ir = copy.deepcopy(irHandler.ir)
+    
+    do_fold = args.opt_constfold or args.opt_all
+    do_simp = args.opt_algsimp or args.opt_all
+    
+    if not (do_fold or do_simp or args.opt_constprop or args.opt_dce):
+        # If no specific optimization is selected but we are here, 
+        # it might be from -dfa flag.
+        return optimizeUsingDFA(irHandler)
+
+    for _ in range(10): # Max 10 iterations
+        changed = False
+        new_ir = []
+        for stmt, tgt in ir:
+            new_stmt = stmt
+            if isinstance(stmt, ChironAST.AssignmentCommand):
+                new_rexpr = simplify_expr(stmt.rexpr, do_fold, do_simp)
+                if str(new_rexpr) != str(stmt.rexpr):
+                    new_stmt = ChironAST.AssignmentCommand(stmt.lvar, new_rexpr)
+                    changed = True
+            elif isinstance(stmt, ChironAST.MoveCommand):
+                new_expr = simplify_expr(stmt.expr, do_fold, do_simp)
+                if str(new_expr) != str(stmt.expr):
+                    new_stmt = ChironAST.MoveCommand(stmt.direction, new_expr)
+                    changed = True
+            elif isinstance(stmt, ChironAST.ConditionCommand):
+                new_cond = simplify_expr(stmt.cond, do_fold, do_simp)
+                if str(new_cond) != str(stmt.cond):
+                    new_stmt = ChironAST.ConditionCommand(new_cond)
+                    changed = True
+            elif isinstance(stmt, ChironAST.GotoCommand):
+                new_xcor = simplify_expr(stmt.xcor, do_fold, do_simp)
+                new_ycor = simplify_expr(stmt.ycor, do_fold, do_simp)
+                if str(new_xcor) != str(stmt.xcor) or str(new_ycor) != str(stmt.ycor):
+                    new_stmt = ChironAST.GotoCommand(new_xcor, new_ycor)
+                    changed = True
+            
+            new_ir.append((new_stmt, tgt))
+        
+        ir = new_ir
+        if not changed:
+            break
+            
+    return ir
