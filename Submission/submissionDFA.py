@@ -107,7 +107,7 @@ class ForwardAnalysis():
 
         return meetVal
 
-def optimizeUsingDFA(irHandler):
+def optimizeUsingDFA(irHandler, args):
     '''
         get the cfg out of IR
         each basic block consists of single statement
@@ -120,7 +120,8 @@ def optimizeUsingDFA(irHandler):
     # NOTE: Implement your code below. Do not change anything above this line.
     # Implement your analysis according to the questions on each basic block
 
-
+    do_fold = args.opt_constfold or args.opt_all
+    do_simp = args.opt_algsimp or args.opt_all
 
     # TODO: Return the optimized IR in optIR
     optIR = irHandler.ir
@@ -211,15 +212,19 @@ def simplify_expr(expr, do_fold=True, do_simp=True):
     return expr
 
 def optimize(irHandler, args):
+    # If -dfa flag is present, we use the DFA-based optimizer first
+    if args.dataFlowAnalysis:
+        irHandler.setIR(optimizeUsingDFA(irHandler, args))
+
     ir = copy.deepcopy(irHandler.ir)
     
     do_fold = args.opt_constfold or args.opt_all
     do_simp = args.opt_algsimp or args.opt_all
     
     if not (do_fold or do_simp or args.opt_constprop or args.opt_dce):
-        # If no specific optimization is selected but we are here, 
-        # it might be from -dfa flag.
-        return optimizeUsingDFA(irHandler)
+        # If no specific optimization is selected, we return the current IR
+        # (which may have been updated by optimizeUsingDFA)
+        return irHandler.ir
 
     for _ in range(10): # Max 10 iterations
         changed = False
