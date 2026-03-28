@@ -253,10 +253,5 @@ def optimize(irHandler, args):
         ir = new_ir
         if not changed:
             break
-            
-    # NEW: run old DFA-style optimization too, on updated IR
-    if args.opt_constprop or args.opt_dce or args.opt_all:
-        tempHandler = copy.deepcopy(irHandler)
-        tempHandler.ir = ir
-        ir = optimizeUsingDFA(tempHandler)        
+                  
     return ir
