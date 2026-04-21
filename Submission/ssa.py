@@ -144,18 +144,32 @@ class SSAInfo:
                 new_dom = new_dom | {b}
                 if new_dom != dom[b]:
                     dom[b] = new_dom
-                    changed = True
+                    changed = True'
 
         self.idom = {}
         self.dom_children = {b: [] for b in self.rpo}
+
         for b in self.rpo:
             if b == self._start:
                 continue
-            candidates = dom[b] - {b}
-            if not candidates:
+
+            strict = dom[b] - {b}
+            if not strict:
                 continue
-            self.idom[b] = max(candidates, key=lambda c: rpo_index.get(c, -1))
-            self.dom_children[self.idom[b]].append(b)
+
+            idom_b = None
+            for d in strict:
+            # d is the immediate dominator if no other strict dominator
+            # is strictly below it.
+                if all(o == d or d not in dom[o] for o in strict):
+                    idom_b = d
+                    break
+
+            if idom_b is None:
+                raise RuntimeError(f"Could not determine idom for block {b.name}")
+
+            self.idom[b] = idom_b
+            self.dom_children[idom_b].append(b)
 
 
     def _compute_dom_frontiers(self):
