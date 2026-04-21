@@ -138,7 +138,7 @@ class SCCP:
 
     def _eval_phis(self, block):
         for var, preds in self.ssa.phi_nodes.get(block, {}).items():
-            phi_ver = self.ssa.var_version_def.get((var, block))
+            phi_ver = self.ssa.get_phi_def_version(block, var)
             if phi_ver is None:
                 continue
             old_val = self.cell.get((var, phi_ver), UNDEF)
@@ -168,10 +168,10 @@ class SCCP:
 
         if isinstance(instr, AST.AssignmentCommand):
             var = instr.lvar.varname
-            ver = self.ssa.var_version_def.get((var, block))
+            ver = self.ssa.get_instr_def_version(block, var)
             if ver is None:
-                # This def might be from a phi, not instruction.
-                # Propagate flow.
+                # No instruction-def version recorded for this variable in
+                # this block. Propagate flow without updating any cell.
                 for succ in self.cfg.successors(block):
                     self._cfg_worklist.append((block, succ))
                 return

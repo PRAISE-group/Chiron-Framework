@@ -168,8 +168,11 @@ def run_adce(cfg, ssa_info, executable_blocks):
         def_block = ssa_info.def_site.get(key)
         if def_block is None:
             return
-        if var in ssa_info.phi_nodes.get(def_block, {}):
-            # This version is defined by a phi — trace operands
+        # Only follow phi operands if this specific version is the phi's
+        # result. A block can have both a phi-def and an instruction-def for
+        # the same variable; we must not treat the instruction-def version as
+        # a phi just because the block happens to host a phi for var.
+        if ssa_info.get_phi_def_version(def_block, var) == ver:
             mark_live(def_block)
             for pred_block, pred_ver in ssa_info.phi_nodes[def_block][var].items():
                 if pred_ver >= 0:
@@ -195,7 +198,7 @@ def run_adce(cfg, ssa_info, executable_blocks):
 
         # Also trace phi operands if this block has phis that are live
         for var in ssa_info.phi_nodes.get(block, {}):
-            phi_ver = ssa_info.var_version_def.get((var, block))
+            phi_ver = ssa_info.get_phi_def_version(block, var)
             if phi_ver is not None:
                 for pred_block, pred_ver in ssa_info.phi_nodes[block][var].items():
                     if pred_ver >= 0:

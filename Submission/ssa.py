@@ -64,7 +64,11 @@ class SSAInfo:
 
         self.phi_nodes = {}
 
-        self.var_version_def = {}
+        # Phi-def and instruction-def metadata are stored separately so that
+        # a block with both a phi for x and an instruction defining x can
+        # expose both versions unambiguously.
+        self.phi_version_def = {}    # (block, var) -> ver from the phi at block
+        self.instr_version_def = {}  # (block, var) -> ver from the instruction at block
         self.var_version_use = {}
         self.def_site = {}
         self.uses = {}
@@ -209,17 +213,16 @@ class SSAInfo:
         version_counter = {var: 0 for var in self.all_vars}
         version_stack = {var: [] for var in self.all_vars}
 
-        self.var_version_def = {}
+        self.phi_version_def = {}
+        self.instr_version_def = {}
         self.var_version_use = {}
         self.def_site = {}
         self.uses = {}
 
-        def new_version(var, block):
+        def fresh_version(var):
             ver = version_counter[var]
             version_counter[var] += 1
             version_stack[var].append(ver)
-            self.var_version_def[(var, block)] = ver
-            self.def_site[(var, ver)] = block
             return ver
 
         def current_version(var):
@@ -230,8 +233,12 @@ class SSAInfo:
         def rename_block(block):
             pushed = {var: 0 for var in self.all_vars}
 
+            # Phi-defs act at the top of the block and must be pushed before
+            # the instruction's uses so the instruction sees the phi version.
             for var in self.phi_nodes.get(block, {}):
-                new_version(var, block)
+                ver = fresh_version(var)
+                self.phi_version_def[(block, var)] = ver
+                self.def_site[(var, ver)] = block
                 pushed[var] += 1
 
             instr = get_block_instr(block)
@@ -244,9 +251,15 @@ class SSAInfo:
                         self.uses[key] = set()
                     self.uses[key].add(block)
 
+                # Instruction-def gets a fresh version AFTER its uses and is
+                # recorded separately from the phi-def, so a block that has
+                # both a phi-def and an instruction-def for the same variable
+                # keeps both versions accessible.
                 d = var_defined_by(instr)
                 if d is not None:
-                    new_version(d, block)
+                    ver = fresh_version(d)
+                    self.instr_version_def[(block, d)] = ver
+                    self.def_site[(d, ver)] = block
                     pushed[d] += 1
 
             for succ in self.cfg.successors(block):
@@ -267,6 +280,19 @@ class SSAInfo:
 
         rename_block(self._start)
 
+    # -------------------------------------------------------------------
+    # Accessors
+    # -------------------------------------------------------------------
+
+    def get_phi_def_version(self, block, var):
+        return self.phi_version_def.get((block, var))
+
+    def get_instr_def_version(self, block, var):
+        return self.instr_version_def.get((block, var))
+
+    def block_has_phi_def(self, block, var):
+        return (block, var) in self.phi_version_def
+
     def dump(self):
         """Print SSA metadata for debugging."""
         print("\n===== SSA INFO =====")
@@ -280,17 +306,21 @@ class SSAInfo:
                     pred_str = ", ".join(
                         f"{p.name}:v{v}" for p, v in preds.items()
                     )
-                    ver = self.var_version_def.get((var, block), "?")
+                    ver = self.phi_version_def.get((block, var), "?")
                     print(f"  [{block.name}] {var}_v{ver} = phi({pred_str})")
 
-        print("\nDefinitions:")
-        for (var, block), ver in sorted(
-            self.var_version_def.items(), key=lambda x: (x[0][0], x[1])
+        print("\nPhi definitions:")
+        for (block, var), ver in sorted(
+            self.phi_version_def.items(), key=lambda x: (x[0][1], x[1])
+        ):
+            print(f"  {var}_v{ver} defined at [{block.name}] (phi)")
+
+        print("\nInstruction definitions:")
+        for (block, var), ver in sorted(
+            self.instr_version_def.items(), key=lambda x: (x[0][1], x[1])
         ):
             instr = get_block_instr(block)
-            is_phi = var in self.phi_nodes.get(block, {})
-            src = "phi" if is_phi else str(instr)
-            print(f"  {var}_v{ver} defined at [{block.name}] ({src})")
+            print(f"  {var}_v{ver} defined at [{block.name}] ({instr})")
 
         print("\nUses:")
         for (var, block), ver in sorted(
