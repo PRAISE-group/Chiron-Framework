@@ -144,7 +144,7 @@ class SSAInfo:
                 new_dom = new_dom | {b}
                 if new_dom != dom[b]:
                     dom[b] = new_dom
-                    changed = True'
+                    changed = True
 
         self.idom = {}
         self.dom_children = {b: [] for b in self.rpo}
